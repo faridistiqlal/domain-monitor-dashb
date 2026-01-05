@@ -51,15 +51,48 @@ async function checkHTTPAccess(url: string, timeout: number = 6000): Promise<{ a
     
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
-        return { accessible: false, error: 'Connection Timeout', responseTime: timeout }
+        return { accessible: false, error: 'Timeout', responseTime: timeout }
+      }
+      
+      if (error.message.includes('ERR_CERT_DATE_INVALID')) {
+        return { accessible: false, error: 'Sertifikat SSL Kadaluarsa', responseTime }
+      }
+      
+      if (error.message.includes('ERR_CERT_AUTHORITY_INVALID')) {
+        return { accessible: false, error: 'Sertifikat SSL Tidak Valid', responseTime }
+      }
+      
+      if (error.message.includes('ERR_CERT_COMMON_NAME_INVALID')) {
+        return { accessible: false, error: 'SSL: Domain Tidak Cocok', responseTime }
+      }
+      
+      if (error.message.includes('ERR_SSL_PROTOCOL_ERROR')) {
+        return { accessible: false, error: 'SSL Protocol Error', responseTime }
+      }
+      
+      if (error.message.includes('ERR_CONNECTION_REFUSED')) {
+        return { accessible: false, error: 'Connection Refused', responseTime }
+      }
+      
+      if (error.message.includes('ERR_CONNECTION_RESET')) {
+        return { accessible: false, error: 'Connection Reset', responseTime }
+      }
+      
+      if (error.message.includes('ERR_ADDRESS_UNREACHABLE')) {
+        return { accessible: false, error: 'Address Unreachable', responseTime }
+      }
+      
+      if (error.message.includes('ERR_NAME_NOT_RESOLVED')) {
+        return { accessible: false, error: 'DNS Tidak Ditemukan', responseTime }
       }
       
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        return { accessible: false, error: 'Network Unreachable', responseTime }
+        return { accessible: false, error: 'CORS/Network Block', responseTime }
       }
       
       if (error.message.includes('ERR_')) {
-        return { accessible: false, error: error.message, responseTime }
+        const errMatch = error.message.match(/ERR_[A-Z_]+/)
+        return { accessible: false, error: errMatch ? errMatch[0] : error.message, responseTime }
       }
       
       return { accessible: false, error: 'Connection Failed', responseTime }
@@ -105,14 +138,28 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
     status = 'online'
   } else if (dnsResolvable && !httpAccessible) {
     status = 'dns-only'
-    error = httpResult.error || 'DNS resolve berhasil tetapi HTTP/HTTPS tidak dapat diakses'
+    
+    if (httpResult.error?.includes('SSL') || 
+        httpResult.error?.includes('Sertifikat') ||
+        httpResult.error?.includes('CERT')) {
+      error = httpResult.error
+    } else if (httpResult.error === 'Timeout') {
+      error = 'Server lambat atau tidak merespons'
+    } else if (httpResult.error === 'CORS/Network Block') {
+      error = 'Browser CORS/Network - Coba akses manual'
+    } else {
+      error = httpResult.error || 'DNS OK, Server tidak dapat diakses'
+    }
   } else if (!dnsResolvable && !httpAccessible) {
-    if (httpResult.error === 'Connection Timeout') {
+    if (httpResult.error === 'Timeout') {
       status = 'dns-only'
-      error = 'Timeout - Server lambat atau tidak merespons'
+      error = 'Timeout - Server lambat'
+    } else if (httpResult.error === 'DNS Tidak Ditemukan') {
+      status = 'offline'
+      error = 'DNS tidak dapat di-resolve'
     } else {
       status = 'offline'
-      error = 'DNS tidak dapat di-resolve dan HTTP tidak accessible'
+      error = httpResult.error || 'Domain tidak dapat diakses'
     }
   } else {
     status = 'offline'

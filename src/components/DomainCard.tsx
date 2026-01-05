@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy, CaretDown, Tag } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, Tag } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -10,12 +10,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 
 interface DomainCardProps {
@@ -191,38 +185,14 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
                 </TooltipContent>
               </Tooltip>
               
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                      >
-                        <Copy size={14} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Salin URL</p>
-                  </TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => handleCopyUrl('plain')} className="text-xs cursor-pointer">
-                    <Copy size={14} className="mr-2" />
-                    Salin apa adanya
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleCopyUrl('https')} className="text-xs cursor-pointer">
-                    <Copy size={14} className="mr-2" />
-                    Salin dengan HTTPS
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleCopyUrl('http')} className="text-xs cursor-pointer">
-                    <Copy size={14} className="mr-2" />
-                    Salin dengan HTTP
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleCopyUrl('plain')}
+                className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              >
+                <Copy size={14} />
+              </Button>
             </div>
           </div>
 

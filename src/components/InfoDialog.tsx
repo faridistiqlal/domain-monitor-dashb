@@ -65,6 +65,7 @@ export function InfoDialog() {
                       <li>Service web hosting belum diaktifkan di cPanel/VM</li>
                       <li>Virtual host tidak dikonfigurasi dengan benar</li>
                       <li>Server timeout/sangat lambat (&gt;6 detik)</li>
+                      <li><span className="font-medium text-foreground">Sertifikat SSL bermasalah:</span> Sertifikat kadaluarsa (ERR_CERT_DATE_INVALID), tidak valid, atau tidak cocok dengan domain</li>
                       <li><span className="font-medium text-foreground">Network-specific issue:</span> Website hanya bisa diakses dari jaringan tertentu karena pembatasan IP/firewall</li>
                       <li><span className="font-medium text-foreground">CORS/Browser security:</span> Browser memblokir akses cross-origin dari aplikasi monitoring ini</li>
                     </ul>
@@ -151,8 +152,21 @@ export function InfoDialog() {
                   <p className="text-sm font-semibold text-amber-500 mb-1">Verifikasi Manual:</p>
                   <p className="text-sm text-muted-foreground">
                     Untuk domain yang status DNS Only, <span className="font-semibold text-foreground">klik icon globe</span> untuk membuka website di tab baru. 
-                    Jika website terbuka dengan baik, berarti masalahnya adalah browser security/CORS, bukan server mati.
+                    Jika website terbuka dengan baik, berarti masalahnya adalah browser security/CORS, bukan server mati. 
+                    Jika muncul peringatan SSL, periksa sertifikat SSL domain tersebut.
                   </p>
+                </div>
+                
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="text-sm font-semibold text-amber-500 mb-1">Sertifikat SSL Bermasalah:</p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Jika error message menunjukkan masalah SSL (Sertifikat Kadaluarsa, Tidak Valid, dll):
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
+                    <li><span className="font-semibold text-foreground">Sertifikat Kadaluarsa:</span> Perbarui SSL certificate di cPanel/hosting</li>
+                    <li><span className="font-semibold text-foreground">Sertifikat Tidak Valid:</span> Pastikan menggunakan SSL dari CA terpercaya atau setup Let's Encrypt</li>
+                    <li><span className="font-semibold text-foreground">Domain Tidak Cocok:</span> SSL certificate tidak sesuai dengan nama domain yang digunakan</li>
+                  </ul>
                 </div>
                 
                 <div className="bg-card border rounded-lg p-3">
