@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
@@ -17,6 +18,7 @@ import { exportDomainsToCSV } from '@/lib/csv-export'
 import { toast } from 'sonner'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
+type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
 
 function App() {
   const [domains, setDomains] = useKV<Domain[]>('monitoring-domains', [])
@@ -24,6 +26,7 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortType>('none')
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -135,6 +138,54 @@ function App() {
     
     return matchesFilter && matchesSearch
   }) || []
+
+  const sortedDomains = (() => {
+    if (sortBy === 'none') return filteredDomains
+
+    const domainsCopy = [...filteredDomains]
+
+    if (sortBy === 'name-asc') {
+      return domainsCopy.sort((a, b) => a.url.localeCompare(b.url))
+    }
+
+    if (sortBy === 'name-desc') {
+      return domainsCopy.sort((a, b) => b.url.localeCompare(a.url))
+    }
+
+    if (sortBy === 'status-online-first') {
+      return domainsCopy.sort((a, b) => {
+        const statusA = statuses[a.id]?.status || 'checking'
+        const statusB = statuses[b.id]?.status || 'checking'
+        
+        const statusOrder: Record<string, number> = {
+          'online': 1,
+          'dns-only': 2,
+          'offline': 3,
+          'checking': 4
+        }
+        
+        return (statusOrder[statusA] || 999) - (statusOrder[statusB] || 999)
+      })
+    }
+
+    if (sortBy === 'status-offline-first') {
+      return domainsCopy.sort((a, b) => {
+        const statusA = statuses[a.id]?.status || 'checking'
+        const statusB = statuses[b.id]?.status || 'checking'
+        
+        const statusOrder: Record<string, number> = {
+          'offline': 1,
+          'dns-only': 2,
+          'online': 3,
+          'checking': 4
+        }
+        
+        return (statusOrder[statusA] || 999) - (statusOrder[statusB] || 999)
+      })
+    }
+
+    return domainsCopy
+  })()
 
   return (
     <div className="min-h-screen bg-background">
@@ -293,28 +344,55 @@ function App() {
                   </div>
                 </div>
                 
-                <div className="relative w-full sm:w-64">
-                  <MagnifyingGlass 
-                    size={14} 
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Cari domain..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-7 pl-8 pr-8 text-xs"
-                  />
-                  {searchQuery && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
-                    >
-                      <X size={14} className="text-muted-foreground hover:text-foreground" />
-                    </Button>
-                  )}
+                <div className="flex items-center gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-36">
+                        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
+                          <SelectTrigger className="h-7 text-xs">
+                            <div className="flex items-center gap-1.5">
+                              <SortAscending size={14} />
+                              <SelectValue placeholder="Urutkan" />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none" className="text-xs">Default</SelectItem>
+                            <SelectItem value="name-asc" className="text-xs">Nama A-Z</SelectItem>
+                            <SelectItem value="name-desc" className="text-xs">Nama Z-A</SelectItem>
+                            <SelectItem value="status-online-first" className="text-xs">Online Pertama</SelectItem>
+                            <SelectItem value="status-offline-first" className="text-xs">Offline Pertama</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Urutkan domain</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <div className="relative w-full sm:w-52">
+                    <MagnifyingGlass 
+                      size={14} 
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Cari domain..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-7 pl-8 pr-8 text-xs"
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
+                      >
+                        <X size={14} className="text-muted-foreground hover:text-foreground" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -357,7 +435,7 @@ function App() {
           ) : (
             <ScrollArea className="flex-1">
               <div className="space-y-2 pr-4">
-                {filteredDomains.map(domain => (
+                {sortedDomains.map(domain => (
                   <DomainCard
                     key={domain.id}
                     domain={domain}
