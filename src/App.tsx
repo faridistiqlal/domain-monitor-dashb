@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -8,21 +8,27 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
 import { ImportDialog } from '@/components/ImportDialog'
 import { InfoDialog } from '@/components/InfoDialog'
-import { Domain, DomainStatus } from '@/lib/types'
+import { GroupCard } from '@/components/GroupCard'
+import { GroupFormDialog } from '@/components/GroupFormDialog'
+import { AssignDomainsDialog } from '@/components/AssignDomainsDialog'
+import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
 import { toast } from 'sonner'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
+type ViewMode = 'all' | 'groups' | 'group-detail'
 
 function App() {
   const [domains, setDomains] = useKV<Domain[]>('monitoring-domains', [])
+  const [groups, setGroups] = useKV<DomainGroup[]>('domain-groups', [])
   const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
@@ -30,6 +36,11 @@ function App() {
   const [sortBy, setSortBy] = useState<SortType>('none')
   const [countdown, setCountdown] = useState(60)
   const [isPaused, setIsPaused] = useState(false)
+  const [activeTab, setActiveTab] = useState<'domains' | 'groups'>('domains')
+  const [viewMode, setViewMode] = useState<ViewMode>('all')
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<DomainGroup | null>(null)
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -129,6 +140,57 @@ function App() {
     toast.success(`${importedDomains.length} domain berhasil diimport`)
   }
 
+  const handleCreateGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
+    const newGroup: DomainGroup = {
+      ...groupData,
+      id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: Date.now(),
+    }
+    setGroups(current => [...(current || []), newGroup])
+    toast.success('Grup berhasil dibuat')
+  }
+
+  const handleEditGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
+    if (!editingGroup) return
+    
+    setGroups(current =>
+      (current || []).map(g =>
+        g.id === editingGroup.id
+          ? { ...g, ...groupData }
+          : g
+      )
+    )
+    toast.success('Grup berhasil diperbarui')
+    setEditingGroup(null)
+  }
+
+  const handleDeleteGroup = (groupId: string) => {
+    setGroups(current => (current || []).filter(g => g.id !== groupId))
+    setDomains(current =>
+      (current || []).map(d =>
+        d.groupId === groupId ? { ...d, groupId: undefined } : d
+      )
+    )
+    toast.success('Grup berhasil dihapus')
+  }
+
+  const handleAssignDomains = (domainIds: string[], groupId: string | null) => {
+    setDomains(current =>
+      (current || []).map(d =>
+        domainIds.includes(d.id)
+          ? { ...d, groupId: groupId || undefined }
+          : d
+      )
+    )
+    toast.success('Domain berhasil diatur grupnya')
+  }
+
+  const handleViewGroupDomains = (groupId: string) => {
+    setSelectedGroupId(groupId)
+    setViewMode('group-detail')
+    setActiveTab('domains')
+  }
+
   useEffect(() => {
     checkAllDomains()
     setCountdown(60)
@@ -161,7 +223,14 @@ function App() {
   const dnsOnlyCount = Object.values(statuses).filter(s => s.status === 'dns-only').length
   const totalCount = domains?.length || 0
 
-  const filteredDomains = domains?.filter(domain => {
+  const currentViewDomains = (() => {
+    if (viewMode === 'group-detail' && selectedGroupId) {
+      return domains?.filter(d => d.groupId === selectedGroupId) || []
+    }
+    return domains || []
+  })()
+
+  const filteredDomains = currentViewDomains.filter(domain => {
     const matchesFilter = filter === 'all' || (() => {
       const status = statuses[domain.id]?.status
       if (!status || status === 'checking') return true
@@ -172,7 +241,7 @@ function App() {
       domain.url.toLowerCase().includes(searchQuery.toLowerCase())
     
     return matchesFilter && matchesSearch
-  }) || []
+  })
 
   const sortedDomains = (() => {
     if (sortBy === 'none') return filteredDomains
@@ -221,6 +290,17 @@ function App() {
 
     return domainsCopy
   })()
+
+  const selectedGroup = selectedGroupId ? groups?.find(g => g.id === selectedGroupId) : null
+
+  const getGroupStats = (groupId: string) => {
+    const groupDomains = domains?.filter(d => d.groupId === groupId) || []
+    const count = groupDomains.length
+    const online = groupDomains.filter(d => statuses[d.id]?.status === 'online').length
+    const offline = groupDomains.filter(d => statuses[d.id]?.status === 'offline').length
+    const dnsOnly = groupDomains.filter(d => statuses[d.id]?.status === 'dns-only').length
+    return { count, online, offline, dnsOnly }
+  }
 
   return (
     <TooltipProvider>
@@ -286,181 +366,315 @@ function App() {
 
         <Separator className="mb-4" />
 
-        <div className="space-y-4 flex flex-col h-[calc(100vh-180px)]">
-          <AddDomainForm onAdd={handleAddDomain} />
+        <Tabs value={activeTab} onValueChange={(val) => {
+          setActiveTab(val as 'domains' | 'groups')
+          if (val === 'domains' && viewMode === 'group-detail') {
+            setViewMode('all')
+            setSelectedGroupId(null)
+          }
+        }} className="space-y-4">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="domains" className="gap-1.5">
+              <ListBullets size={14} />
+              Semua Domain
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="gap-1.5">
+              <FolderOpen size={14} />
+              Kelola Grup
+            </TabsTrigger>
+          </TabsList>
 
-          {totalCount > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs px-1">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
-                    <span className="text-muted-foreground">Online</span>
-                    <span className="font-semibold text-success">{onlineCount}</span>
-                  </div>
-                  {dnsOnlyCount > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-                      <span className="text-muted-foreground">DNS Only</span>
-                      <span className="font-semibold text-amber-500">{dnsOnlyCount}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
-                    <span className="text-muted-foreground">Offline</span>
-                    <span className="font-semibold text-destructive">{offlineCount}</span>
-                  </div>
-                </div>
+          <TabsContent value="domains" className="space-y-4 flex flex-col h-[calc(100vh-220px)]">
+            {viewMode === 'group-detail' && selectedGroup && (
+              <div className="flex items-center gap-2 px-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setViewMode('all')
+                    setSelectedGroupId(null)
+                  }}
+                  className="h-7 text-xs"
+                >
+                  ← Kembali
+                </Button>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">
-                    {isPaused ? 'Dijeda' : `Refresh dalam ${countdown}s`} • {totalCount} domain
-                  </span>
-                  {!isPaused && (
-                    <Progress 
-                      value={(countdown / 60) * 100} 
-                      className="w-16 h-1.5"
+                  <div 
+                    className="w-6 h-6 rounded flex items-center justify-center"
+                    style={{ backgroundColor: `${selectedGroup.color}20` }}
+                  >
+                    <div 
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: selectedGroup.color }}
                     />
-                  )}
+                  </div>
+                  <span className="text-sm font-semibold">{selectedGroup.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({currentViewDomains.length} domain)
+                  </span>
                 </div>
               </div>
+            )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">Filter:</span>
-                  <div className="flex gap-1.5 flex-1">
-                    <Button
-                      variant={filter === 'all' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFilter('all')}
-                      className="h-8 px-3 text-xs flex-1 lg:flex-none"
-                    >
-                      Semua
-                    </Button>
-                    <Button
-                      variant={filter === 'online' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFilter('online')}
-                      className="h-8 px-3 text-xs flex-1 lg:flex-none"
-                    >
-                      Online
-                    </Button>
+            <AddDomainForm onAdd={handleAddDomain} />
+
+            {totalCount > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs px-1">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
+                      <span className="text-muted-foreground">Online</span>
+                      <span className="font-semibold text-success">{onlineCount}</span>
+                    </div>
                     {dnsOnlyCount > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                        <span className="text-muted-foreground">DNS Only</span>
+                        <span className="font-semibold text-amber-500">{dnsOnlyCount}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
+                      <span className="text-muted-foreground">Offline</span>
+                      <span className="font-semibold text-destructive">{offlineCount}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">
+                      {isPaused ? 'Dijeda' : `Refresh dalam ${countdown}s`} • {totalCount} domain
+                    </span>
+                    {!isPaused && (
+                      <Progress 
+                        value={(countdown / 60) * 100} 
+                        className="w-16 h-1.5"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Filter:</span>
+                    <div className="flex gap-1.5 flex-1">
                       <Button
-                        variant={filter === 'dns-only' ? 'default' : 'outline'}
+                        variant={filter === 'all' ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => setFilter('dns-only')}
+                        onClick={() => setFilter('all')}
                         className="h-8 px-3 text-xs flex-1 lg:flex-none"
                       >
-                        DNS Only
+                        Semua
                       </Button>
-                    )}
-                    <Button
-                      variant={filter === 'offline' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFilter('offline')}
-                      className="h-8 px-3 text-xs flex-1 lg:flex-none"
-                    >
-                      Offline
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 lg:flex-none lg:w-40">
-                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
-                      <SelectTrigger className="h-8 py-0 text-xs w-full">
-                        <div className="flex items-center gap-1.5">
-                          <SortAscending size={14} />
-                          <SelectValue placeholder="Urutkan" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none" className="text-xs">Default</SelectItem>
-                        <SelectItem value="name-asc" className="text-xs">Nama A-Z</SelectItem>
-                        <SelectItem value="name-desc" className="text-xs">Nama Z-A</SelectItem>
-                        <SelectItem value="status-online-first" className="text-xs">Online Pertama</SelectItem>
-                        <SelectItem value="status-offline-first" className="text-xs">Offline Pertama</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <Button
+                        variant={filter === 'online' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFilter('online')}
+                        className="h-8 px-3 text-xs flex-1 lg:flex-none"
+                      >
+                        Online
+                      </Button>
+                      {dnsOnlyCount > 0 && (
+                        <Button
+                          variant={filter === 'dns-only' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setFilter('dns-only')}
+                          className="h-8 px-3 text-xs flex-1 lg:flex-none"
+                        >
+                          DNS Only
+                        </Button>
+                      )}
+                      <Button
+                        variant={filter === 'offline' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFilter('offline')}
+                        className="h-8 px-3 text-xs flex-1 lg:flex-none"
+                      >
+                        Offline
+                      </Button>
+                    </div>
                   </div>
                   
-                  <div className="relative flex-1">
-                    <MagnifyingGlass 
-                      size={14} 
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
-                    />
-                    <Input
-                      type="text"
-                      placeholder="Cari domain..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-8 pl-8 pr-8 text-xs w-full"
-                    />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 lg:flex-none lg:w-40">
+                      <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
+                        <SelectTrigger className="h-8 py-0 text-xs w-full">
+                          <div className="flex items-center gap-1.5">
+                            <SortAscending size={14} />
+                            <SelectValue placeholder="Urutkan" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none" className="text-xs">Default</SelectItem>
+                          <SelectItem value="name-asc" className="text-xs">Nama A-Z</SelectItem>
+                          <SelectItem value="name-desc" className="text-xs">Nama Z-A</SelectItem>
+                          <SelectItem value="status-online-first" className="text-xs">Online Pertama</SelectItem>
+                          <SelectItem value="status-offline-first" className="text-xs">Offline Pertama</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="relative flex-1">
+                      <MagnifyingGlass 
+                        size={14} 
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
+                      />
+                      <Input
+                        type="text"
+                        placeholder="Cari domain..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-8 pl-8 pr-8 text-xs w-full"
+                      />
+                      {searchQuery && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
+                        >
+                          <X size={14} className="text-muted-foreground hover:text-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!domains || domains.length === 0 ? (
+              <EmptyState />
+            ) : filteredDomains.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {searchQuery 
+                      ? `Tidak ada domain yang cocok dengan "${searchQuery}"` 
+                      : viewMode === 'group-detail'
+                        ? 'Tidak ada domain dalam grup ini'
+                        : 'Tidak ada domain dengan status ini'}
+                  </p>
+                  <div className="flex gap-2 justify-center">
                     {searchQuery && (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
+                        className="text-xs"
                       >
-                        <X size={14} className="text-muted-foreground hover:text-foreground" />
+                        Hapus Pencarian
+                      </Button>
+                    )}
+                    {filter !== 'all' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFilter('all')}
+                        className="text-xs"
+                      >
+                        Tampilkan Semua
                       </Button>
                     )}
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="space-y-2 pr-4">
+                  {sortedDomains.map(domain => {
+                    const domainGroup = domain.groupId 
+                      ? groups?.find(g => g.id === domain.groupId)
+                      : undefined
+                    return (
+                      <DomainCard
+                        key={domain.id}
+                        domain={domain}
+                        status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
+                        onDelete={handleDeleteDomain}
+                        group={domainGroup}
+                      />
+                    )
+                  })}
+                </div>
+              </ScrollArea>
+            )}
+          </TabsContent>
 
-          {!domains || domains.length === 0 ? (
-            <EmptyState />
-          ) : filteredDomains.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {searchQuery 
-                    ? `Tidak ada domain yang cocok dengan "${searchQuery}"` 
-                    : 'Tidak ada domain dengan status ini'}
-                </p>
-                <div className="flex gap-2 justify-center">
-                  {searchQuery && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSearchQuery('')}
-                      className="text-xs"
-                    >
-                      Hapus Pencarian
-                    </Button>
-                  )}
-                  {filter !== 'all' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFilter('all')}
-                      className="text-xs"
-                    >
-                      Tampilkan Semua
-                    </Button>
-                  )}
+          <TabsContent value="groups" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Kelola grup domain untuk organisasi yang lebih baik
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAssignDialogOpen(true)}
+                  disabled={!domains || domains.length === 0}
+                  className="h-8"
+                >
+                  <Tag size={14} />
+                  Atur Grup
+                </Button>
+                <GroupFormDialog onSave={handleCreateGroup} />
+              </div>
+            </div>
+
+            {!groups || groups.length === 0 ? (
+              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+                <div className="text-center space-y-3">
+                  <div className="w-16 h-16 rounded-2xl bg-muted mx-auto flex items-center justify-center">
+                    <FolderOpen size={32} weight="duotone" className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold mb-1">Belum Ada Grup</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Buat grup untuk mengelompokkan domain
+                    </p>
+                    <GroupFormDialog onSave={handleCreateGroup} />
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <ScrollArea className="flex-1">
-              <div className="space-y-2 pr-4">
-                {sortedDomains.map(domain => (
-                  <DomainCard
-                    key={domain.id}
-                    domain={domain}
-                    status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
-                    onDelete={handleDeleteDomain}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
-          )}
-        </div>
+            ) : (
+              <ScrollArea className="h-[calc(100vh-300px)]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-4">
+                  {groups.map(group => {
+                    const stats = getGroupStats(group.id)
+                    return (
+                      <GroupCard
+                        key={group.id}
+                        group={group}
+                        domainCount={stats.count}
+                        onlineCount={stats.online}
+                        offlineCount={stats.offline}
+                        dnsOnlyCount={stats.dnsOnly}
+                        onEdit={(g) => setEditingGroup(g)}
+                        onDelete={handleDeleteGroup}
+                        onViewDomains={handleViewGroupDomains}
+                      />
+                    )
+                  })}
+                </div>
+              </ScrollArea>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        <AssignDomainsDialog
+          open={assignDialogOpen}
+          onOpenChange={setAssignDialogOpen}
+          domains={domains || []}
+          groups={groups || []}
+          onAssign={handleAssignDomains}
+        />
+
+        <GroupFormDialog
+          group={editingGroup || undefined}
+          onSave={handleEditGroup}
+          open={editingGroup !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditingGroup(null)
+          }}
+        />
       </div>
     </div>
     </TooltipProvider>

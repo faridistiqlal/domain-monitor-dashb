@@ -2,6 +2,15 @@ export interface Domain {
   id: string
   url: string
   addedAt: number
+  groupId?: string
+}
+
+export interface DomainGroup {
+  id: string
+  name: string
+  color: string
+  createdAt: number
+  description?: string
 }
 
 export interface DomainStatus {

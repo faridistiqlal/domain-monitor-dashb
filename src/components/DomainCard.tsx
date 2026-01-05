@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy, CaretDown } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, CaretDown, Tag } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusIndicator } from './StatusIndicator'
-import { Domain, DomainStatus } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
 import {
   Tooltip,
   TooltipContent,
@@ -21,9 +21,10 @@ interface DomainCardProps {
   domain: Domain
   status: DomainStatus
   onDelete: (id: string) => void
+  group?: DomainGroup
 }
 
-export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
+export function DomainCard({ domain, status, onDelete, group }: DomainCardProps) {
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
     try {
       let textToCopy = domain.url
@@ -94,6 +95,23 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
             <h3 className="font-mono text-sm font-medium text-foreground truncate">
               {domain.url}
             </h3>
+            {group && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
+                    style={{ backgroundColor: `${group.color}20`, color: group.color }}
+                  >
+                    <Tag size={10} weight="fill" />
+                    <span className="font-medium">{group.name}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Grup: {group.name}</p>
+                  {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
+                </TooltipContent>
+              </Tooltip>
+            )}
             <div className="flex items-center shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
