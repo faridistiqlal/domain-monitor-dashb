@@ -8,6 +8,7 @@ import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
 import { ImportDialog } from '@/components/ImportDialog'
+import { InfoDialog } from '@/components/InfoDialog'
 import { Domain, DomainStatus } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -158,6 +159,8 @@ function App() {
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  <InfoDialog />
+                  
                   <ImportDialog
                     existingDomains={domains || []}
                     onImport={handleImportDomains}
