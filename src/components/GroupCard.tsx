@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Folder, DotsThree, Trash, PencilSimple, Globe } from '@phosphor-icons/react'
+import { Folder, DotsThree, Trash, PencilSimple, Globe, DownloadSimple } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,6 +19,7 @@ interface GroupCardProps {
   onEdit: (group: DomainGroup) => void
   onDelete: (groupId: string) => void
   onViewDomains: (groupId: string) => void
+  onExport: (groupId: string) => void
 }
 
 export function GroupCard({
@@ -30,6 +31,7 @@ export function GroupCard({
   onEdit,
   onDelete,
   onViewDomains,
+  onExport,
 }: GroupCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -84,6 +86,16 @@ export function GroupCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem 
+              onClick={(e) => {
+                e.stopPropagation()
+                onExport(group.id)
+              }}
+              disabled={domainCount === 0}
+            >
+              <DownloadSimple size={14} className="mr-2" />
+              Export CSV
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => {
               e.stopPropagation()
               onEdit(group)

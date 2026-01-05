@@ -85,7 +85,8 @@ export function downloadCSV(csvContent: string, filename: string = 'domain-monit
 
 export function exportDomainsToCSV(
   domains: Domain[], 
-  statuses: Record<string, DomainStatus>
+  statuses: Record<string, DomainStatus>,
+  groupName?: string
 ): { success: boolean; duplicates?: string[] } {
   const validation = validateExportDomains(domains)
   
@@ -98,7 +99,8 @@ export function exportDomainsToCSV(
 
   const csvContent = generateCSV(validation.uniqueDomains, statuses)
   const timestamp = new Date().toISOString().split('T')[0]
-  const filename = `domain-monitor-${timestamp}.csv`
+  const groupSuffix = groupName ? `-${groupName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}` : ''
+  const filename = `domain-monitor${groupSuffix}-${timestamp}.csv`
   downloadCSV(csvContent, filename)
   
   return { success: true }

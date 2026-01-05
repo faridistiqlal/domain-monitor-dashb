@@ -133,6 +133,30 @@ function App() {
     toast.success('Data berhasil diekspor ke CSV')
   }
 
+  const handleExportGroupCSV = (groupId: string) => {
+    const group = groups?.find(g => g.id === groupId)
+    if (!group) return
+
+    const groupDomains = domains?.filter(d => d.groupId === groupId) || []
+    
+    if (groupDomains.length === 0) {
+      toast.error('Tidak ada domain dalam grup ini')
+      return
+    }
+    
+    const result = exportDomainsToCSV(groupDomains, statuses, group.name)
+    
+    if (!result.success && result.duplicates && result.duplicates.length > 0) {
+      toast.error(
+        `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
+        { duration: 6000 }
+      )
+      return
+    }
+    
+    toast.success(`Domain grup "${group.name}" berhasil diekspor ke CSV`)
+  }
+
   const handleImportDomains = (importedDomains: Domain[], groupId?: string) => {
     if (importedDomains.length === 0) return
 
@@ -397,33 +421,45 @@ function App() {
 
           <TabsContent value="domains" className="space-y-4 flex flex-col h-[calc(100vh-220px)]">
             {viewMode === 'group-detail' && selectedGroup && (
-              <div className="flex items-center gap-2 px-1">
+              <div className="flex items-center justify-between gap-2 px-1">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setViewMode('all')
+                      setSelectedGroupId(null)
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    ← Kembali
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-6 h-6 rounded flex items-center justify-center"
+                      style={{ backgroundColor: `${selectedGroup.color}20` }}
+                    >
+                      <div 
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: selectedGroup.color }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold">{selectedGroup.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({currentViewDomains.length} domain)
+                    </span>
+                  </div>
+                </div>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setViewMode('all')
-                    setSelectedGroupId(null)
-                  }}
+                  onClick={() => handleExportGroupCSV(selectedGroup.id)}
+                  disabled={currentViewDomains.length === 0}
                   className="h-7 text-xs"
                 >
-                  ← Kembali
+                  <DownloadSimple size={14} />
+                  Export CSV
                 </Button>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-6 h-6 rounded flex items-center justify-center"
-                    style={{ backgroundColor: `${selectedGroup.color}20` }}
-                  >
-                    <div 
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: selectedGroup.color }}
-                    />
-                  </div>
-                  <span className="text-sm font-semibold">{selectedGroup.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({currentViewDomains.length} domain)
-                  </span>
-                </div>
               </div>
             )}
 
@@ -666,6 +702,7 @@ function App() {
                         onEdit={(g) => setEditingGroup(g)}
                         onDelete={handleDeleteGroup}
                         onViewDomains={handleViewGroupDomains}
+                        onExport={handleExportGroupCSV}
                       />
                     )
                   })}
