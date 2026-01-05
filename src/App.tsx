@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
@@ -188,9 +187,8 @@ function App() {
   })()
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-4 max-w-5xl">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-4 max-w-5xl">
         <header className="mb-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
@@ -208,66 +206,34 @@ function App() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <InfoDialog />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Panduan Monitoring</p>
-                </TooltipContent>
-              </Tooltip>
+              <InfoDialog />
+              
+              <ImportDialog
+                existingDomains={domains || []}
+                onImport={handleImportDomains}
+              />
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <ImportDialog
-                      existingDomains={domains || []}
-                      onImport={handleImportDomains}
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Import dari CSV</p>
-                </TooltipContent>
-              </Tooltip>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                className="h-8"
+              >
+                <DownloadSimple size={14} />
+              </Button>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportCSV}
-                    className="h-8"
-                  >
-                    <DownloadSimple size={14} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Export ke CSV</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleManualRefresh}
-                    disabled={isRefreshing}
-                    className="h-8"
-                  >
-                    <ArrowClockwise 
-                      size={14} 
-                      className={isRefreshing ? 'animate-spin' : ''} 
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Refresh Status</p>
-                </TooltipContent>
-              </Tooltip>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="h-8"
+              >
+                <ArrowClockwise 
+                  size={14} 
+                  className={isRefreshing ? 'animate-spin' : ''} 
+                />
+              </Button>
             </div>
           </div>
         </header>
@@ -346,30 +312,23 @@ function App() {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex-1 lg:flex-none lg:w-40">
-                        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
-                          <SelectTrigger className="h-8 py-0 text-xs w-full">
-                            <div className="flex items-center gap-1.5">
-                              <SortAscending size={14} />
-                              <SelectValue placeholder="Urutkan" />
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none" className="text-xs">Default</SelectItem>
-                            <SelectItem value="name-asc" className="text-xs">Nama A-Z</SelectItem>
-                            <SelectItem value="name-desc" className="text-xs">Nama Z-A</SelectItem>
-                            <SelectItem value="status-online-first" className="text-xs">Online Pertama</SelectItem>
-                            <SelectItem value="status-offline-first" className="text-xs">Offline Pertama</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Urutkan domain</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <div className="flex-1 lg:flex-none lg:w-40">
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
+                      <SelectTrigger className="h-8 py-0 text-xs w-full">
+                        <div className="flex items-center gap-1.5">
+                          <SortAscending size={14} />
+                          <SelectValue placeholder="Urutkan" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none" className="text-xs">Default</SelectItem>
+                        <SelectItem value="name-asc" className="text-xs">Nama A-Z</SelectItem>
+                        <SelectItem value="name-desc" className="text-xs">Nama Z-A</SelectItem>
+                        <SelectItem value="status-online-first" className="text-xs">Online Pertama</SelectItem>
+                        <SelectItem value="status-offline-first" className="text-xs">Offline Pertama</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   
                   <div className="relative flex-1">
                     <MagnifyingGlass 
@@ -450,7 +409,6 @@ function App() {
         </div>
       </div>
     </div>
-    </TooltipProvider>
   )
 }
 
