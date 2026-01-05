@@ -93,7 +93,7 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
         transition={{ duration: 0.2 }}
         whileHover={{ scale: 1.002 }}
       >
-        <Card className={`p-2.5 hover:shadow-md transition-all duration-200 ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+        <Card className={`p-3 hover:shadow-md transition-all duration-200 ${isSelected ? 'ring-1 ring-primary' : ''}`}>
           <div className="flex items-center gap-3">
             {showCheckbox && (
               <Checkbox
@@ -140,7 +140,7 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
       transition={{ duration: 0.2 }}
       whileHover={{ scale: 1.005 }}
     >
-      <Card className={`p-2.5 hover:shadow-md transition-all duration-200 ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+      <Card className={`p-3 hover:shadow-md transition-all duration-200 ${isSelected ? 'ring-1 ring-primary' : ''}`}>
         <div className="flex items-center gap-3">
           {showCheckbox && (
             <Checkbox
