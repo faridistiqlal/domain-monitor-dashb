@@ -1191,14 +1191,16 @@ function App() {
           onAssign={handleAssignDomains}
         />
 
-        <GroupFormDialog
-          group={editingGroup || undefined}
-          onSave={handleEditGroup}
-          open={editingGroup !== null}
-          onOpenChange={(open) => {
-            if (!open) setEditingGroup(null)
-          }}
-        />
+        {editingGroup && (
+          <GroupFormDialog
+            group={editingGroup}
+            onSave={handleEditGroup}
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) setEditingGroup(null)
+            }}
+          />
+        )}
       </div>
     </div>
     </TooltipProvider>
