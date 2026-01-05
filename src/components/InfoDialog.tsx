@@ -31,7 +31,7 @@ export function InfoDialog() {
           </DialogDescription>
         </DialogHeader>
         
-        <Accordion type="multiple" defaultValue={["status", "cara-kerja", "troubleshooting", "fitur"]} className="w-full pt-2">
+        <Accordion type="multiple" defaultValue={[]} className="w-full pt-2">
           <AccordionItem value="status">
             <AccordionTrigger className="text-sm font-semibold">
               Status Monitoring
