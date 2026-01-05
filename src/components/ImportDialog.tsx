@@ -71,7 +71,6 @@ export function ImportDialog({ existingDomains, onImport }: ImportDialogProps) {
           className="h-8"
         >
           <UploadSimple size={14} />
-          Import CSV
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

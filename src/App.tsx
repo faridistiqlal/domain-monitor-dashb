@@ -4,6 +4,7 @@ import { Globe, ArrowClockwise, DownloadSimple } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
@@ -121,7 +122,7 @@ function App() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-4 max-w-5xl">
         <header className="mb-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
                 <Globe size={24} weight="duotone" className="text-primary-foreground" />
@@ -136,36 +137,34 @@ function App() {
               </div>
             </div>
 
-            {totalCount > 0 && (
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3 text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
-                    <span className="text-muted-foreground">Online:</span>
-                    <span className="font-semibold">{onlineCount}</span>
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <InfoDialog />
                   </div>
-                  {dnsOnlyCount > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-                      <span className="text-muted-foreground">DNS Only:</span>
-                      <span className="font-semibold">{dnsOnlyCount}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
-                    <span className="text-muted-foreground">Offline:</span>
-                    <span className="font-semibold">{offlineCount}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Panduan Monitoring</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <ImportDialog
+                      existingDomains={domains || []}
+                      onImport={handleImportDomains}
+                    />
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <InfoDialog />
-                  
-                  <ImportDialog
-                    existingDomains={domains || []}
-                    onImport={handleImportDomains}
-                  />
-                  
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Import dari CSV</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
@@ -173,9 +172,15 @@ function App() {
                     className="h-8"
                   >
                     <DownloadSimple size={14} />
-                    Export CSV
                   </Button>
-                  
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Export ke CSV</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
@@ -187,11 +192,13 @@ function App() {
                       size={14} 
                       className={isRefreshing ? 'animate-spin' : ''} 
                     />
-                    Refresh
                   </Button>
-                </div>
-              </div>
-            )}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh Status</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </header>
 
@@ -201,8 +208,29 @@ function App() {
           <AddDomainForm onAdd={handleAddDomain} />
 
           {totalCount > 0 && (
-            <div className="text-center text-xs text-muted-foreground py-2">
-              Auto-refresh setiap 60 detik • Total {totalCount} domain dipantau
+            <div className="flex items-center justify-between text-xs px-1">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
+                  <span className="text-muted-foreground">Online</span>
+                  <span className="font-semibold text-success">{onlineCount}</span>
+                </div>
+                {dnsOnlyCount > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                    <span className="text-muted-foreground">DNS Only</span>
+                    <span className="font-semibold text-amber-500">{dnsOnlyCount}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
+                  <span className="text-muted-foreground">Offline</span>
+                  <span className="font-semibold text-destructive">{offlineCount}</span>
+                </div>
+              </div>
+              <div className="text-muted-foreground">
+                Auto-refresh 60s • {totalCount} domain
+              </div>
             </div>
           )}
 
