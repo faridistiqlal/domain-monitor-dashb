@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Trash, Warning } from '@phosphor-icons/react'
+import { Trash, Warning, Globe } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusIndicator } from './StatusIndicator'
@@ -66,10 +66,25 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
         <div className="flex items-center gap-3">
           <StatusIndicator status={status.status} className="shrink-0" />
           
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex items-center gap-2">
             <h3 className="font-mono text-sm font-medium text-foreground truncate">
               {domain.url}
             </h3>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
+                  className="shrink-0 h-6 w-6 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                >
+                  <Globe size={14} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Buka di tab baru</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="flex items-center gap-2 shrink-0 text-xs">
