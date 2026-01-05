@@ -10,4 +10,5 @@ export interface DomainStatus {
   responseTime?: number
   lastChecked?: number
   error?: string
+  ipAddress?: string
 }

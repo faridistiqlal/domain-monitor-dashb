@@ -37,6 +37,15 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
           </div>
 
           <div className="flex items-center gap-2 shrink-0 text-xs">
+            {status.ipAddress && (
+              <>
+                <span className="font-mono text-accent">
+                  {status.ipAddress}
+                </span>
+                <span className="text-border">|</span>
+              </>
+            )}
+            
             <span className="font-medium text-muted-foreground">
               {getStatusText()}
             </span>

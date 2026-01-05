@@ -1,5 +1,20 @@
 import { DomainStatus } from './types'
 
+async function getIPAddress(domain: string): Promise<string | undefined> {
+  try {
+    const cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0]
+    const response = await fetch(`https://dns.google/resolve?name=${cleanDomain}&type=A`)
+    const data = await response.json()
+    
+    if (data.Answer && data.Answer.length > 0) {
+      return data.Answer[0].data
+    }
+  } catch (error) {
+    console.error('IP lookup failed:', error)
+  }
+  return undefined
+}
+
 export async function checkDomainStatus(url: string, domainId: string): Promise<DomainStatus> {
   const startTime = Date.now()
   
@@ -8,11 +23,14 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000)
 
-    const response = await fetch(fullUrl, {
-      method: 'HEAD',
-      mode: 'no-cors',
-      signal: controller.signal,
-    })
+    const [response, ipAddress] = await Promise.all([
+      fetch(fullUrl, {
+        method: 'HEAD',
+        mode: 'no-cors',
+        signal: controller.signal,
+      }),
+      getIPAddress(url)
+    ])
 
     clearTimeout(timeoutId)
     const responseTime = Date.now() - startTime
@@ -22,9 +40,11 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
       status: 'online',
       responseTime,
       lastChecked: Date.now(),
+      ipAddress,
     }
   } catch (error) {
     const responseTime = Date.now() - startTime
+    const ipAddress = await getIPAddress(url)
     
     if (error instanceof Error && error.name === 'AbortError') {
       return {
@@ -32,6 +52,7 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
         status: 'offline',
         lastChecked: Date.now(),
         error: 'Timeout',
+        ipAddress,
       }
     }
 
@@ -40,6 +61,7 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
       status: 'online',
       responseTime,
       lastChecked: Date.now(),
+      ipAddress,
     }
   }
 }
