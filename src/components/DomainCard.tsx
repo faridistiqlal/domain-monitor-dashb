@@ -7,7 +7,6 @@ import { Domain, DomainStatus } from '@/lib/types'
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 
@@ -90,18 +89,16 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
               </span>
               
               {status.status === 'dns-only' && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Warning size={14} className="text-amber-500" weight="fill" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs max-w-[250px] whitespace-pre-line">
-                        {getDetailedInfo()}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Warning size={14} className="text-amber-500" weight="fill" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs max-w-[250px] whitespace-pre-line">
+                      {getDetailedInfo()}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
             
@@ -112,20 +109,18 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
                 {status.responseTime}ms
               </span>
             ) : status.error ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-destructive truncate max-w-[120px] cursor-help">
-                      {status.error}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs max-w-[250px] whitespace-pre-line">
-                      {getDetailedInfo()}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-destructive truncate max-w-[120px] cursor-help">
+                    {status.error}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs max-w-[250px] whitespace-pre-line">
+                    {getDetailedInfo()}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
             ) : (
               <span className="text-muted-foreground">-</span>
             )}
