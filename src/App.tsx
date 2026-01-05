@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
@@ -187,56 +188,57 @@ function App() {
   })()
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-4 max-w-5xl">
-        <header className="mb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <Globe size={24} weight="duotone" className="text-primary-foreground" />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-4 max-w-5xl">
+          <header className="mb-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                  <Globe size={24} weight="duotone" className="text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    Domain Monitor
+                  </h1>
+                  <p className="text-xs text-muted-foreground tracking-wide">
+                    Kabupaten Kendal
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                  Domain Monitor
-                </h1>
-                <p className="text-xs text-muted-foreground tracking-wide">
-                  Kabupaten Kendal
-                </p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <InfoDialog />
-              
-              <ImportDialog
-                existingDomains={domains || []}
-                onImport={handleImportDomains}
-              />
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportCSV}
-                className="h-8"
-              >
-                <DownloadSimple size={14} />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleManualRefresh}
-                disabled={isRefreshing}
-                className="h-8"
-              >
-                <ArrowClockwise 
-                  size={14} 
-                  className={isRefreshing ? 'animate-spin' : ''} 
+              <div className="flex items-center gap-2">
+                <InfoDialog />
+                
+                <ImportDialog
+                  existingDomains={domains || []}
+                  onImport={handleImportDomains}
                 />
-              </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportCSV}
+                  className="h-8"
+                >
+                  <DownloadSimple size={14} />
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="h-8"
+                >
+                  <ArrowClockwise 
+                    size={14} 
+                    className={isRefreshing ? 'animate-spin' : ''} 
+                  />
+                </Button>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
         <Separator className="mb-4" />
 
@@ -409,6 +411,7 @@ function App() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   )
 }
 
