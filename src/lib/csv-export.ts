@@ -67,23 +67,45 @@ export function generateCSV(domains: Domain[], statuses: Record<string, DomainSt
 }
 
 export function downloadCSV(csvContent: string, filename: string = 'domain-monitor-export.csv') {
+  console.log('[Download CSV] Starting download:', filename, 'Content length:', csvContent.length)
+  
   const BOM = '\uFEFF'
   const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
   
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.style.display = 'none'
+  console.log('[Download CSV] Blob created, size:', blob.size)
   
-  document.body.appendChild(link)
+  if ((navigator as any).msSaveBlob) {
+    (navigator as any).msSaveBlob(blob, filename)
+    console.log('[Download CSV] Downloaded via msSaveBlob')
+    return
+  }
   
-  link.click()
-  
-  setTimeout(() => {
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, 100)
+  try {
+    const url = URL.createObjectURL(blob)
+    console.log('[Download CSV] Object URL created:', url)
+    
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.style.display = 'none'
+    
+    document.body.appendChild(link)
+    console.log('[Download CSV] Link element added to DOM')
+    
+    link.click()
+    console.log('[Download CSV] Click triggered')
+    
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link)
+      }
+      URL.revokeObjectURL(url)
+      console.log('[Download CSV] Cleanup completed')
+    }, 100)
+  } catch (error) {
+    console.error('[Download CSV] Error:', error)
+    throw error
+  }
 }
 
 export function exportDomainsToCSV(
@@ -91,7 +113,15 @@ export function exportDomainsToCSV(
   statuses: Record<string, DomainStatus>,
   groupName?: string
 ): { success: boolean; duplicates?: string[] } {
+  console.log('[CSV Export] Starting export with', domains.length, 'domains')
+  
+  if (!domains || domains.length === 0) {
+    console.error('[CSV Export] No domains to export')
+    return { success: false, duplicates: [] }
+  }
+  
   const validation = validateExportDomains(domains)
+  console.log('[CSV Export] Validation result:', validation)
   
   if (!validation.valid) {
     return {
@@ -101,9 +131,13 @@ export function exportDomainsToCSV(
   }
 
   const csvContent = generateCSV(validation.uniqueDomains, statuses)
+  console.log('[CSV Export] Generated CSV content length:', csvContent.length)
+  
   const timestamp = new Date().toISOString().split('T')[0]
   const groupSuffix = groupName ? `-${groupName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}` : ''
   const filename = `domain-monitor${groupSuffix}-${timestamp}.csv`
+  
+  console.log('[CSV Export] Downloading as:', filename)
   downloadCSV(csvContent, filename)
   
   return { success: true }

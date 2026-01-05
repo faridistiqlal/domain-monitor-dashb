@@ -201,6 +201,8 @@ function App() {
   }
 
   const handleExportCSV = () => {
+    console.log('[Export] Starting export, domains:', domains?.length, 'statuses:', Object.keys(statuses).length)
+    
     if (!domains || domains.length === 0) {
       toast.error('Tidak ada data untuk diekspor')
       return
@@ -211,20 +213,32 @@ function App() {
       return
     }
     
-    const result = exportDomainsToCSV(domains, statuses)
-    
-    if (!result.success && result.duplicates && result.duplicates.length > 0) {
-      toast.error(
-        `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
-        { duration: 6000 }
-      )
-      return
+    try {
+      const result = exportDomainsToCSV(domains, statuses)
+      console.log('[Export] Export result:', result)
+      
+      if (!result.success) {
+        if (result.duplicates && result.duplicates.length > 0) {
+          toast.error(
+            `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
+            { duration: 6000 }
+          )
+        } else {
+          toast.error('Gagal mengekspor data')
+        }
+        return
+      }
+      
+      toast.success(`Berhasil mengekspor ${domains.length} domain ke CSV`)
+    } catch (error) {
+      console.error('[Export] Error during export:', error)
+      toast.error('Terjadi kesalahan saat mengekspor data')
     }
-    
-    toast.success('Data berhasil diekspor ke CSV')
   }
 
   const handleExportFilteredCSV = () => {
+    console.log('[Export Filtered] Starting export, filtered domains:', filteredDomains.length)
+    
     if (filteredDomains.length === 0) {
       toast.error('Tidak ada domain yang terfilter untuk diekspor')
       return
@@ -235,29 +249,41 @@ function App() {
       return
     }
     
-    let filename = 'monitoring-domains'
-    if (viewMode === 'group-detail' && selectedGroup) {
-      filename = selectedGroup.name
-    } else if (filter !== 'all') {
-      filename += `-${filter}`
+    try {
+      let filename = 'monitoring-domains'
+      if (viewMode === 'group-detail' && selectedGroup) {
+        filename = selectedGroup.name
+      } else if (filter !== 'all') {
+        filename += `-${filter}`
+      }
+      
+      const result = exportDomainsToCSV(filteredDomains, statuses, filename)
+      console.log('[Export Filtered] Export result:', result)
+      
+      if (!result.success) {
+        if (result.duplicates && result.duplicates.length > 0) {
+          toast.error(
+            `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
+            { duration: 6000 }
+          )
+        } else {
+          toast.error('Gagal mengekspor data')
+        }
+        return
+      }
+      
+      toast.success(`${filteredDomains.length} domain terfilter berhasil diekspor ke CSV`)
+    } catch (error) {
+      console.error('[Export Filtered] Error during export:', error)
+      toast.error('Terjadi kesalahan saat mengekspor data')
     }
-    
-    const result = exportDomainsToCSV(filteredDomains, statuses, filename)
-    
-    if (!result.success && result.duplicates && result.duplicates.length > 0) {
-      toast.error(
-        `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
-        { duration: 6000 }
-      )
-      return
-    }
-    
-    toast.success(`${filteredDomains.length} domain terfilter berhasil diekspor ke CSV`)
   }
 
   const handleExportGroupCSV = (groupId: string) => {
     const group = groups?.find(g => g.id === groupId)
     if (!group) return
+
+    console.log('[Export Group] Starting export for group:', group.name)
 
     if (!autoRefreshEnabled && !hasChecked) {
       toast.error('Silakan check domain terlebih dahulu sebelum export')
@@ -265,23 +291,34 @@ function App() {
     }
 
     const groupDomains = domains?.filter(d => d.groupId === groupId) || []
+    console.log('[Export Group] Group domains:', groupDomains.length)
     
     if (groupDomains.length === 0) {
       toast.error('Tidak ada domain dalam grup ini')
       return
     }
     
-    const result = exportDomainsToCSV(groupDomains, statuses, group.name)
-    
-    if (!result.success && result.duplicates && result.duplicates.length > 0) {
-      toast.error(
-        `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
-        { duration: 6000 }
-      )
-      return
+    try {
+      const result = exportDomainsToCSV(groupDomains, statuses, group.name)
+      console.log('[Export Group] Export result:', result)
+      
+      if (!result.success) {
+        if (result.duplicates && result.duplicates.length > 0) {
+          toast.error(
+            `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
+            { duration: 6000 }
+          )
+        } else {
+          toast.error('Gagal mengekspor data')
+        }
+        return
+      }
+      
+      toast.success(`Domain grup "${group.name}" berhasil diekspor ke CSV`)
+    } catch (error) {
+      console.error('[Export Group] Error during export:', error)
+      toast.error('Terjadi kesalahan saat mengekspor data')
     }
-    
-    toast.success(`Domain grup "${group.name}" berhasil diekspor ke CSV`)
   }
 
   const handleImportDomains = (importedDomains: Domain[], groupId?: string) => {
