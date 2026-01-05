@@ -788,7 +788,7 @@ function App() {
             {!domains || domains.length === 0 ? (
               <EmptyState />
             ) : !hasChecked && !autoRefreshEnabled ? (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center py-12">
                 <div className="text-center space-y-6 max-w-md mx-auto">
                   <div className="w-24 h-24 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center">
                     <ArrowClockwise size={48} weight="duotone" className="text-primary" />
