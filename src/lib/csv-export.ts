@@ -81,7 +81,6 @@ export function downloadCSV(csvContent: string, filename: string = 'domain-monit
     
     console.log('[Download CSV] Blob created, size:', blob.size, 'type:', blob.type)
     
-    // IE10+ support
     if ((navigator as any).msSaveBlob) {
       (navigator as any).msSaveBlob(blob, filename)
       console.log('[Download CSV] Downloaded via msSaveBlob (IE)')
@@ -94,29 +93,22 @@ export function downloadCSV(csvContent: string, filename: string = 'domain-monit
     const link = document.createElement('a')
     link.href = url
     link.download = filename
-    link.style.display = 'none'
     
-    // Add link to DOM before clicking
     document.body.appendChild(link)
-    console.log('[Download CSV] Link added to body')
+    console.log('[Download CSV] Link added to body, triggering download')
     
-    // Small delay to ensure link is in DOM
+    link.click()
+    console.log('[Download CSV] Click triggered')
+    
+    document.body.removeChild(link)
+    console.log('[Download CSV] Link removed from DOM')
+    
     setTimeout(() => {
-      link.click()
-      console.log('[Download CSV] Click triggered')
-      
-      // Cleanup after download
-      setTimeout(() => {
-        if (document.body.contains(link)) {
-          document.body.removeChild(link)
-          console.log('[Download CSV] Link removed from DOM')
-        }
-        URL.revokeObjectURL(url)
-        console.log('[Download CSV] URL revoked')
-      }, 200)
-    }, 10)
+      URL.revokeObjectURL(url)
+      console.log('[Download CSV] URL revoked after cleanup delay')
+    }, 1000)
     
-    console.log('[Download CSV] Download process initiated')
+    console.log('[Download CSV] Download process completed')
   } catch (error) {
     console.error('[Download CSV] Critical error:', error)
     console.error('[Download CSV] Error stack:', (error as Error).stack)
@@ -128,7 +120,7 @@ export function exportDomainsToCSV(
   domains: Domain[], 
   statuses: Record<string, DomainStatus>,
   groupName?: string
-): { success: boolean; duplicates?: string[]; downloadUrl?: string; filename?: string } {
+): { success: boolean; duplicates?: string[] } {
   console.log('[CSV Export] Starting export with', domains.length, 'domains')
   
   if (!domains || domains.length === 0) {
@@ -156,7 +148,5 @@ export function exportDomainsToCSV(
   console.log('[CSV Export] Downloading as:', filename)
   downloadCSV(csvContent, filename)
   
-  const downloadUrl = createCSVDataURL(csvContent)
-  
-  return { success: true, downloadUrl, filename }
+  return { success: true }
 }
