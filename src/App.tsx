@@ -277,7 +277,7 @@ function App() {
           <AddDomainForm onAdd={handleAddDomain} />
 
           {totalCount > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between text-xs px-1">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
@@ -303,15 +303,15 @@ function App() {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 px-1">
-                <div className="flex items-center gap-2 flex-1">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground whitespace-nowrap">Filter:</span>
-                  <div className="flex gap-1.5 flex-wrap">
+                  <div className="flex gap-1.5 flex-1">
                     <Button
                       variant={filter === 'all' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setFilter('all')}
-                      className="h-7 px-3 text-xs"
+                      className="h-8 px-3 text-xs flex-1 lg:flex-none"
                     >
                       Semua
                     </Button>
@@ -319,7 +319,7 @@ function App() {
                       variant={filter === 'online' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setFilter('online')}
-                      className="h-7 px-3 text-xs"
+                      className="h-8 px-3 text-xs flex-1 lg:flex-none"
                     >
                       Online
                     </Button>
@@ -328,7 +328,7 @@ function App() {
                         variant={filter === 'dns-only' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setFilter('dns-only')}
-                        className="h-7 px-3 text-xs"
+                        className="h-8 px-3 text-xs flex-1 lg:flex-none"
                       >
                         DNS Only
                       </Button>
@@ -337,7 +337,7 @@ function App() {
                       variant={filter === 'offline' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setFilter('offline')}
-                      className="h-7 px-3 text-xs"
+                      className="h-8 px-3 text-xs flex-1 lg:flex-none"
                     >
                       Offline
                     </Button>
@@ -347,9 +347,9 @@ function App() {
                 <div className="flex items-center gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="w-36">
+                      <div className="flex-1 lg:flex-none lg:w-40">
                         <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
-                          <SelectTrigger className="h-7 text-xs">
+                          <SelectTrigger className="h-8 text-xs w-full">
                             <div className="flex items-center gap-1.5">
                               <SortAscending size={14} />
                               <SelectValue placeholder="Urutkan" />
@@ -370,7 +370,7 @@ function App() {
                     </TooltipContent>
                   </Tooltip>
                   
-                  <div className="relative w-full sm:w-52">
+                  <div className="relative flex-1">
                     <MagnifyingGlass 
                       size={14} 
                       className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
@@ -380,14 +380,14 @@ function App() {
                       placeholder="Cari domain..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-7 pl-8 pr-8 text-xs"
+                      className="h-8 pl-8 pr-8 text-xs w-full"
                     />
                     {searchQuery && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
                       >
                         <X size={14} className="text-muted-foreground hover:text-foreground" />
                       </Button>
