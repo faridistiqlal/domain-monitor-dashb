@@ -43,7 +43,7 @@ export function validateExportDomains(domains: Domain[]): ExportValidation {
 }
 
 export function generateCSV(domains: Domain[], statuses: Record<string, DomainStatus>): string {
-  const headers = ['Domain', 'Status', 'IP Address', 'Response Time (ms)', 'Last Checked', 'Error']
+  const headers = ['Domain', 'Status', 'IP Address', 'DNS Resolvable', 'HTTP Accessible', 'Response Time (ms)', 'Last Checked', 'Error']
   const rows: string[][] = [headers]
 
   domains.forEach(domain => {
@@ -52,6 +52,8 @@ export function generateCSV(domains: Domain[], statuses: Record<string, DomainSt
       domain.url,
       status?.status || 'unknown',
       status?.ipAddress || '-',
+      status?.dnsResolvable !== undefined ? (status.dnsResolvable ? 'Yes' : 'No') : '-',
+      status?.httpAccessible !== undefined ? (status.httpAccessible ? 'Yes' : 'No') : '-',
       status?.responseTime !== undefined ? status.responseTime.toString() : '-',
       status?.lastChecked ? new Date(status.lastChecked).toLocaleString('id-ID') : '-',
       status?.error || '-'

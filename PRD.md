@@ -20,18 +20,18 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 - **Success criteria**: Domain persists after page refresh, validates .kendalkab.go.id format, prevents duplicates
 
 ### Real-time Status Monitoring
-- **Functionality**: Periodically checks each domain's accessibility and displays color-coded status
-- **Purpose**: Provides immediate visibility into which sites are up or down
+- **Functionality**: Periodically checks each domain's DNS resolution and HTTP/HTTPS accessibility, displaying color-coded status with distinction between server reachability and web service availability
+- **Purpose**: Provides immediate visibility into which sites are up or down, and identifies cases where server can be reached but web service is not responding
 - **Trigger**: Automatic on page load and every 60 seconds thereafter
-- **Progression**: Load page → Fetch all domains → Check each URL → Update status indicator → Repeat after interval
-- **Success criteria**: Status updates within 10 seconds, clear visual distinction between up/down, shows last check timestamp
+- **Progression**: Load page → Fetch all domains → Check DNS resolution → Check HTTP accessibility → Update status indicator → Repeat after interval
+- **Success criteria**: Status updates within 10 seconds, clear visual distinction between fully online (green), DNS-only/server reachable but HTTP down (amber), and completely offline (red), shows last check timestamp
 
-### Status Indicators
-- **Functionality**: Display health status with green (accessible) or red (down) indicators
-- **Purpose**: Enable quick visual scanning of system health
+### Enhanced Status Indicators
+- **Functionality**: Display health status with green (fully accessible), amber (DNS resolves but HTTP unavailable), or red (completely down) indicators
+- **Purpose**: Enable quick visual scanning of system health and distinguish between network/DNS issues vs web service issues
 - **Trigger**: Automatic after each health check completes
-- **Progression**: Health check completes → Parse response → Update color indicator → Show response time if successful
-- **Success criteria**: Color changes are immediate and obvious, includes response time for successful checks
+- **Progression**: Health check completes → Check DNS resolution → Check HTTP accessibility → Update color indicator → Show detailed status info on hover
+- **Success criteria**: Three-state color system is immediately obvious, tooltip shows detailed diagnostics (DNS resolvable, HTTP accessible, IP address, response time, error details)
 
 ### Persistent Configuration
 - **Functionality**: Save domain list across browser sessions
@@ -44,6 +44,7 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 
 - **Empty State**: Show helpful onboarding message with example domain when no domains are configured
 - **All Domains Down**: Display summary count and suggest checking network connectivity
+- **DNS Resolves but HTTP Fails**: Amber status indicator with warning icon, tooltip shows "Server dapat di-ping tetapi HTTP/HTTPS tidak dapat diakses"
 - **Invalid Domain Format**: Show inline validation error, only accept *.kendalkab.go.id or valid URLs
 - **Slow Network**: Show loading skeleton during initial checks, timeout after 10 seconds per domain
 - **CORS Issues**: Handle browser CORS restrictions gracefully with error messaging explaining limitations
@@ -62,10 +63,12 @@ A dark mode monitoring interface with high contrast status indicators for quick 
   - Dark Slate Background (`oklch(0.15 0.01 250)`) - Reduces eye strain during extended monitoring sessions
   - Medium Gray (`oklch(0.45 0.01 250)`) - For secondary UI elements and borders
 - **Accent Color**: Bright Cyan (`oklch(0.75 0.15 200)`) - Electric blue for interactive elements and focus states, suggests digital connectivity
+- **Warning Color**: Amber (`oklch(0.70 0.18 60)`) - Used for "DNS-only" status when server is reachable but HTTP/HTTPS service is down
 - **Foreground/Background Pairings**:
   - Primary (Deep Blue `oklch(0.35 0.08 250)`): White text (`oklch(0.98 0 0)`) - Ratio 8.2:1 ✓
   - Background (Dark Slate `oklch(0.15 0.01 250)`): Light Gray text (`oklch(0.88 0.01 250)`) - Ratio 11.5:1 ✓
   - Success (Vibrant Green `oklch(0.65 0.20 145)`): White text (`oklch(0.98 0 0)`) - Ratio 5.1:1 ✓
+  - Warning (Amber `oklch(0.70 0.18 60)`): Dark text (`oklch(0.15 0.01 250)`) - Ratio 9.8:1 ✓
   - Destructive (Alert Red `oklch(0.55 0.22 25)`): White text (`oklch(0.98 0 0)`) - Ratio 4.8:1 ✓
   - Accent (Bright Cyan `oklch(0.75 0.15 200)`): Dark text (`oklch(0.15 0.01 250)`) - Ratio 10.2:1 ✓
 
@@ -108,7 +111,9 @@ Animations should reinforce the sense of **live monitoring and system responsive
 
 - **Customizations**:
   - Custom status indicator component: Circular dot (12px) with glow effect using box-shadow
-  - Custom domain card with flex layout: status dot, domain name, response time, timestamp, delete button
+  - Three-state status system: Green (online), Amber (DNS resolves but HTTP down), Red (completely offline)
+  - Custom domain card with flex layout: status dot, domain name, IP address, status text, response time/error, delete button
+  - Warning icon with tooltip for DNS-only status showing detailed diagnostics
   - Pulsing animation for status transitions using Framer Motion
   - Empty state illustration: Simple SVG or icon composition for zero domains
 
@@ -116,7 +121,7 @@ Animations should reinforce the sense of **live monitoring and system responsive
   - Buttons: Default with cyan accent, hover with brightness increase, active with scale down (0.98)
   - Input: Subtle border on rest, cyan border on focus with glow effect
   - Domain cards: Neutral on rest, elevated shadow on hover, pressed state with scale
-  - Status indicators: Solid green (online), solid red (offline), pulsing gray (checking)
+  - Status indicators: Solid green (online), solid amber with glow (DNS-only), solid red (offline), pulsing gray (checking)
 
 - **Icon Selection**:
   - Plus icon for adding domains
@@ -149,11 +154,13 @@ Animations should reinforce the sense of **live monitoring and system responsive
 
 **Technical Approach**: 
 - Use `useKV` hook to persist domain list
-- Implement health checks using `fetch()` with timeout (10s)
+- Implement dual-check system: DNS resolution via Google DNS API, HTTP accessibility via fetch with timeout (10s)
+- Distinguish between three states: fully online (DNS + HTTP), DNS-only (server pingable but HTTP down), completely offline
 - Note: Browser CORS restrictions may prevent direct domain pings - will use fetch with error handling
 - Consider using a CORS proxy or external monitoring API if direct checks fail
 - Auto-refresh every 60 seconds using setInterval
 - Show last checked timestamp using date-fns for formatting
+- Display detailed diagnostic info (DNS status, HTTP status, IP address) in tooltips
 
 **Limitations to Communicate**:
 - Browser-based monitoring has CORS limitations - some domains may not be checkable directly

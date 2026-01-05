@@ -1,9 +1,15 @@
 import { motion } from 'framer-motion'
-import { Trash } from '@phosphor-icons/react'
+import { Trash, Warning } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusIndicator } from './StatusIndicator'
 import { Domain, DomainStatus } from '@/lib/types'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface DomainCardProps {
   domain: Domain
@@ -15,7 +21,34 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
   const getStatusText = () => {
     if (status.status === 'online') return 'Online'
     if (status.status === 'offline') return 'Offline'
+    if (status.status === 'dns-only') return 'DNS Only'
     return 'Checking...'
+  }
+
+  const getDetailedInfo = () => {
+    const parts: string[] = []
+    
+    if (status.dnsResolvable !== undefined) {
+      parts.push(`DNS: ${status.dnsResolvable ? '✓ Resolvable' : '✗ Not resolvable'}`)
+    }
+    
+    if (status.ipAddress) {
+      parts.push(`IP: ${status.ipAddress}`)
+    }
+    
+    if (status.httpAccessible !== undefined) {
+      parts.push(`HTTP/HTTPS: ${status.httpAccessible ? '✓ Accessible' : '✗ Not accessible'}`)
+    }
+    
+    if (status.responseTime !== undefined) {
+      parts.push(`Response: ${status.responseTime}ms`)
+    }
+    
+    if (status.error) {
+      parts.push(`Error: ${status.error}`)
+    }
+    
+    return parts.join('\n')
   }
 
   return (
@@ -46,9 +79,31 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
               </>
             )}
             
-            <span className="font-medium text-muted-foreground">
-              {getStatusText()}
-            </span>
+            <div className="flex items-center gap-1">
+              <span className={`font-medium ${
+                status.status === 'online' ? 'text-success' :
+                status.status === 'dns-only' ? 'text-amber-500' :
+                status.status === 'offline' ? 'text-destructive' :
+                'text-muted-foreground'
+              }`}>
+                {getStatusText()}
+              </span>
+              
+              {status.status === 'dns-only' && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Warning size={14} className="text-amber-500" weight="fill" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs max-w-[250px] whitespace-pre-line">
+                        {getDetailedInfo()}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
             
             <span className="text-border">|</span>
             
@@ -57,9 +112,20 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
                 {status.responseTime}ms
               </span>
             ) : status.error ? (
-              <span className="text-destructive truncate max-w-[200px]">
-                {status.error}
-              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-destructive truncate max-w-[120px] cursor-help">
+                      {status.error}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs max-w-[250px] whitespace-pre-line">
+                      {getDetailedInfo()}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ) : (
               <span className="text-muted-foreground">-</span>
             )}

@@ -15,54 +15,61 @@ async function getIPAddress(domain: string): Promise<string | undefined> {
   return undefined
 }
 
-export async function checkDomainStatus(url: string, domainId: string): Promise<DomainStatus> {
+async function checkHTTPAccess(url: string, timeout: number = 10000): Promise<{ accessible: boolean; responseTime?: number; error?: string }> {
   const startTime = Date.now()
   
   try {
     const fullUrl = url.startsWith('http') ? url : `https://${url}`
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
+    const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-    const [response, ipAddress] = await Promise.all([
-      fetch(fullUrl, {
-        method: 'HEAD',
-        mode: 'no-cors',
-        signal: controller.signal,
-      }),
-      getIPAddress(url)
-    ])
+    await fetch(fullUrl, {
+      method: 'HEAD',
+      mode: 'no-cors',
+      signal: controller.signal,
+    })
 
     clearTimeout(timeoutId)
     const responseTime = Date.now() - startTime
 
-    return {
-      id: domainId,
-      status: 'online',
-      responseTime,
-      lastChecked: Date.now(),
-      ipAddress,
-    }
+    return { accessible: true, responseTime }
   } catch (error) {
-    const responseTime = Date.now() - startTime
-    const ipAddress = await getIPAddress(url)
-    
     if (error instanceof Error && error.name === 'AbortError') {
-      return {
-        id: domainId,
-        status: 'offline',
-        lastChecked: Date.now(),
-        error: 'Timeout',
-        ipAddress,
-      }
+      return { accessible: false, error: 'Timeout' }
     }
+    return { accessible: true, responseTime: Date.now() - startTime }
+  }
+}
 
-    return {
-      id: domainId,
-      status: 'online',
-      responseTime,
-      lastChecked: Date.now(),
-      ipAddress,
-    }
+export async function checkDomainStatus(url: string, domainId: string): Promise<DomainStatus> {
+  const ipAddress = await getIPAddress(url)
+  const dnsResolvable = !!ipAddress
+  
+  const httpResult = await checkHTTPAccess(url)
+  const httpAccessible = httpResult.accessible
+  
+  let status: 'online' | 'offline' | 'dns-only' = 'offline'
+  let error: string | undefined
+  
+  if (dnsResolvable && httpAccessible) {
+    status = 'online'
+  } else if (dnsResolvable && !httpAccessible) {
+    status = 'dns-only'
+    error = httpResult.error || 'Server dapat di-ping tetapi HTTP/HTTPS tidak dapat diakses'
+  } else if (!dnsResolvable) {
+    status = 'offline'
+    error = 'DNS tidak dapat di-resolve'
+  }
+
+  return {
+    id: domainId,
+    status,
+    responseTime: httpResult.responseTime,
+    lastChecked: Date.now(),
+    error,
+    ipAddress,
+    httpAccessible,
+    dnsResolvable,
   }
 }
 

@@ -17,6 +17,10 @@ export function StatusIndicator({ status, className }: StatusIndicatorProps) {
       color: 'bg-destructive',
       glow: 'shadow-[0_0_8px_rgba(244,67,54,0.6)]',
     },
+    'dns-only': {
+      color: 'bg-amber-500',
+      glow: 'shadow-[0_0_8px_rgba(245,158,11,0.6)]',
+    },
     checking: {
       color: 'bg-muted-foreground',
       glow: 'shadow-[0_0_8px_rgba(158,158,158,0.4)]',

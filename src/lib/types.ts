@@ -6,9 +6,11 @@ export interface Domain {
 
 export interface DomainStatus {
   id: string
-  status: 'online' | 'offline' | 'checking'
+  status: 'online' | 'offline' | 'checking' | 'dns-only'
   responseTime?: number
   lastChecked?: number
   error?: string
   ipAddress?: string
+  httpAccessible?: boolean
+  dnsResolvable?: boolean
 }

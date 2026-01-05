@@ -113,6 +113,7 @@ function App() {
 
   const onlineCount = Object.values(statuses).filter(s => s.status === 'online').length
   const offlineCount = Object.values(statuses).filter(s => s.status === 'offline').length
+  const dnsOnlyCount = Object.values(statuses).filter(s => s.status === 'dns-only').length
   const totalCount = domains?.length || 0
 
   return (
@@ -142,6 +143,13 @@ function App() {
                     <span className="text-muted-foreground">Online:</span>
                     <span className="font-semibold">{onlineCount}</span>
                   </div>
+                  {dnsOnlyCount > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                      <span className="text-muted-foreground">DNS Only:</span>
+                      <span className="font-semibold">{dnsOnlyCount}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
                     <span className="text-muted-foreground">Offline:</span>
