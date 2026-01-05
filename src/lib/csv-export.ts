@@ -69,18 +69,21 @@ export function generateCSV(domains: Domain[], statuses: Record<string, DomainSt
 export function downloadCSV(csvContent: string, filename: string = 'domain-monitor-export.csv') {
   const BOM = '\uFEFF'
   const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
   
-  if (link.download !== undefined) {
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', filename)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.style.display = 'none'
+  
+  document.body.appendChild(link)
+  
+  link.click()
+  
+  setTimeout(() => {
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-  }
+  }, 100)
 }
 
 export function exportDomainsToCSV(
