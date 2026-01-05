@@ -12,6 +12,11 @@ interface DomainCardProps {
 }
 
 export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
+  const getStatusText = () => {
+    if (status.status === 'online') return 'Online'
+    if (status.status === 'offline') return 'Offline'
+    return 'Checking...'
+  }
 
   return (
     <motion.div
@@ -22,28 +27,33 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
       whileHover={{ scale: 1.005 }}
     >
       <Card className="p-2.5 hover:shadow-md transition-shadow duration-200">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <StatusIndicator status={status.status} className="shrink-0" />
+        <div className="flex items-center gap-3">
+          <StatusIndicator status={status.status} className="shrink-0" />
+          
+          <div className="flex-1 min-w-0">
+            <h3 className="font-mono text-sm font-medium text-foreground truncate">
+              {domain.url}
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 text-xs">
+            <span className="font-medium text-muted-foreground">
+              {getStatusText()}
+            </span>
             
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-mono text-sm font-medium text-foreground break-all">
-                  {domain.url}
-                </h3>
-                {status.responseTime !== undefined && (
-                  <span className="font-mono text-xs text-muted-foreground shrink-0">
-                    {status.responseTime}ms
-                  </span>
-                )}
-              </div>
-              
-              {status.error && (
-                <span className="text-xs text-destructive block mt-0.5">
-                  {status.error}
-                </span>
-              )}
-            </div>
+            <span className="text-border">|</span>
+            
+            {status.responseTime !== undefined ? (
+              <span className="font-mono text-muted-foreground">
+                {status.responseTime}ms
+              </span>
+            ) : status.error ? (
+              <span className="text-destructive truncate max-w-[200px]">
+                {status.error}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">-</span>
+            )}
           </div>
 
           <Button
