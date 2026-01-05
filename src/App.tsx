@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -9,6 +9,7 @@ import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
 import { Domain, DomainStatus } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
+import { exportDomainsToCSV } from '@/lib/csv-export'
 import { toast } from 'sonner'
 
 function App() {
@@ -73,6 +74,16 @@ function App() {
     toast.success('Status diperbarui')
   }
 
+  const handleExportCSV = () => {
+    if (!domains || domains.length === 0) {
+      toast.error('Tidak ada data untuk diekspor')
+      return
+    }
+    
+    exportDomainsToCSV(domains, statuses)
+    toast.success('Data berhasil diekspor ke CSV')
+  }
+
   useEffect(() => {
     checkAllDomains()
 
@@ -121,19 +132,31 @@ function App() {
                   </div>
                 </div>
                 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleManualRefresh}
-                  disabled={isRefreshing}
-                  className="border-accent/50 hover:bg-accent/10 h-8"
-                >
-                  <ArrowClockwise 
-                    size={14} 
-                    className={isRefreshing ? 'animate-spin' : ''} 
-                  />
-                  Refresh
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    className="border-accent/50 hover:bg-accent/10 h-8"
+                  >
+                    <DownloadSimple size={14} />
+                    Export CSV
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                    className="border-accent/50 hover:bg-accent/10 h-8"
+                  >
+                    <ArrowClockwise 
+                      size={14} 
+                      className={isRefreshing ? 'animate-spin' : ''} 
+                    />
+                    Refresh
+                  </Button>
+                </div>
               </div>
             )}
           </div>
