@@ -91,16 +91,17 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, x: -100 }}
         transition={{ duration: 0.2 }}
-        whileHover={{ scale: 1.002 }}
       >
-        <Card className={`p-3 hover:shadow-md transition-all duration-200 ${isSelected ? 'ring-1 ring-primary' : ''}`}>
+        <Card className={`group p-3.5 transition-all duration-200 ${isSelected ? 'ring-1 ring-primary bg-primary/5' : 'hover:shadow-md hover:bg-accent/5'}`}>
           <div className="flex items-center gap-3">
             {showCheckbox && (
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
-                className="shrink-0"
-              />
+              <div className="shrink-0">
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
+                  className="shrink-0"
+                />
+              </div>
             )}
             
             <div className="flex-1 min-w-0 flex items-center gap-1.5">
@@ -138,16 +139,17 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.2 }}
-      whileHover={{ scale: 1.005 }}
     >
-      <Card className={`p-3 hover:shadow-md transition-all duration-200 ${isSelected ? 'ring-1 ring-primary' : ''}`}>
+      <Card className={`group p-3.5 transition-all duration-200 ${isSelected ? 'ring-1 ring-primary bg-primary/5' : 'hover:shadow-md hover:bg-accent/5'}`}>
         <div className="flex items-center gap-3">
           {showCheckbox && (
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
-              className="shrink-0"
-            />
+            <div className="shrink-0">
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
+                className="shrink-0"
+              />
+            </div>
           )}
           <StatusIndicator status={status.status} className="shrink-0" />
           
