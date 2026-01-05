@@ -85,43 +85,45 @@ export function downloadCSV(csvContent: string, filename: string = 'domain-monit
     console.log('[Download CSV] Object URL created:', url)
     
     const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.style.visibility = 'hidden'
+    link.style.position = 'absolute'
+    link.style.top = '0'
+    link.style.left = '0'
+    link.setAttribute('target', '_blank')
     
-    if ('download' in link) {
-      link.href = url
-      link.download = filename
-      link.style.position = 'fixed'
-      link.style.left = '-9999px'
-      
-      document.body.appendChild(link)
-      console.log('[Download CSV] Link added to body. About to click...')
-      console.log('[Download CSV] Link href:', link.href)
-      console.log('[Download CSV] Link download:', link.download)
-      
-      link.click()
-      
-      console.log('[Download CSV] Click event triggered')
+    document.body.appendChild(link)
+    console.log('[Download CSV] Link added to body')
+    console.log('[Download CSV] Link href:', link.href)
+    console.log('[Download CSV] Link download:', link.download)
+    console.log('[Download CSV] Link is in DOM:', document.body.contains(link))
+    
+    requestAnimationFrame(() => {
+      console.log('[Download CSV] Triggering click in next frame')
+      link.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        })
+      )
+      console.log('[Download CSV] Click dispatched')
       
       setTimeout(() => {
         if (document.body.contains(link)) {
           document.body.removeChild(link)
+          console.log('[Download CSV] Link removed from DOM')
         }
         URL.revokeObjectURL(url)
-        console.log('[Download CSV] Cleanup completed after 300ms')
-      }, 300)
-      
-      console.log('[Download CSV] Download initiated successfully')
-    } else {
-      console.warn('[Download CSV] Download attribute not supported, opening in new window')
-      window.open(url, '_blank')
-      setTimeout(() => {
-        URL.revokeObjectURL(url)
-      }, 300)
-    }
+        console.log('[Download CSV] URL revoked')
+      }, 1000)
+    })
+    
+    console.log('[Download CSV] Download process initiated')
   } catch (error) {
     console.error('[Download CSV] Critical error:', error)
     console.error('[Download CSV] Error stack:', (error as Error).stack)
-    
-    alert('Gagal mengunduh file CSV. Silakan cek console untuk detail error.')
     throw error
   }
 }
