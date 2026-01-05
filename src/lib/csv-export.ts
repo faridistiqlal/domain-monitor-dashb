@@ -66,6 +66,12 @@ export function generateCSV(domains: Domain[], statuses: Record<string, DomainSt
   ).join('\n')
 }
 
+export function createCSVDataURL(csvContent: string): string {
+  const BOM = '\uFEFF'
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
+  return URL.createObjectURL(blob)
+}
+
 export function downloadCSV(csvContent: string, filename: string = 'domain-monitor-export.csv') {
   console.log('[Download CSV] Starting download:', filename, 'Content length:', csvContent.length)
   
@@ -116,7 +122,7 @@ export function exportDomainsToCSV(
   domains: Domain[], 
   statuses: Record<string, DomainStatus>,
   groupName?: string
-): { success: boolean; duplicates?: string[] } {
+): { success: boolean; duplicates?: string[]; downloadUrl?: string; filename?: string } {
   console.log('[CSV Export] Starting export with', domains.length, 'domains')
   
   if (!domains || domains.length === 0) {
@@ -144,5 +150,7 @@ export function exportDomainsToCSV(
   console.log('[CSV Export] Downloading as:', filename)
   downloadCSV(csvContent, filename)
   
-  return { success: true }
+  const downloadUrl = createCSVDataURL(csvContent)
+  
+  return { success: true, downloadUrl, filename }
 }
