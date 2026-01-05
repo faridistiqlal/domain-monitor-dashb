@@ -81,7 +81,16 @@ function App() {
       return
     }
     
-    exportDomainsToCSV(domains, statuses)
+    const result = exportDomainsToCSV(domains, statuses)
+    
+    if (!result.success && result.duplicates && result.duplicates.length > 0) {
+      toast.error(
+        `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
+        { duration: 6000 }
+      )
+      return
+    }
+    
     toast.success('Data berhasil diekspor ke CSV')
   }
 

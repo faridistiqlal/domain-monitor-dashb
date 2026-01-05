@@ -9,6 +9,39 @@ export interface DomainExportRow {
   error: string
 }
 
+export interface ExportValidation {
+  valid: boolean
+  duplicates: string[]
+  uniqueDomains: Domain[]
+}
+
+export function validateExportDomains(domains: Domain[]): ExportValidation {
+  const seen = new Map<string, number>()
+  const duplicates: string[] = []
+  const uniqueDomains: Domain[] = []
+
+  domains.forEach(domain => {
+    const url = domain.url.toLowerCase()
+    
+    if (seen.has(url)) {
+      const count = seen.get(url)!
+      seen.set(url, count + 1)
+      if (count === 1) {
+        duplicates.push(domain.url)
+      }
+    } else {
+      seen.set(url, 1)
+      uniqueDomains.push(domain)
+    }
+  })
+
+  return {
+    valid: duplicates.length === 0,
+    duplicates,
+    uniqueDomains
+  }
+}
+
 export function generateCSV(domains: Domain[], statuses: Record<string, DomainStatus>): string {
   const headers = ['Domain', 'Status', 'IP Address', 'Response Time (ms)', 'Last Checked', 'Error']
   const rows: string[][] = [headers]
@@ -48,9 +81,23 @@ export function downloadCSV(csvContent: string, filename: string = 'domain-monit
   }
 }
 
-export function exportDomainsToCSV(domains: Domain[], statuses: Record<string, DomainStatus>) {
-  const csvContent = generateCSV(domains, statuses)
+export function exportDomainsToCSV(
+  domains: Domain[], 
+  statuses: Record<string, DomainStatus>
+): { success: boolean; duplicates?: string[] } {
+  const validation = validateExportDomains(domains)
+  
+  if (!validation.valid) {
+    return {
+      success: false,
+      duplicates: validation.duplicates
+    }
+  }
+
+  const csvContent = generateCSV(validation.uniqueDomains, statuses)
   const timestamp = new Date().toISOString().split('T')[0]
   const filename = `domain-monitor-${timestamp}.csv`
   downloadCSV(csvContent, filename)
+  
+  return { success: true }
 }
