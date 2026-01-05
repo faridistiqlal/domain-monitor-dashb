@@ -133,11 +133,21 @@ function App() {
     toast.success('Data berhasil diekspor ke CSV')
   }
 
-  const handleImportDomains = (importedDomains: Domain[]) => {
+  const handleImportDomains = (importedDomains: Domain[], groupId?: string) => {
     if (importedDomains.length === 0) return
 
-    setDomains(current => [...(current || []), ...importedDomains])
-    toast.success(`${importedDomains.length} domain berhasil diimport`)
+    const domainsWithGroup = groupId 
+      ? importedDomains.map(d => ({ ...d, groupId }))
+      : importedDomains
+
+    setDomains(current => [...(current || []), ...domainsWithGroup])
+    
+    if (groupId) {
+      const group = groups?.find(g => g.id === groupId)
+      toast.success(`${importedDomains.length} domain berhasil diimport ke grup "${group?.name}"`)
+    } else {
+      toast.success(`${importedDomains.length} domain berhasil diimport`)
+    }
   }
 
   const handleCreateGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
@@ -327,6 +337,7 @@ function App() {
                 
                 <ImportDialog
                   existingDomains={domains || []}
+                  groups={groups || []}
                   onImport={handleImportDomains}
                 />
 
@@ -605,6 +616,11 @@ function App() {
                 Kelola grup domain untuk organisasi yang lebih baik
               </p>
               <div className="flex gap-2">
+                <ImportDialog
+                  existingDomains={domains || []}
+                  groups={groups || []}
+                  onImport={handleImportDomains}
+                />
                 <Button
                   variant="outline"
                   size="sm"

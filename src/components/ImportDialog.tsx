@@ -9,19 +9,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { importDomainsFromCSV, ImportResult } from '@/lib/csv-import'
-import { Domain } from '@/lib/types'
+import { Domain, DomainGroup } from '@/lib/types'
 
 interface ImportDialogProps {
   existingDomains: Domain[]
-  onImport: (domains: Domain[]) => void
+  groups?: DomainGroup[]
+  onImport: (domains: Domain[], groupId?: string) => void
 }
 
-export function ImportDialog({ existingDomains, onImport }: ImportDialogProps) {
+export function ImportDialog({ existingDomains, groups, onImport }: ImportDialogProps) {
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('none')
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -47,7 +51,8 @@ export function ImportDialog({ existingDomains, onImport }: ImportDialogProps) {
       setResult(importResult)
 
       if (importResult.success.length > 0) {
-        onImport(importResult.success)
+        const groupIdToAssign = selectedGroupId === 'none' ? undefined : selectedGroupId
+        onImport(importResult.success, groupIdToAssign)
       }
     } catch (error) {
       console.error('Error importing CSV:', error)
@@ -60,6 +65,7 @@ export function ImportDialog({ existingDomains, onImport }: ImportDialogProps) {
     setOpen(false)
     setFile(null)
     setResult(null)
+    setSelectedGroupId('none')
   }
 
   return (
@@ -82,6 +88,35 @@ export function ImportDialog({ existingDomains, onImport }: ImportDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4">
+          {groups && groups.length > 0 && !result && (
+            <div className="space-y-2">
+              <Label htmlFor="group-select" className="text-sm font-medium">
+                Tambahkan ke Grup (Opsional)
+              </Label>
+              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                <SelectTrigger id="group-select" className="w-full">
+                  <SelectValue placeholder="Pilih grup" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-muted-foreground">Tanpa Grup</span>
+                  </SelectItem>
+                  {groups.map(group => (
+                    <SelectItem key={group.id} value={group.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: group.color }}
+                        />
+                        <span>{group.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {!file ? (
             <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
               <label
