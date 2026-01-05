@@ -13,4 +13,5 @@ export interface DomainStatus {
   ipAddress?: string
   httpAccessible?: boolean
   dnsResolvable?: boolean
+  protocol?: string
 }

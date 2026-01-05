@@ -15,29 +15,72 @@ async function getIPAddress(domain: string): Promise<string | undefined> {
   return undefined
 }
 
-async function checkHTTPAccess(url: string, timeout: number = 10000): Promise<{ accessible: boolean; responseTime?: number; error?: string }> {
+async function checkHTTPAccess(url: string, timeout: number = 15000): Promise<{ accessible: boolean; responseTime?: number; error?: string; statusCode?: number }> {
   const startTime = Date.now()
+  const fullUrl = url.startsWith('http') ? url : `https://${url}`
   
   try {
-    const fullUrl = url.startsWith('http') ? url : `https://${url}`
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-    await fetch(fullUrl, {
-      method: 'HEAD',
+    const response = await fetch(fullUrl, {
+      method: 'GET',
       mode: 'no-cors',
+      cache: 'no-store',
       signal: controller.signal,
+      redirect: 'follow',
     })
 
     clearTimeout(timeoutId)
     const responseTime = Date.now() - startTime
 
-    return { accessible: true, responseTime }
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      return { accessible: false, error: 'Timeout' }
+    return { 
+      accessible: true, 
+      responseTime,
+      statusCode: response.status === 0 ? undefined : response.status
     }
-    return { accessible: true, responseTime: Date.now() - startTime }
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        return { accessible: false, error: 'Connection Timeout', responseTime }
+      }
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        return { accessible: false, error: 'Network Unreachable', responseTime }
+      }
+      
+      if (error.message.includes('ERR_')) {
+        return { accessible: false, error: error.message, responseTime }
+      }
+      
+      return { accessible: false, error: 'Connection Failed', responseTime }
+    }
+    
+    return { accessible: false, error: 'Unknown Error', responseTime }
+  }
+}
+
+async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; responseTime?: number; error?: string; protocol?: string }> {
+  const cleanUrl = url.replace(/^https?:\/\//, '')
+  
+  const httpsResult = await checkHTTPAccess(`https://${cleanUrl}`, 15000)
+  
+  if (httpsResult.accessible) {
+    return { ...httpsResult, protocol: 'https' }
+  }
+  
+  const httpResult = await checkHTTPAccess(`http://${cleanUrl}`, 15000)
+  
+  if (httpResult.accessible) {
+    return { ...httpResult, protocol: 'http' }
+  }
+  
+  return {
+    accessible: false,
+    error: httpsResult.error || httpResult.error || 'Both HTTP and HTTPS failed',
+    responseTime: Math.min(httpsResult.responseTime || 15000, httpResult.responseTime || 15000)
   }
 }
 
@@ -45,7 +88,7 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
   const ipAddress = await getIPAddress(url)
   const dnsResolvable = !!ipAddress
   
-  const httpResult = await checkHTTPAccess(url)
+  const httpResult = await checkHTTPSandHTTP(url)
   const httpAccessible = httpResult.accessible
   
   let status: 'online' | 'offline' | 'dns-only' = 'offline'
@@ -55,10 +98,10 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
     status = 'online'
   } else if (dnsResolvable && !httpAccessible) {
     status = 'dns-only'
-    error = httpResult.error || 'Server dapat di-ping tetapi HTTP/HTTPS tidak dapat diakses'
+    error = httpResult.error || 'Server dapat di-ping tetapi website tidak dapat diakses'
   } else if (!dnsResolvable) {
     status = 'offline'
-    error = 'DNS tidak dapat di-resolve'
+    error = 'DNS tidak dapat di-resolve (Domain tidak terdaftar atau DNS down)'
   }
 
   return {
@@ -70,6 +113,7 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
     ipAddress,
     httpAccessible,
     dnsResolvable,
+    protocol: httpResult.protocol,
   }
 }
 

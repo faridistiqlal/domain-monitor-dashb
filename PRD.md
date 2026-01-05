@@ -20,11 +20,11 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 - **Success criteria**: Domain persists after page refresh, validates .kendalkab.go.id format, prevents duplicates
 
 ### Real-time Status Monitoring
-- **Functionality**: Periodically checks each domain's DNS resolution and HTTP/HTTPS accessibility, displaying color-coded status with distinction between server reachability and web service availability
-- **Purpose**: Provides immediate visibility into which sites are up or down, and identifies cases where server can be reached but web service is not responding
-- **Trigger**: Automatic on page load and every 60 seconds thereafter
-- **Progression**: Load page → Fetch all domains → Check DNS resolution → Check HTTP accessibility → Update status indicator → Repeat after interval
-- **Success criteria**: Status updates within 10 seconds, clear visual distinction between fully online (green), DNS-only/server reachable but HTTP down (amber), and completely offline (red), shows last check timestamp
+- **Functionality**: Periodically checks each domain's DNS resolution and HTTP/HTTPS accessibility (testing both protocols), displaying color-coded status with distinction between server reachability and web service availability, with enhanced error detection for network-specific issues
+- **Purpose**: Provides immediate visibility into which sites are up or down, identifies cases where server can be reached but web service is not responding, and detects network-specific accessibility problems (e.g., site accessible from some networks but not others)
+- **Trigger**: Automatic on page load and every 60 seconds thereafter, or manual refresh
+- **Progression**: Load page → Fetch all domains → Check DNS resolution → Try HTTPS access → Try HTTP access if HTTPS fails → Detect connection errors (timeout, network unreachable, etc.) → Update status indicator → Repeat after interval
+- **Success criteria**: Status updates within 15 seconds per domain, clear visual distinction between fully online (green), DNS-only/server reachable but HTTP down (amber), and completely offline (red), shows protocol used (HTTP/HTTPS badge), shows last check timestamp, captures detailed error messages for troubleshooting network-specific issues
 
 ### Enhanced Status Indicators
 - **Functionality**: Display health status with green (fully accessible), amber (DNS resolves but HTTP unavailable), or red (completely down) indicators
@@ -44,7 +44,8 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 
 - **Empty State**: Show helpful onboarding message with example domain when no domains are configured
 - **All Domains Down**: Display summary count and suggest checking network connectivity
-- **DNS Resolves but HTTP Fails**: Amber status indicator with warning icon, tooltip shows "Server dapat di-ping tetapi HTTP/HTTPS tidak dapat diakses"
+- **DNS Resolves but HTTP Fails**: Amber status indicator with warning icon, tooltip shows detailed diagnostics including "Server dapat di-ping tetapi website tidak dapat diakses" with specific error (Connection Timeout, Network Unreachable, etc.)
+- **Network-Specific Issues**: When domain is accessible via ping/DNS but HTTP fails, system captures error type (timeout, unreachable, failed) to help diagnose firewall/IP-restriction issues where site works on some networks but not others
 - **Invalid Domain Format**: Show inline validation error, only accept *.kendalkab.go.id or valid URLs
 - **Slow Network**: Show loading skeleton during initial checks, timeout after 10 seconds per domain
 - **CORS Issues**: Handle browser CORS restrictions gracefully with error messaging explaining limitations

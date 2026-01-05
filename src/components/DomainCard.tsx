@@ -36,7 +36,11 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
     }
     
     if (status.httpAccessible !== undefined) {
-      parts.push(`HTTP/HTTPS: ${status.httpAccessible ? '✓ Accessible' : '✗ Not accessible'}`)
+      parts.push(`Web Server: ${status.httpAccessible ? '✓ Accessible' : '✗ Not accessible'}`)
+    }
+    
+    if (status.protocol) {
+      parts.push(`Protocol: ${status.protocol.toUpperCase()}`)
     }
     
     if (status.responseTime !== undefined) {
@@ -73,6 +77,19 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
               <>
                 <span className="font-mono text-accent">
                   {status.ipAddress}
+                </span>
+                <span className="text-border">|</span>
+              </>
+            )}
+            
+            {status.protocol && status.status === 'online' && (
+              <>
+                <span className={`font-mono uppercase px-1.5 py-0.5 rounded ${
+                  status.protocol === 'https' 
+                    ? 'bg-success/20 text-success' 
+                    : 'bg-amber-500/20 text-amber-500'
+                }`}>
+                  {status.protocol}
                 </span>
                 <span className="text-border">|</span>
               </>

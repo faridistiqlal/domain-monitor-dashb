@@ -49,8 +49,8 @@ export function InfoDialog() {
                 <div className="space-y-1">
                   <div className="font-semibold text-amber-500">DNS Only</div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Server DNS berfungsi dan domain dapat di-resolve ke IP address, 
-                    <span className="font-medium text-foreground"> tetapi web server tidak merespons</span>. 
+                    Server DNS berfungsi dan domain dapat di-resolve ke IP address (bisa di-ping), 
+                    <span className="font-medium text-foreground"> tetapi web server HTTP/HTTPS tidak merespons</span>. 
                     Kemungkinan penyebab:
                   </p>
                   <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
@@ -58,6 +58,7 @@ export function InfoDialog() {
                     <li>Konfigurasi firewall memblokir port 80/443</li>
                     <li>Service web hosting belum diaktifkan di cPanel/VM</li>
                     <li>Virtual host tidak dikonfigurasi dengan benar</li>
+                    <li><span className="font-medium text-foreground">Network-specific issue:</span> Website hanya bisa diakses dari jaringan tertentu karena pembatasan IP/firewall</li>
                   </ul>
                   <p className="text-sm text-amber-500 font-medium pt-1">
                     ⚠️ Pengunjung tidak dapat mengakses website meski domain valid
@@ -137,6 +138,16 @@ export function InfoDialog() {
                 <p className="text-sm text-muted-foreground">
                   Verifikasi DNS record di domain registrar. Pastikan A record atau CNAME 
                   mengarah ke IP server yang benar.
+                </p>
+              </div>
+
+              <div className="bg-card border rounded-lg p-3">
+                <p className="text-sm font-semibold text-accent mb-1">Kasus Network-Specific:</p>
+                <p className="text-sm text-muted-foreground">
+                  Jika domain bisa di-ping tapi website tidak bisa diakses dari jaringan tertentu, 
+                  kemungkinan ada pembatasan firewall berdasarkan IP. Coba akses dari jaringan lain 
+                  atau gunakan VPN. Periksa konfigurasi <span className="font-mono">.htaccess</span>, 
+                  iptables, atau firewall cPanel untuk whitelist/blacklist IP.
                 </p>
               </div>
             </div>
