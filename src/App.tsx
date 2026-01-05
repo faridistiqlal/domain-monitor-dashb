@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { Progress } from '@/components/ui/progress'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
@@ -27,6 +28,7 @@ function App() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortType>('none')
+  const [countdown, setCountdown] = useState(60)
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -80,6 +82,7 @@ function App() {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true)
+    setCountdown(60)
     await checkAllDomains()
     setIsRefreshing(false)
     toast.success('Status diperbarui')
@@ -113,13 +116,26 @@ function App() {
 
   useEffect(() => {
     checkAllDomains()
+    setCountdown(60)
 
     const interval = setInterval(() => {
       checkAllDomains()
+      setCountdown(60)
     }, 60000)
 
     return () => clearInterval(interval)
   }, [domains])
+
+  useEffect(() => {
+    const countdownInterval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) return 60
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(countdownInterval)
+  }, [])
 
   const onlineCount = Object.values(statuses).filter(s => s.status === 'online').length
   const offlineCount = Object.values(statuses).filter(s => s.status === 'offline').length
@@ -267,8 +283,14 @@ function App() {
                     <span className="font-semibold text-destructive">{offlineCount}</span>
                   </div>
                 </div>
-                <div className="text-muted-foreground">
-                  Auto-refresh 60s • {totalCount} domain
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">
+                    Refresh dalam {countdown}s • {totalCount} domain
+                  </span>
+                  <Progress 
+                    value={(countdown / 60) * 100} 
+                    className="w-16 h-1.5"
+                  />
                 </div>
               </div>
 
