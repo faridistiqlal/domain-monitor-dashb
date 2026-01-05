@@ -702,13 +702,6 @@ function App() {
               <p className="text-sm text-muted-foreground">
                 Kelola domain - tambah, hapus, dan edit data domain
               </p>
-              <div className="flex gap-2">
-                <ImportDialog
-                  existingDomains={domains || []}
-                  groups={groups || []}
-                  onImport={handleImportDomains}
-                />
-              </div>
             </div>
 
             <AddDomainForm onAdd={handleAddDomain} />
