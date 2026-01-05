@@ -131,13 +131,11 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => handleCopyUrl('plain')} className="text-xs cursor-pointer">
                     <Copy size={14} className="mr-2" />
-                    Salin domain
-                    <span className="ml-auto text-muted-foreground">{domain.url}</span>
+                    Salin apa adanya
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleCopyUrl('https')} className="text-xs cursor-pointer">
                     <Copy size={14} className="mr-2" />
                     Salin dengan HTTPS
-                    <span className="ml-auto text-success">✓</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleCopyUrl('http')} className="text-xs cursor-pointer">
                     <Copy size={14} className="mr-2" />
