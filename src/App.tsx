@@ -89,32 +89,32 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-5xl">
-        <header className="mb-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
-                <Globe size={28} weight="duotone" className="text-primary-foreground" />
+      <div className="container mx-auto px-4 py-4 max-w-5xl">
+        <header className="mb-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                <Globe size={24} weight="duotone" className="text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">
+                <h1 className="text-2xl font-bold tracking-tight">
                   Domain Monitor
                 </h1>
-                <p className="text-sm text-muted-foreground tracking-wide">
+                <p className="text-xs text-muted-foreground tracking-wide">
                   Kabupaten Kendal
                 </p>
               </div>
             </div>
 
             {totalCount > 0 && (
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 text-xs">
+                  <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
                     <span className="text-muted-foreground">Online:</span>
                     <span className="font-semibold">{onlineCount}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
                     <span className="text-muted-foreground">Offline:</span>
                     <span className="font-semibold">{offlineCount}</span>
@@ -126,10 +126,10 @@ function App() {
                   size="sm"
                   onClick={handleManualRefresh}
                   disabled={isRefreshing}
-                  className="border-accent/50 hover:bg-accent/10"
+                  className="border-accent/50 hover:bg-accent/10 h-8"
                 >
                   <ArrowClockwise 
-                    size={16} 
+                    size={14} 
                     className={isRefreshing ? 'animate-spin' : ''} 
                   />
                   Refresh
@@ -139,16 +139,16 @@ function App() {
           </div>
         </header>
 
-        <Separator className="mb-6" />
+        <Separator className="mb-4" />
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <AddDomainForm onAdd={handleAddDomain} />
 
           {!domains || domains.length === 0 ? (
             <EmptyState />
           ) : (
             <ScrollArea className="h-[calc(100vh-320px)]">
-              <div className="space-y-4 pr-4">
+              <div className="space-y-2 pr-4">
                 {domains.map(domain => (
                   <DomainCard
                     key={domain.id}
@@ -163,7 +163,7 @@ function App() {
         </div>
 
         {totalCount > 0 && (
-          <div className="mt-6 text-center text-xs text-muted-foreground">
+          <div className="mt-4 text-center text-xs text-muted-foreground">
             Auto-refresh setiap 60 detik • Total {totalCount} domain dipantau
           </div>
         )}
