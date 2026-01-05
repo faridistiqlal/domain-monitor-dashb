@@ -69,41 +69,59 @@ export function generateCSV(domains: Domain[], statuses: Record<string, DomainSt
 export function downloadCSV(csvContent: string, filename: string = 'domain-monitor-export.csv') {
   console.log('[Download CSV] Starting download:', filename, 'Content length:', csvContent.length)
   
-  const BOM = '\uFEFF'
-  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
-  
-  console.log('[Download CSV] Blob created, size:', blob.size)
-  
-  if ((navigator as any).msSaveBlob) {
-    (navigator as any).msSaveBlob(blob, filename)
-    console.log('[Download CSV] Downloaded via msSaveBlob')
-    return
-  }
-  
   try {
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
+    
+    console.log('[Download CSV] Blob created, size:', blob.size, 'type:', blob.type)
+    
+    if ((navigator as any).msSaveBlob) {
+      (navigator as any).msSaveBlob(blob, filename)
+      console.log('[Download CSV] Downloaded via msSaveBlob (IE)')
+      return
+    }
+    
     const url = URL.createObjectURL(blob)
     console.log('[Download CSV] Object URL created:', url)
     
     const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.style.display = 'none'
     
-    document.body.appendChild(link)
-    console.log('[Download CSV] Link element added to DOM')
-    
-    link.click()
-    console.log('[Download CSV] Click triggered')
-    
-    setTimeout(() => {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link)
-      }
-      URL.revokeObjectURL(url)
-      console.log('[Download CSV] Cleanup completed')
-    }, 100)
+    if ('download' in link) {
+      link.href = url
+      link.download = filename
+      link.style.position = 'fixed'
+      link.style.left = '-9999px'
+      
+      document.body.appendChild(link)
+      console.log('[Download CSV] Link added to body. About to click...')
+      console.log('[Download CSV] Link href:', link.href)
+      console.log('[Download CSV] Link download:', link.download)
+      
+      link.click()
+      
+      console.log('[Download CSV] Click event triggered')
+      
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link)
+        }
+        URL.revokeObjectURL(url)
+        console.log('[Download CSV] Cleanup completed after 300ms')
+      }, 300)
+      
+      console.log('[Download CSV] Download initiated successfully')
+    } else {
+      console.warn('[Download CSV] Download attribute not supported, opening in new window')
+      window.open(url, '_blank')
+      setTimeout(() => {
+        URL.revokeObjectURL(url)
+      }, 300)
+    }
   } catch (error) {
-    console.error('[Download CSV] Error:', error)
+    console.error('[Download CSV] Critical error:', error)
+    console.error('[Download CSV] Error stack:', (error as Error).stack)
+    
+    alert('Gagal mengunduh file CSV. Silakan cek console untuk detail error.')
     throw error
   }
 }
