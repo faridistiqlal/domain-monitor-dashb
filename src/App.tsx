@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
@@ -188,8 +188,9 @@ function App() {
   })()
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-4 max-w-5xl">
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-4 max-w-5xl">
         <header className="mb-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
@@ -449,6 +450,7 @@ function App() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   )
 }
 
