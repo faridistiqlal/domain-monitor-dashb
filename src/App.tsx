@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -37,12 +37,13 @@ function App() {
   const [sortBy, setSortBy] = useState<SortType>('none')
   const [countdown, setCountdown] = useState(60)
   const [isPaused, setIsPaused] = useState(false)
-  const [activeTab, setActiveTab] = useState<'domains' | 'groups'>('domains')
+  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage'>('domains')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<DomainGroup | null>(null)
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set())
+  const [manageSearchQuery, setManageSearchQuery] = useState('')
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -295,7 +296,7 @@ function App() {
 
   useEffect(() => {
     setSelectedDomains(new Set())
-  }, [filter, searchQuery, sortBy, viewMode, selectedGroupId])
+  }, [filter, searchQuery, sortBy, viewMode, selectedGroupId, activeTab])
 
   const onlineCount = Object.values(statuses).filter(s => s.status === 'online').length
   const offlineCount = Object.values(statuses).filter(s => s.status === 'offline').length
@@ -447,20 +448,24 @@ function App() {
         <Separator className="mb-4" />
 
         <Tabs value={activeTab} onValueChange={(val) => {
-          setActiveTab(val as 'domains' | 'groups')
+          setActiveTab(val as 'domains' | 'groups' | 'manage')
           if (val === 'domains' && viewMode === 'group-detail') {
             setViewMode('all')
             setSelectedGroupId(null)
           }
         }} className="space-y-4">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="domains" className="gap-1.5">
               <ListBullets size={14} />
-              Semua Domain
+              Monitoring
             </TabsTrigger>
             <TabsTrigger value="groups" className="gap-1.5">
               <FolderOpen size={14} />
               Kelola Grup
+            </TabsTrigger>
+            <TabsTrigger value="manage" className="gap-1.5">
+              <Toolbox size={14} />
+              Kelola Data
             </TabsTrigger>
           </TabsList>
 
@@ -507,8 +512,6 @@ function App() {
                 </Button>
               </div>
             )}
-
-            <AddDomainForm onAdd={handleAddDomain} />
 
             {totalCount > 0 && (
               <div className="space-y-3">
@@ -633,41 +636,6 @@ function App() {
               </div>
             )}
 
-            {selectedDomains.size > 0 && (
-              <div className="sticky top-0 z-10 bg-primary/10 border border-primary rounded-lg p-2.5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      checked={selectedDomains.size === sortedDomains.length}
-                      onCheckedChange={handleSelectAll}
-                    />
-                    <span className="text-sm font-medium text-primary">
-                      {selectedDomains.size} domain dipilih
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedDomains(new Set())}
-                      className="h-8"
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleBulkDelete}
-                      className="h-8"
-                    >
-                      <Trash size={14} />
-                      Hapus {selectedDomains.size} Domain
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {!domains || domains.length === 0 ? (
               <EmptyState />
             ) : filteredDomains.length === 0 ? (
@@ -705,41 +673,191 @@ function App() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {sortedDomains.length > 0 && (
+              <ScrollArea className="flex-1">
+                <div className="space-y-2 pr-4">
+                  {sortedDomains.map(domain => {
+                    const domainGroup = domain.groupId 
+                      ? groups?.find(g => g.id === domain.groupId)
+                      : undefined
+                    return (
+                      <DomainCard
+                        key={domain.id}
+                        domain={domain}
+                        status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
+                        onDelete={() => {}}
+                        group={domainGroup}
+                        isSelected={false}
+                        onSelect={() => {}}
+                        showCheckbox={false}
+                      />
+                    )
+                  })}
+                </div>
+              </ScrollArea>
+            )}
+          </TabsContent>
+
+          <TabsContent value="manage" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Kelola domain - tambah, hapus, dan edit data domain
+              </p>
+              <div className="flex gap-2">
+                <ImportDialog
+                  existingDomains={domains || []}
+                  groups={groups || []}
+                  onImport={handleImportDomains}
+                />
+              </div>
+            </div>
+
+            <AddDomainForm onAdd={handleAddDomain} />
+
+            {totalCount > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="relative flex-1">
+                    <MagnifyingGlass 
+                      size={14} 
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Cari domain untuk dihapus..."
+                      value={manageSearchQuery}
+                      onChange={(e) => setManageSearchQuery(e.target.value)}
+                      className="h-9 pl-8 pr-8 text-xs"
+                    />
+                    {manageSearchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setManageSearchQuery('')}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9 p-0 hover:bg-transparent"
+                      >
+                        <X size={14} className="text-muted-foreground hover:text-foreground" />
+                      </Button>
+                    )}
+                  </div>
+                  {selectedDomains.size > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="h-9"
+                    >
+                      <Trash size={14} />
+                      Hapus {selectedDomains.size} Domain
+                    </Button>
+                  )}
+                </div>
+
+                {selectedDomains.size > 0 && (
+                  <div className="bg-primary/10 border border-primary rounded-lg p-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={selectedDomains.size === (() => {
+                            const filtered = (domains || []).filter(domain => 
+                              manageSearchQuery === '' || 
+                              domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
+                            )
+                            return filtered.length
+                          })()}
+                          onCheckedChange={(checked) => {
+                            const filtered = (domains || []).filter(domain => 
+                              manageSearchQuery === '' || 
+                              domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
+                            )
+                            if (checked) {
+                              setSelectedDomains(new Set(filtered.map(d => d.id)))
+                            } else {
+                              setSelectedDomains(new Set())
+                            }
+                          }}
+                        />
+                        <span className="text-sm font-medium text-primary">
+                          {selectedDomains.size} domain dipilih
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedDomains(new Set())}
+                        className="h-8"
+                      >
+                        Batal
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!domains || domains.length === 0 ? (
+              <EmptyState />
+            ) : (() => {
+              const filteredManageDomains = (domains || []).filter(domain => 
+                manageSearchQuery === '' || 
+                domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
+              )
+              return filteredManageDomains.length === 0 ? (
+                <div className="flex items-center justify-center h-[calc(100vh-400px)]">
+                  <div className="text-center space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Tidak ada domain yang cocok dengan "{manageSearchQuery}"
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setManageSearchQuery('')}
+                      className="text-xs"
+                    >
+                      Hapus Pencarian
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 px-1">
                     <Checkbox
-                      checked={selectedDomains.size === sortedDomains.length && sortedDomains.length > 0}
-                      onCheckedChange={handleSelectAll}
+                      checked={selectedDomains.size === filteredManageDomains.length && filteredManageDomains.length > 0}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedDomains(new Set(filteredManageDomains.map(d => d.id)))
+                        } else {
+                          setSelectedDomains(new Set())
+                        }
+                      }}
                     />
                     <span className="text-xs text-muted-foreground">
                       {selectedDomains.size > 0 ? `${selectedDomains.size} terpilih` : 'Pilih semua'}
                     </span>
                   </div>
-                )}
-                <ScrollArea className="flex-1">
-                  <div className="space-y-2 pr-4">
-                    {sortedDomains.map(domain => {
-                      const domainGroup = domain.groupId 
-                        ? groups?.find(g => g.id === domain.groupId)
-                        : undefined
-                      return (
-                        <DomainCard
-                          key={domain.id}
-                          domain={domain}
-                          status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
-                          onDelete={handleDeleteDomain}
-                          group={domainGroup}
-                          isSelected={selectedDomains.has(domain.id)}
-                          onSelect={handleSelectDomain}
-                          showCheckbox={true}
-                        />
-                      )
-                    })}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
+                  <ScrollArea className="h-[calc(100vh-380px)]">
+                    <div className="space-y-2 pr-4">
+                      {filteredManageDomains.map(domain => {
+                        const domainGroup = domain.groupId 
+                          ? groups?.find(g => g.id === domain.groupId)
+                          : undefined
+                        return (
+                          <DomainCard
+                            key={domain.id}
+                            domain={domain}
+                            status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
+                            onDelete={handleDeleteDomain}
+                            group={domainGroup}
+                            isSelected={selectedDomains.has(domain.id)}
+                            onSelect={handleSelectDomain}
+                            showCheckbox={true}
+                          />
+                        )
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )
+            })()}
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-4">
@@ -748,11 +866,6 @@ function App() {
                 Kelola grup domain untuk organisasi yang lebih baik
               </p>
               <div className="flex gap-2">
-                <ImportDialog
-                  existingDomains={domains || []}
-                  groups={groups || []}
-                  onImport={handleImportDomains}
-                />
                 <Button
                   variant="outline"
                   size="sm"
