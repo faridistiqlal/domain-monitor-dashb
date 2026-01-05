@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise, DownloadSimple } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -22,6 +23,7 @@ function App() {
   const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -122,10 +124,16 @@ function App() {
   const totalCount = domains?.length || 0
 
   const filteredDomains = domains?.filter(domain => {
-    if (filter === 'all') return true
-    const status = statuses[domain.id]?.status
-    if (!status || status === 'checking') return true
-    return status === filter
+    const matchesFilter = filter === 'all' || (() => {
+      const status = statuses[domain.id]?.status
+      if (!status || status === 'checking') return true
+      return status === filter
+    })()
+    
+    const matchesSearch = searchQuery === '' || 
+      domain.url.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    return matchesFilter && matchesSearch
   }) || []
 
   return (
@@ -244,43 +252,69 @@ function App() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 px-1">
-                <span className="text-xs text-muted-foreground">Filter:</span>
-                <div className="flex gap-1.5">
-                  <Button
-                    variant={filter === 'all' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilter('all')}
-                    className="h-7 px-3 text-xs"
-                  >
-                    Semua
-                  </Button>
-                  <Button
-                    variant={filter === 'online' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilter('online')}
-                    className="h-7 px-3 text-xs"
-                  >
-                    Online
-                  </Button>
-                  {dnsOnlyCount > 0 && (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 px-1">
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Filter:</span>
+                  <div className="flex gap-1.5 flex-wrap">
                     <Button
-                      variant={filter === 'dns-only' ? 'default' : 'outline'}
+                      variant={filter === 'all' ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setFilter('dns-only')}
+                      onClick={() => setFilter('all')}
                       className="h-7 px-3 text-xs"
                     >
-                      DNS Only
+                      Semua
+                    </Button>
+                    <Button
+                      variant={filter === 'online' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setFilter('online')}
+                      className="h-7 px-3 text-xs"
+                    >
+                      Online
+                    </Button>
+                    {dnsOnlyCount > 0 && (
+                      <Button
+                        variant={filter === 'dns-only' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFilter('dns-only')}
+                        className="h-7 px-3 text-xs"
+                      >
+                        DNS Only
+                      </Button>
+                    )}
+                    <Button
+                      variant={filter === 'offline' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setFilter('offline')}
+                      className="h-7 px-3 text-xs"
+                    >
+                      Offline
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="relative w-full sm:w-64">
+                  <MagnifyingGlass 
+                    size={14} 
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Cari domain..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-7 pl-8 pr-8 text-xs"
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
+                    >
+                      <X size={14} className="text-muted-foreground hover:text-foreground" />
                     </Button>
                   )}
-                  <Button
-                    variant={filter === 'offline' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilter('offline')}
-                    className="h-7 px-3 text-xs"
-                  >
-                    Offline
-                  </Button>
                 </div>
               </div>
             </div>
@@ -291,15 +325,33 @@ function App() {
           ) : filteredDomains.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground">Tidak ada domain dengan status ini</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFilter('all')}
-                  className="text-xs"
-                >
-                  Tampilkan Semua
-                </Button>
+                <p className="text-sm text-muted-foreground">
+                  {searchQuery 
+                    ? `Tidak ada domain yang cocok dengan "${searchQuery}"` 
+                    : 'Tidak ada domain dengan status ini'}
+                </p>
+                <div className="flex gap-2 justify-center">
+                  {searchQuery && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSearchQuery('')}
+                      className="text-xs"
+                    >
+                      Hapus Pencarian
+                    </Button>
+                  )}
+                  {filter !== 'all' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFilter('all')}
+                      className="text-xs"
+                    >
+                      Tampilkan Semua
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ) : (
