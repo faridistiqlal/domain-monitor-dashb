@@ -120,7 +120,7 @@ export function exportDomainsToCSV(
   domains: Domain[], 
   statuses: Record<string, DomainStatus>,
   groupName?: string
-): { success: boolean; duplicates?: string[] } {
+): { success: boolean; duplicates?: string[]; downloadUrl?: string; filename?: string } {
   console.log('[CSV Export] Starting export with', domains.length, 'domains')
   
   if (!domains || domains.length === 0) {
@@ -146,7 +146,25 @@ export function exportDomainsToCSV(
   const filename = `domain-monitor${groupSuffix}-${timestamp}.csv`
   
   console.log('[CSV Export] Downloading as:', filename)
-  downloadCSV(csvContent, filename)
   
-  return { success: true }
+  const BOM = '\uFEFF'
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const downloadUrl = URL.createObjectURL(blob)
+  
+  console.log('[CSV Export] Created blob URL:', downloadUrl)
+  
+  const link = document.createElement('a')
+  link.href = downloadUrl
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  
+  console.log('[CSV Export] Triggered download')
+  
+  return { 
+    success: true,
+    downloadUrl,
+    filename
+  }
 }

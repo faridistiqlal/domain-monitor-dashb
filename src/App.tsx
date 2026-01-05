@@ -20,6 +20,7 @@ import { GroupCard } from '@/components/GroupCard'
 import { GroupFormDialog } from '@/components/GroupFormDialog'
 import { AssignDomainsDialog } from '@/components/AssignDomainsDialog'
 import { OptimizedDomainList } from '@/components/VirtualizedDomainList'
+import { ExportSuccessDialog } from '@/components/ExportSuccessDialog'
 import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -53,6 +54,8 @@ function App() {
   const [manageSearchQuery, setManageSearchQuery] = useState('')
   const debouncedManageSearchQuery = useDebounce(manageSearchQuery, 300)
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [exportData, setExportData] = useState<{ url: string; filename: string; count: number } | null>(null)
 
   const checkAllDomains = async (showToast = false) => {
     if (!domains || domains.length === 0) return
@@ -229,6 +232,15 @@ function App() {
         return
       }
       
+      if (result.downloadUrl && result.filename) {
+        setExportData({
+          url: result.downloadUrl,
+          filename: result.filename,
+          count: domains.length
+        })
+        setExportDialogOpen(true)
+      }
+      
       toast.success(`Berhasil mengekspor ${domains.length} domain ke CSV`)
     } catch (error) {
       console.error('[Export] Error during export:', error)
@@ -272,6 +284,15 @@ function App() {
         return
       }
       
+      if (result.downloadUrl && result.filename) {
+        setExportData({
+          url: result.downloadUrl,
+          filename: result.filename,
+          count: filteredDomains.length
+        })
+        setExportDialogOpen(true)
+      }
+      
       toast.success(`${filteredDomains.length} domain terfilter berhasil diekspor ke CSV`)
     } catch (error) {
       console.error('[Export Filtered] Error during export:', error)
@@ -312,6 +333,15 @@ function App() {
           toast.error('Gagal mengekspor data')
         }
         return
+      }
+      
+      if (result.downloadUrl && result.filename) {
+        setExportData({
+          url: result.downloadUrl,
+          filename: result.filename,
+          count: groupDomains.length
+        })
+        setExportDialogOpen(true)
       }
       
       toast.success(`Domain grup "${group.name}" berhasil diekspor ke CSV`)
@@ -1231,6 +1261,16 @@ function App() {
             onOpenChange={(open) => {
               if (!open) setEditingGroup(null)
             }}
+          />
+        )}
+
+        {exportData && (
+          <ExportSuccessDialog
+            open={exportDialogOpen}
+            onOpenChange={setExportDialogOpen}
+            downloadUrl={exportData.url}
+            filename={exportData.filename}
+            domainCount={exportData.count}
           />
         )}
       </div>
