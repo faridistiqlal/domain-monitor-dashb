@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
+import { ImportDialog } from '@/components/ImportDialog'
 import { Domain, DomainStatus } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -84,6 +85,13 @@ function App() {
     toast.success('Data berhasil diekspor ke CSV')
   }
 
+  const handleImportDomains = (importedDomains: Domain[]) => {
+    if (importedDomains.length === 0) return
+
+    setDomains(current => [...(current || []), ...importedDomains])
+    toast.success(`${importedDomains.length} domain berhasil diimport`)
+  }
+
   useEffect(() => {
     checkAllDomains()
 
@@ -133,6 +141,11 @@ function App() {
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  <ImportDialog
+                    existingDomains={domains || []}
+                    onImport={handleImportDomains}
+                  />
+                  
                   <Button
                     variant="outline"
                     size="sm"
