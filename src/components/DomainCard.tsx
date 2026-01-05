@@ -92,10 +92,12 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
         exit={{ opacity: 0, x: -100 }}
         transition={{ duration: 0.2 }}
       >
-        <Card className={`group p-3.5 transition-all duration-200 ${isSelected ? 'ring-1 ring-primary bg-primary/5' : 'hover:shadow-md hover:bg-accent/5'}`}>
+        <Card className={`group transition-all duration-200 ${
+          showCheckbox ? 'py-3.5 pr-3.5 pl-4' : 'p-3.5'
+        } ${isSelected ? 'ring-1 ring-primary bg-primary/5' : 'hover:shadow-md hover:bg-accent/5'}`}>
           <div className="flex items-center gap-3">
             {showCheckbox && (
-              <div className="shrink-0">
+              <div className="shrink-0 -ml-0.5">
                 <Checkbox
                   checked={isSelected}
                   onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
@@ -140,10 +142,12 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={`group p-3.5 transition-all duration-200 ${isSelected ? 'ring-1 ring-primary bg-primary/5' : 'hover:shadow-md hover:bg-accent/5'}`}>
+      <Card className={`group transition-all duration-200 ${
+        showCheckbox ? 'py-3.5 pr-3.5 pl-4' : 'p-3.5'
+      } ${isSelected ? 'ring-1 ring-primary bg-primary/5' : 'hover:shadow-md hover:bg-accent/5'}`}>
         <div className="flex items-center gap-3">
           {showCheckbox && (
-            <div className="shrink-0">
+            <div className="shrink-0 -ml-0.5">
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
