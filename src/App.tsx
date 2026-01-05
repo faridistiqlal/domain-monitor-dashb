@@ -923,22 +923,56 @@ function App() {
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Kelola grup domain untuk organisasi yang lebih baik
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAssignDialogOpen(true)}
-                  disabled={!domains || domains.length === 0}
-                  className="h-8"
-                >
-                  <Tag size={14} />
-                  Atur Grup
-                </Button>
-                <GroupFormDialog onSave={handleCreateGroup} />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs px-1">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Globe size={14} weight="duotone" className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Total Domain</span>
+                    <span className="font-semibold text-foreground">{totalCount}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <FolderOpen size={14} weight="duotone" className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Total Grup</span>
+                    <span className="font-semibold text-foreground">{groups?.length || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
+                    <span className="text-muted-foreground">Online</span>
+                    <span className="font-semibold text-success">{onlineCount}</span>
+                  </div>
+                  {dnsOnlyCount > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                      <span className="text-muted-foreground">DNS Only</span>
+                      <span className="font-semibold text-amber-500">{dnsOnlyCount}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
+                    <span className="text-muted-foreground">Offline</span>
+                    <span className="font-semibold text-destructive">{offlineCount}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Kelola grup domain untuk organisasi yang lebih baik
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAssignDialogOpen(true)}
+                    disabled={!domains || domains.length === 0}
+                    className="h-8"
+                  >
+                    <Tag size={14} />
+                    Atur Grup
+                  </Button>
+                  <GroupFormDialog onSave={handleCreateGroup} />
+                </div>
               </div>
             </div>
 
