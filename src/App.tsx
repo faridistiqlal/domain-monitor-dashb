@@ -300,17 +300,22 @@ function App() {
     setSelectedDomains(new Set())
   }, [filter, searchQuery, sortBy, viewMode, selectedGroupId, activeTab, manageGroupFilter])
 
-  const onlineCount = Object.values(statuses).filter(s => s.status === 'online').length
-  const offlineCount = Object.values(statuses).filter(s => s.status === 'offline').length
-  const dnsOnlyCount = Object.values(statuses).filter(s => s.status === 'dns-only').length
-  const totalCount = domains?.length || 0
-
   const currentViewDomains = (() => {
     if (viewMode === 'group-detail' && selectedGroupId) {
       return domains?.filter(d => d.groupId === selectedGroupId) || []
     }
     return domains || []
   })()
+
+  const onlineCount = currentViewDomains.filter(d => statuses[d.id]?.status === 'online').length
+  const offlineCount = currentViewDomains.filter(d => statuses[d.id]?.status === 'offline').length
+  const dnsOnlyCount = currentViewDomains.filter(d => statuses[d.id]?.status === 'dns-only').length
+  const totalCount = currentViewDomains.length
+
+  const globalOnlineCount = (domains || []).filter(d => statuses[d.id]?.status === 'online').length
+  const globalOfflineCount = (domains || []).filter(d => statuses[d.id]?.status === 'offline').length
+  const globalDnsOnlyCount = (domains || []).filter(d => statuses[d.id]?.status === 'dns-only').length
+  const globalTotalCount = domains?.length || 0
 
   const filteredDomains = currentViewDomains.filter(domain => {
     const matchesFilter = filter === 'all' || (() => {
@@ -713,7 +718,7 @@ function App() {
 
             <AddDomainForm onAdd={handleAddDomain} />
 
-            {totalCount > 0 && (
+            {globalTotalCount > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 lg:flex-none lg:w-48">
@@ -929,7 +934,7 @@ function App() {
                   <div className="flex items-center gap-1.5">
                     <Globe size={14} weight="duotone" className="text-muted-foreground" />
                     <span className="text-muted-foreground">Total Domain</span>
-                    <span className="font-semibold text-foreground">{totalCount}</span>
+                    <span className="font-semibold text-foreground">{globalTotalCount}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <FolderOpen size={14} weight="duotone" className="text-muted-foreground" />
@@ -939,19 +944,19 @@ function App() {
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
                     <span className="text-muted-foreground">Online</span>
-                    <span className="font-semibold text-success">{onlineCount}</span>
+                    <span className="font-semibold text-success">{globalOnlineCount}</span>
                   </div>
-                  {dnsOnlyCount > 0 && (
+                  {globalDnsOnlyCount > 0 && (
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
                       <span className="text-muted-foreground">DNS Only</span>
-                      <span className="font-semibold text-amber-500">{dnsOnlyCount}</span>
+                      <span className="font-semibold text-amber-500">{globalDnsOnlyCount}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
                     <span className="text-muted-foreground">Offline</span>
-                    <span className="font-semibold text-destructive">{offlineCount}</span>
+                    <span className="font-semibold text-destructive">{globalOfflineCount}</span>
                   </div>
                 </div>
               </div>
