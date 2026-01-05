@@ -69,7 +69,7 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
             variant="ghost"
             size="icon"
             onClick={() => onDelete(domain.id)}
-            className="shrink-0 h-7 w-7 text-muted-foreground hover:text-destructive"
+            className="shrink-0 h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
             <Trash size={16} />
           </Button>

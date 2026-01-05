@@ -46,7 +46,7 @@ export function AddDomainForm({ onAdd }: AddDomainFormProps) {
           <Button 
             type="submit" 
             size="sm"
-            className="shrink-0 bg-accent text-accent-foreground hover:brightness-110 transition-all h-9"
+            className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90 transition-all h-9"
           >
             <Plus size={18} weight="bold" />
             Tambah

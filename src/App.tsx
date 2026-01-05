@@ -159,7 +159,7 @@ function App() {
                     variant="outline"
                     size="sm"
                     onClick={handleExportCSV}
-                    className="border-accent/50 hover:bg-accent/10 h-8"
+                    className="h-8"
                   >
                     <DownloadSimple size={14} />
                     Export CSV
@@ -170,7 +170,7 @@ function App() {
                     size="sm"
                     onClick={handleManualRefresh}
                     disabled={isRefreshing}
-                    className="border-accent/50 hover:bg-accent/10 h-8"
+                    className="h-8"
                   >
                     <ArrowClockwise 
                       size={14} 

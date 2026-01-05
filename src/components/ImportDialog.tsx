@@ -68,7 +68,7 @@ export function ImportDialog({ existingDomains, onImport }: ImportDialogProps) {
         <Button
           variant="outline"
           size="sm"
-          className="border-accent/50 hover:bg-accent/10 h-8"
+          className="h-8"
         >
           <UploadSimple size={14} />
           Import CSV
@@ -169,7 +169,7 @@ export function ImportDialog({ existingDomains, onImport }: ImportDialogProps) {
                 <Button
                   onClick={handleImport}
                   disabled={!file || isProcessing}
-                  className="flex-1 bg-accent text-accent-foreground hover:brightness-110"
+                  className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
                 >
                   {isProcessing ? 'Memproses...' : 'Import'}
                 </Button>
