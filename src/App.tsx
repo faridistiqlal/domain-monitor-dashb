@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -29,6 +29,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortType>('none')
   const [countdown, setCountdown] = useState(60)
+  const [isPaused, setIsPaused] = useState(false)
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -83,9 +84,23 @@ function App() {
   const handleManualRefresh = async () => {
     setIsRefreshing(true)
     setCountdown(60)
+    setIsPaused(false)
     await checkAllDomains()
     setIsRefreshing(false)
     toast.success('Status diperbarui')
+  }
+
+  const handleTogglePause = () => {
+    setIsPaused(prev => {
+      const newPausedState = !prev
+      if (newPausedState) {
+        toast.info('Auto-refresh dijeda')
+      } else {
+        toast.info('Auto-refresh dilanjutkan')
+        setCountdown(60)
+      }
+      return newPausedState
+    })
   }
 
   const handleExportCSV = () => {
@@ -118,15 +133,19 @@ function App() {
     checkAllDomains()
     setCountdown(60)
 
+    if (isPaused) return
+
     const interval = setInterval(() => {
       checkAllDomains()
       setCountdown(60)
     }, 60000)
 
     return () => clearInterval(interval)
-  }, [domains])
+  }, [domains, isPaused])
 
   useEffect(() => {
+    if (isPaused) return
+
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) return 60
@@ -135,7 +154,7 @@ function App() {
     }, 1000)
 
     return () => clearInterval(countdownInterval)
-  }, [])
+  }, [isPaused])
 
   const onlineCount = Object.values(statuses).filter(s => s.status === 'online').length
   const offlineCount = Object.values(statuses).filter(s => s.status === 'offline').length
@@ -243,6 +262,15 @@ function App() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={handleTogglePause}
+                  className="h-8"
+                >
+                  {isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleManualRefresh}
                   disabled={isRefreshing}
                   className="h-8"
@@ -285,12 +313,14 @@ function App() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">
-                    Refresh dalam {countdown}s • {totalCount} domain
+                    {isPaused ? 'Dijeda' : `Refresh dalam ${countdown}s`} • {totalCount} domain
                   </span>
-                  <Progress 
-                    value={(countdown / 60) * 100} 
-                    className="w-16 h-1.5"
-                  />
+                  {!isPaused && (
+                    <Progress 
+                      value={(countdown / 60) * 100} 
+                      className="w-16 h-1.5"
+                    />
+                  )}
                 </div>
               </div>
 
