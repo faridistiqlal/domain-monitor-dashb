@@ -349,7 +349,7 @@ function App() {
                     <TooltipTrigger asChild>
                       <div className="flex-1 lg:flex-none lg:w-40">
                         <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
-                          <SelectTrigger className="h-8 text-xs w-full">
+                          <SelectTrigger className="h-8 py-0 text-xs w-full">
                             <div className="flex items-center gap-1.5">
                               <SortAscending size={14} />
                               <SelectValue placeholder="Urutkan" />
