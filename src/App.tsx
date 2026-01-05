@@ -186,13 +186,19 @@ function App() {
 
         <Separator className="mb-4" />
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex flex-col h-[calc(100vh-180px)]">
           <AddDomainForm onAdd={handleAddDomain} />
+
+          {totalCount > 0 && (
+            <div className="text-center text-xs text-muted-foreground py-2">
+              Auto-refresh setiap 60 detik • Total {totalCount} domain dipantau
+            </div>
+          )}
 
           {!domains || domains.length === 0 ? (
             <EmptyState />
           ) : (
-            <ScrollArea className="h-[calc(100vh-320px)]">
+            <ScrollArea className="flex-1">
               <div className="space-y-2 pr-4">
                 {domains.map(domain => (
                   <DomainCard
@@ -206,12 +212,6 @@ function App() {
             </ScrollArea>
           )}
         </div>
-
-        {totalCount > 0 && (
-          <div className="mt-4 text-center text-xs text-muted-foreground">
-            Auto-refresh setiap 60 detik • Total {totalCount} domain dipantau
-          </div>
-        )}
       </div>
     </div>
   )
