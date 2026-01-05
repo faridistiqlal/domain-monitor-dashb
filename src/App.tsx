@@ -1,5 +1,175 @@
+import { useEffect, useState } from 'react'
+import { useKV } from '@github/spark/hooks'
+import { Globe, ArrowClockwise } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { AddDomainForm } from '@/components/AddDomainForm'
+import { DomainCard } from '@/components/DomainCard'
+import { EmptyState } from '@/components/EmptyState'
+import { Domain, DomainStatus } from '@/lib/types'
+import { checkDomainStatus } from '@/lib/monitoring'
+import { toast } from 'sonner'
+
 function App() {
-    return <div></div>
+  const [domains, setDomains] = useKV<Domain[]>('monitoring-domains', [])
+  const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const checkAllDomains = async () => {
+    if (!domains || domains.length === 0) return
+
+    const checkingStatuses: Record<string, DomainStatus> = {}
+    domains.forEach(domain => {
+      checkingStatuses[domain.id] = {
+        id: domain.id,
+        status: 'checking',
+      }
+    })
+    setStatuses(checkingStatuses)
+
+    const results = await Promise.all(
+      domains.map(domain => checkDomainStatus(domain.url, domain.id))
+    )
+
+    const newStatuses: Record<string, DomainStatus> = {}
+    results.forEach(result => {
+      newStatuses[result.id] = result
+    })
+    setStatuses(newStatuses)
+  }
+
+  const handleAddDomain = (url: string) => {
+    const isDuplicate = domains?.some(d => d.url === url)
+    if (isDuplicate) {
+      toast.error('Domain sudah ada dalam daftar')
+      return
+    }
+
+    const newDomain: Domain = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      url,
+      addedAt: Date.now(),
+    }
+
+    setDomains(current => [...(current || []), newDomain])
+    toast.success('Domain berhasil ditambahkan')
+  }
+
+  const handleDeleteDomain = (id: string) => {
+    setDomains(current => (current || []).filter(d => d.id !== id))
+    setStatuses(current => {
+      const newStatuses = { ...current }
+      delete newStatuses[id]
+      return newStatuses
+    })
+    toast.success('Domain dihapus dari daftar')
+  }
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true)
+    await checkAllDomains()
+    setIsRefreshing(false)
+    toast.success('Status diperbarui')
+  }
+
+  useEffect(() => {
+    checkAllDomains()
+
+    const interval = setInterval(() => {
+      checkAllDomains()
+    }, 60000)
+
+    return () => clearInterval(interval)
+  }, [domains])
+
+  const onlineCount = Object.values(statuses).filter(s => s.status === 'online').length
+  const offlineCount = Object.values(statuses).filter(s => s.status === 'offline').length
+  const totalCount = domains?.length || 0
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
+        <header className="mb-8">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
+                <Globe size={28} weight="duotone" className="text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Domain Monitor
+                </h1>
+                <p className="text-sm text-muted-foreground tracking-wide">
+                  Kabupaten Kendal
+                </p>
+              </div>
+            </div>
+
+            {totalCount > 0 && (
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
+                    <span className="text-muted-foreground">Online:</span>
+                    <span className="font-semibold">{onlineCount}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
+                    <span className="text-muted-foreground">Offline:</span>
+                    <span className="font-semibold">{offlineCount}</span>
+                  </div>
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="border-accent/50 hover:bg-accent/10"
+                >
+                  <ArrowClockwise 
+                    size={16} 
+                    className={isRefreshing ? 'animate-spin' : ''} 
+                  />
+                  Refresh
+                </Button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <Separator className="mb-6" />
+
+        <div className="space-y-6">
+          <AddDomainForm onAdd={handleAddDomain} />
+
+          {!domains || domains.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <ScrollArea className="h-[calc(100vh-320px)]">
+              <div className="space-y-4 pr-4">
+                {domains.map(domain => (
+                  <DomainCard
+                    key={domain.id}
+                    domain={domain}
+                    status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
+                    onDelete={handleDeleteDomain}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+
+        {totalCount > 0 && (
+          <div className="mt-6 text-center text-xs text-muted-foreground">
+            Auto-refresh setiap 60 detik • Total {totalCount} domain dipantau
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default App
