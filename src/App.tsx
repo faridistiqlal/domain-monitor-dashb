@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox } from '@phosphor-icons/react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -540,6 +541,11 @@ function App() {
                     <span className="text-muted-foreground">
                       {isPaused ? 'Dijeda' : `Refresh dalam ${countdown}s`} • {totalCount} domain
                     </span>
+                    {filteredDomains.length !== totalCount && (
+                      <Badge variant="secondary" className="text-xs font-mono">
+                        {filteredDomains.length} ditampilkan
+                      </Badge>
+                    )}
                     {!isPaused && (
                       <Progress 
                         value={(countdown / 60) * 100} 
