@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Trash, Warning, Globe, Copy, CaretDown, Tag } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { StatusIndicator } from './StatusIndicator'
 import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
 import {
@@ -22,9 +23,12 @@ interface DomainCardProps {
   status: DomainStatus
   onDelete: (id: string) => void
   group?: DomainGroup
+  isSelected?: boolean
+  onSelect?: (id: string, selected: boolean) => void
+  showCheckbox?: boolean
 }
 
-export function DomainCard({ domain, status, onDelete, group }: DomainCardProps) {
+export function DomainCard({ domain, status, onDelete, group, isSelected, onSelect, showCheckbox }: DomainCardProps) {
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
     try {
       let textToCopy = domain.url
@@ -87,8 +91,15 @@ export function DomainCard({ domain, status, onDelete, group }: DomainCardProps)
       transition={{ duration: 0.2 }}
       whileHover={{ scale: 1.005 }}
     >
-      <Card className="p-2.5 hover:shadow-md transition-shadow duration-200">
+      <Card className={`p-2.5 hover:shadow-md transition-all duration-200 ${isSelected ? 'ring-2 ring-primary' : ''}`}>
         <div className="flex items-center gap-3">
+          {showCheckbox && (
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
+              className="shrink-0"
+            />
+          )}
           <StatusIndicator status={status.status} className="shrink-0" />
           
           <div className="flex-1 min-w-0 flex items-center gap-1.5">

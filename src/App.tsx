@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Checkbox } from '@/components/ui/checkbox'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { EmptyState } from '@/components/EmptyState'
@@ -41,6 +42,7 @@ function App() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<DomainGroup | null>(null)
+  const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set())
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -89,7 +91,46 @@ function App() {
       delete newStatuses[id]
       return newStatuses
     })
+    setSelectedDomains(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(id)
+      return newSet
+    })
     toast.success('Domain dihapus dari daftar')
+  }
+
+  const handleBulkDelete = () => {
+    const count = selectedDomains.size
+    if (count === 0) return
+
+    setDomains(current => (current || []).filter(d => !selectedDomains.has(d.id)))
+    setStatuses(current => {
+      const newStatuses = { ...current }
+      selectedDomains.forEach(id => delete newStatuses[id])
+      return newStatuses
+    })
+    setSelectedDomains(new Set())
+    toast.success(`${count} domain berhasil dihapus`)
+  }
+
+  const handleSelectDomain = (id: string, selected: boolean) => {
+    setSelectedDomains(prev => {
+      const newSet = new Set(prev)
+      if (selected) {
+        newSet.add(id)
+      } else {
+        newSet.delete(id)
+      }
+      return newSet
+    })
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDomains(new Set(sortedDomains.map(d => d.id)))
+    } else {
+      setSelectedDomains(new Set())
+    }
   }
 
   const handleManualRefresh = async () => {
@@ -251,6 +292,10 @@ function App() {
 
     return () => clearInterval(countdownInterval)
   }, [isPaused])
+
+  useEffect(() => {
+    setSelectedDomains(new Set())
+  }, [filter, searchQuery, sortBy, viewMode, selectedGroupId])
 
   const onlineCount = Object.values(statuses).filter(s => s.status === 'online').length
   const offlineCount = Object.values(statuses).filter(s => s.status === 'offline').length
@@ -588,6 +633,41 @@ function App() {
               </div>
             )}
 
+            {selectedDomains.size > 0 && (
+              <div className="sticky top-0 z-10 bg-primary/10 border border-primary rounded-lg p-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={selectedDomains.size === sortedDomains.length}
+                      onCheckedChange={handleSelectAll}
+                    />
+                    <span className="text-sm font-medium text-primary">
+                      {selectedDomains.size} domain dipilih
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedDomains(new Set())}
+                      className="h-8"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="h-8"
+                    >
+                      <Trash size={14} />
+                      Hapus {selectedDomains.size} Domain
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {!domains || domains.length === 0 ? (
               <EmptyState />
             ) : filteredDomains.length === 0 ? (
@@ -625,24 +705,40 @@ function App() {
                 </div>
               </div>
             ) : (
-              <ScrollArea className="flex-1">
-                <div className="space-y-2 pr-4">
-                  {sortedDomains.map(domain => {
-                    const domainGroup = domain.groupId 
-                      ? groups?.find(g => g.id === domain.groupId)
-                      : undefined
-                    return (
-                      <DomainCard
-                        key={domain.id}
-                        domain={domain}
-                        status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
-                        onDelete={handleDeleteDomain}
-                        group={domainGroup}
-                      />
-                    )
-                  })}
-                </div>
-              </ScrollArea>
+              <div className="space-y-2">
+                {sortedDomains.length > 0 && (
+                  <div className="flex items-center gap-2 px-1">
+                    <Checkbox
+                      checked={selectedDomains.size === sortedDomains.length && sortedDomains.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {selectedDomains.size > 0 ? `${selectedDomains.size} terpilih` : 'Pilih semua'}
+                    </span>
+                  </div>
+                )}
+                <ScrollArea className="flex-1">
+                  <div className="space-y-2 pr-4">
+                    {sortedDomains.map(domain => {
+                      const domainGroup = domain.groupId 
+                        ? groups?.find(g => g.id === domain.groupId)
+                        : undefined
+                      return (
+                        <DomainCard
+                          key={domain.id}
+                          domain={domain}
+                          status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
+                          onDelete={handleDeleteDomain}
+                          group={domainGroup}
+                          isSelected={selectedDomains.has(domain.id)}
+                          onSelect={handleSelectDomain}
+                          showCheckbox={true}
+                        />
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
+              </div>
             )}
           </TabsContent>
 
