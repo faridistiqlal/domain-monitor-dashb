@@ -44,6 +44,7 @@ function App() {
   const [editingGroup, setEditingGroup] = useState<DomainGroup | null>(null)
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set())
   const [manageSearchQuery, setManageSearchQuery] = useState('')
+  const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -296,7 +297,7 @@ function App() {
 
   useEffect(() => {
     setSelectedDomains(new Set())
-  }, [filter, searchQuery, sortBy, viewMode, selectedGroupId, activeTab])
+  }, [filter, searchQuery, sortBy, viewMode, selectedGroupId, activeTab, manageGroupFilter])
 
   const onlineCount = Object.values(statuses).filter(s => s.status === 'online').length
   const offlineCount = Object.values(statuses).filter(s => s.status === 'offline').length
@@ -708,7 +709,33 @@ function App() {
 
             {totalCount > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 lg:flex-none lg:w-48">
+                    <Select value={manageGroupFilter} onValueChange={setManageGroupFilter}>
+                      <SelectTrigger className="h-9 py-0 text-xs w-full">
+                        <div className="flex items-center gap-1.5">
+                          <FolderOpen size={14} />
+                          <SelectValue placeholder="Filter Grup" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all" className="text-xs">Semua Grup</SelectItem>
+                        <SelectItem value="ungrouped" className="text-xs">Tanpa Grup</SelectItem>
+                        {groups && groups.length > 0 && groups.map(group => (
+                          <SelectItem key={group.id} value={group.id} className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: group.color }}
+                              />
+                              {group.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
                   <div className="relative flex-1">
                     <MagnifyingGlass 
                       size={14} 
@@ -732,6 +759,7 @@ function App() {
                       </Button>
                     )}
                   </div>
+                  
                   {selectedDomains.size > 0 && (
                     <Button
                       variant="destructive"
@@ -751,17 +779,29 @@ function App() {
                       <div className="flex items-center gap-3">
                         <Checkbox
                           checked={selectedDomains.size === (() => {
-                            const filtered = (domains || []).filter(domain => 
-                              manageSearchQuery === '' || 
-                              domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
-                            )
+                            const filtered = (domains || []).filter(domain => {
+                              const matchesSearch = manageSearchQuery === '' || 
+                                domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
+                              
+                              const matchesGroup = manageGroupFilter === 'all' || 
+                                (manageGroupFilter === 'ungrouped' && !domain.groupId) ||
+                                domain.groupId === manageGroupFilter
+                              
+                              return matchesSearch && matchesGroup
+                            })
                             return filtered.length
                           })()}
                           onCheckedChange={(checked) => {
-                            const filtered = (domains || []).filter(domain => 
-                              manageSearchQuery === '' || 
-                              domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
-                            )
+                            const filtered = (domains || []).filter(domain => {
+                              const matchesSearch = manageSearchQuery === '' || 
+                                domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
+                              
+                              const matchesGroup = manageGroupFilter === 'all' || 
+                                (manageGroupFilter === 'ungrouped' && !domain.groupId) ||
+                                domain.groupId === manageGroupFilter
+                              
+                              return matchesSearch && matchesGroup
+                            })
                             if (checked) {
                               setSelectedDomains(new Set(filtered.map(d => d.id)))
                             } else {
@@ -790,24 +830,46 @@ function App() {
             {!domains || domains.length === 0 ? (
               <EmptyState />
             ) : (() => {
-              const filteredManageDomains = (domains || []).filter(domain => 
-                manageSearchQuery === '' || 
-                domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
-              )
+              const filteredManageDomains = (domains || []).filter(domain => {
+                const matchesSearch = manageSearchQuery === '' || 
+                  domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
+                
+                const matchesGroup = manageGroupFilter === 'all' || 
+                  (manageGroupFilter === 'ungrouped' && !domain.groupId) ||
+                  domain.groupId === manageGroupFilter
+                
+                return matchesSearch && matchesGroup
+              })
               return filteredManageDomains.length === 0 ? (
                 <div className="flex items-center justify-center h-[calc(100vh-400px)]">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-muted-foreground">
-                      Tidak ada domain yang cocok dengan "{manageSearchQuery}"
+                      {manageSearchQuery 
+                        ? `Tidak ada domain yang cocok dengan "${manageSearchQuery}"`
+                        : 'Tidak ada domain dalam filter ini'}
                     </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setManageSearchQuery('')}
-                      className="text-xs"
-                    >
-                      Hapus Pencarian
-                    </Button>
+                    <div className="flex gap-2 justify-center">
+                      {manageSearchQuery && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setManageSearchQuery('')}
+                          className="text-xs"
+                        >
+                          Hapus Pencarian
+                        </Button>
+                      )}
+                      {manageGroupFilter !== 'all' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setManageGroupFilter('all')}
+                          className="text-xs"
+                        >
+                          Tampilkan Semua Grup
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : (
