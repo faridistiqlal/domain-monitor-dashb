@@ -177,6 +177,32 @@ function App() {
     toast.success('Data berhasil diekspor ke CSV')
   }
 
+  const handleExportFilteredCSV = () => {
+    if (filteredDomains.length === 0) {
+      toast.error('Tidak ada domain yang terfilter untuk diekspor')
+      return
+    }
+    
+    let filename = 'monitoring-domains'
+    if (viewMode === 'group-detail' && selectedGroup) {
+      filename = selectedGroup.name
+    } else if (filter !== 'all') {
+      filename += `-${filter}`
+    }
+    
+    const result = exportDomainsToCSV(filteredDomains, statuses, filename)
+    
+    if (!result.success && result.duplicates && result.duplicates.length > 0) {
+      toast.error(
+        `Ditemukan ${result.duplicates.length} domain duplikat. Harap hapus duplikat terlebih dahulu: ${result.duplicates.slice(0, 3).join(', ')}${result.duplicates.length > 3 ? '...' : ''}`,
+        { duration: 6000 }
+      )
+      return
+    }
+    
+    toast.success(`${filteredDomains.length} domain terfilter berhasil diekspor ke CSV`)
+  }
+
   const handleExportGroupCSV = (groupId: string) => {
     const group = groups?.find(g => g.id === groupId)
     if (!group) return
@@ -507,16 +533,30 @@ function App() {
                     </span>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleExportGroupCSV(selectedGroup.id)}
-                  disabled={currentViewDomains.length === 0}
-                  className="h-7 text-xs"
-                >
-                  <DownloadSimple size={14} />
-                  Export CSV
-                </Button>
+                <div className="flex items-center gap-2">
+                  {filteredDomains.length !== currentViewDomains.length && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportFilteredCSV}
+                      disabled={filteredDomains.length === 0}
+                      className="h-7 text-xs"
+                    >
+                      <DownloadSimple size={14} />
+                      Export Terfilter ({filteredDomains.length})
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleExportGroupCSV(selectedGroup.id)}
+                    disabled={currentViewDomains.length === 0}
+                    className="h-7 text-xs"
+                  >
+                    <DownloadSimple size={14} />
+                    Export Semua
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -556,6 +596,17 @@ function App() {
                         value={(countdown / 60) * 100} 
                         className="w-16 h-1.5"
                       />
+                    )}
+                    {viewMode !== 'group-detail' && (filter !== 'all' || searchQuery !== '') && filteredDomains.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportFilteredCSV}
+                        className="h-7 text-xs ml-2"
+                      >
+                        <DownloadSimple size={14} />
+                        Export Terfilter
+                      </Button>
                     )}
                   </div>
                 </div>
