@@ -26,9 +26,10 @@ interface DomainCardProps {
   isSelected?: boolean
   onSelect?: (id: string, selected: boolean) => void
   showCheckbox?: boolean
+  simpleMode?: boolean
 }
 
-export function DomainCard({ domain, status, onDelete, group, isSelected, onSelect, showCheckbox }: DomainCardProps) {
+export function DomainCard({ domain, status, onDelete, group, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
     try {
       let textToCopy = domain.url
@@ -81,6 +82,54 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
     }
     
     return parts.join('\n')
+  }
+
+  if (simpleMode) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, x: -100 }}
+        transition={{ duration: 0.2 }}
+        whileHover={{ scale: 1.002 }}
+      >
+        <Card className={`p-2.5 hover:shadow-md transition-all duration-200 ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+          <div className="flex items-center gap-3">
+            {showCheckbox && (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
+                className="shrink-0"
+              />
+            )}
+            
+            <div className="flex-1 min-w-0 flex items-center gap-1.5">
+              <h3 className="font-mono text-sm font-medium text-foreground truncate">
+                {domain.url}
+              </h3>
+              {group && (
+                <div 
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
+                  style={{ backgroundColor: `${group.color}20`, color: group.color }}
+                >
+                  <Tag size={10} weight="fill" />
+                  <span className="font-medium">{group.name}</span>
+                </div>
+              )}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(domain.id)}
+              className="shrink-0 h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash size={16} />
+            </Button>
+          </div>
+        </Card>
+      </motion.div>
+    )
   }
 
   return (

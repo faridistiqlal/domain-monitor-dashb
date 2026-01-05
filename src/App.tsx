@@ -850,6 +850,7 @@ function App() {
                             isSelected={selectedDomains.has(domain.id)}
                             onSelect={handleSelectDomain}
                             showCheckbox={true}
+                            simpleMode={true}
                           />
                         )
                       })}
