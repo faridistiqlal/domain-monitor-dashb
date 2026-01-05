@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Copy, DownloadSimple, CheckCircle, ArrowSquareOut } from '@phosphor-icons/react'
+import { Copy, DownloadSimple, CheckCircle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useState } from 'react'
 
@@ -28,9 +28,16 @@ export function ExportSuccessDialog({
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleOpenInNewTab = () => {
-    window.open(downloadUrl, '_blank')
-    toast.success('File dibuka di tab baru')
+  const handleDownloadAgain = () => {
+    // Create a temporary link and trigger download
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = filename
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('File sedang didownload lagi')
   }
 
   return (
@@ -88,16 +95,16 @@ export function ExportSuccessDialog({
             <Button
               variant="default"
               size="sm"
-              onClick={handleOpenInNewTab}
+              onClick={handleDownloadAgain}
               className="w-full"
             >
-              <ArrowSquareOut size={16} />
-              Buka di Tab Baru
+              <DownloadSimple size={16} />
+              Download Lagi
             </Button>
           </div>
 
           <p className="text-xs text-muted-foreground text-center">
-            File sudah otomatis terdownload. Gunakan link untuk membuka di tab baru atau salin untuk dibagikan.
+            File sudah otomatis terdownload. Klik "Download Lagi" jika download gagal atau ingin download ulang.
           </p>
         </div>
       </DialogContent>

@@ -81,6 +81,7 @@ export function downloadCSV(csvContent: string, filename: string = 'domain-monit
     
     console.log('[Download CSV] Blob created, size:', blob.size, 'type:', blob.type)
     
+    // IE10+ support
     if ((navigator as any).msSaveBlob) {
       (navigator as any).msSaveBlob(blob, filename)
       console.log('[Download CSV] Downloaded via msSaveBlob (IE)')
@@ -93,24 +94,29 @@ export function downloadCSV(csvContent: string, filename: string = 'domain-monit
     const link = document.createElement('a')
     link.href = url
     link.download = filename
+    link.style.display = 'none'
     
+    // Add link to DOM before clicking
     document.body.appendChild(link)
-    console.log('[Download CSV] Link added to body, triggering click')
+    console.log('[Download CSV] Link added to body')
     
-    link.click()
-    
-    console.log('[Download CSV] Click triggered')
-    
+    // Small delay to ensure link is in DOM
     setTimeout(() => {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link)
-        console.log('[Download CSV] Link removed from DOM')
-      }
-      URL.revokeObjectURL(url)
-      console.log('[Download CSV] URL revoked')
-    }, 100)
+      link.click()
+      console.log('[Download CSV] Click triggered')
+      
+      // Cleanup after download
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link)
+          console.log('[Download CSV] Link removed from DOM')
+        }
+        URL.revokeObjectURL(url)
+        console.log('[Download CSV] URL revoked')
+      }, 200)
+    }, 10)
     
-    console.log('[Download CSV] Download process completed')
+    console.log('[Download CSV] Download process initiated')
   } catch (error) {
     console.error('[Download CSV] Critical error:', error)
     console.error('[Download CSV] Error stack:', (error as Error).stack)

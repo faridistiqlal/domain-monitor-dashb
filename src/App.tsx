@@ -233,12 +233,15 @@ function App() {
       }
       
       if (result.downloadUrl && result.filename) {
-        setExportData({ 
-          url: result.downloadUrl, 
-          filename: result.filename,
-          count: domains.length 
-        })
-        setExportDialogOpen(true)
+        // Give browser time to process the download before showing dialog
+        setTimeout(() => {
+          setExportData({ 
+            url: result.downloadUrl, 
+            filename: result.filename,
+            count: domains.length 
+          })
+          setExportDialogOpen(true)
+        }, 500)
       }
       
       toast.success(`Berhasil mengekspor ${domains.length} domain ke CSV`)
@@ -285,12 +288,15 @@ function App() {
       }
       
       if (result.downloadUrl && result.filename) {
-        setExportData({ 
-          url: result.downloadUrl, 
-          filename: result.filename,
-          count: filteredDomains.length 
-        })
-        setExportDialogOpen(true)
+        // Give browser time to process the download before showing dialog
+        setTimeout(() => {
+          setExportData({ 
+            url: result.downloadUrl, 
+            filename: result.filename,
+            count: filteredDomains.length 
+          })
+          setExportDialogOpen(true)
+        }, 500)
       }
       
       toast.success(`${filteredDomains.length} domain terfilter berhasil diekspor ke CSV`)
@@ -336,12 +342,15 @@ function App() {
       }
       
       if (result.downloadUrl && result.filename) {
-        setExportData({ 
-          url: result.downloadUrl, 
-          filename: result.filename,
-          count: groupDomains.length 
-        })
-        setExportDialogOpen(true)
+        // Give browser time to process the download before showing dialog
+        setTimeout(() => {
+          setExportData({ 
+            url: result.downloadUrl, 
+            filename: result.filename,
+            count: groupDomains.length 
+          })
+          setExportDialogOpen(true)
+        }, 500)
       }
       
       toast.success(`Domain grup "${group.name}" berhasil diekspor ke CSV`)
