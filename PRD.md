@@ -20,11 +20,11 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 - **Success criteria**: Domain persists after page refresh, validates .kendalkab.go.id format, prevents duplicates
 
 ### Real-time Status Monitoring
-- **Functionality**: Periodically checks each domain's DNS resolution and HTTP/HTTPS accessibility (testing both protocols), displaying color-coded status with distinction between server reachability and web service availability, with enhanced error detection for network-specific issues
+- **Functionality**: Periodically checks each domain's DNS resolution and HTTP/HTTPS accessibility (testing both protocols), displaying color-coded status with distinction between server reachability and web service availability, with enhanced error detection for network-specific issues. **Now supports both Auto-refresh mode (checks every 60s) and Manual mode (on-demand checking)**.
 - **Purpose**: Provides immediate visibility into which sites are up or down, identifies cases where server can be reached but web service is not responding, and detects network-specific accessibility problems (e.g., site accessible from some networks but not others)
-- **Trigger**: Automatic on page load and every 60 seconds thereafter, or manual refresh
-- **Progression**: Load page → Fetch all domains → Check DNS resolution → Try HTTPS access → Try HTTP access if HTTPS fails → Detect connection errors (timeout, network unreachable, etc.) → Update status indicator → Repeat after interval
-- **Success criteria**: Status updates within 15 seconds per domain, clear visual distinction between fully online (green), DNS-only/server reachable but HTTP down (amber), and completely offline (red), shows protocol used (HTTP/HTTPS badge), shows last check timestamp, captures detailed error messages for troubleshooting network-specific issues
+- **Trigger**: **Auto mode**: Automatic on page load and every 60 seconds thereafter, or manual refresh. **Manual mode**: User clicks "Check" button to run checks on-demand
+- **Progression**: Load page → **[Auto mode]** Fetch all domains → Check DNS resolution → Try HTTPS access → Try HTTP access if HTTPS fails → Detect connection errors → Update status indicator → Repeat after interval **OR [Manual mode]** Wait for user click → Show progress indicator → Run all checks → Display results with summary toast → Offer export option
+- **Success criteria**: Status updates within 15 seconds per domain, clear visual distinction between fully online (green), DNS-only/server reachable but HTTP down (amber), and completely offline (red), shows protocol used (HTTP/HTTPS badge), shows last check timestamp, captures detailed error messages for troubleshooting network-specific issues, **mode toggle easily accessible, manual check provides clear completion feedback with domain counts**
 
 ### Enhanced Status Indicators
 - **Functionality**: Display health status with green (fully accessible), amber (DNS resolves but HTTP unavailable), or red (completely down) indicators
@@ -50,6 +50,8 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 - **Slow Network**: Show loading skeleton during initial checks, timeout after 10 seconds per domain
 - **CORS Issues**: Handle browser CORS restrictions gracefully with error messaging explaining limitations
 - **Duplicate Domains**: Prevent adding same domain twice with validation message
+- **Manual Mode Initial State**: When in manual mode without any checks performed, show clear call-to-action to run first check with domain count
+- **Export Without Check**: In manual mode, export button only available after at least one check has been performed
 
 ## Design Direction
 

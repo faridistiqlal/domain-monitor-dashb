@@ -38,6 +38,8 @@ function App() {
   const [sortBy, setSortBy] = useState<SortType>('none')
   const [countdown, setCountdown] = useState(60)
   const [isPaused, setIsPaused] = useState(false)
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
+  const [hasChecked, setHasChecked] = useState(false)
   const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage'>('domains')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
@@ -47,8 +49,12 @@ function App() {
   const [manageSearchQuery, setManageSearchQuery] = useState('')
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
 
-  const checkAllDomains = async () => {
+  const checkAllDomains = async (showToast = false) => {
     if (!domains || domains.length === 0) return
+
+    if (showToast) {
+      toast.info(`Memeriksa ${domains.length} domain...`, { duration: 2000 })
+    }
 
     const checkingStatuses: Record<string, DomainStatus> = {}
     domains.forEach(domain => {
@@ -68,6 +74,18 @@ function App() {
       newStatuses[result.id] = result
     })
     setStatuses(newStatuses)
+    setHasChecked(true)
+
+    if (showToast) {
+      const online = results.filter(r => r.status === 'online').length
+      const offline = results.filter(r => r.status === 'offline').length
+      const dnsOnly = results.filter(r => r.status === 'dns-only').length
+      
+      toast.success(
+        `Selesai! Online: ${online}, DNS Only: ${dnsOnly}, Offline: ${offline}`,
+        { duration: 4000 }
+      )
+    }
   }
 
   const handleAddDomain = (url: string) => {
@@ -139,10 +157,11 @@ function App() {
   const handleManualRefresh = async () => {
     setIsRefreshing(true)
     setCountdown(60)
-    setIsPaused(false)
-    await checkAllDomains()
+    if (autoRefreshEnabled) {
+      setIsPaused(false)
+    }
+    await checkAllDomains(true)
     setIsRefreshing(false)
-    toast.success('Status diperbarui')
   }
 
   const handleTogglePause = () => {
@@ -155,6 +174,24 @@ function App() {
         setCountdown(60)
       }
       return newPausedState
+    })
+  }
+
+  const handleToggleAutoRefresh = () => {
+    setAutoRefreshEnabled(prev => {
+      const newState = !prev
+      if (newState) {
+        toast.success('Mode auto-refresh diaktifkan')
+        setIsPaused(false)
+        setCountdown(60)
+        if (!hasChecked) {
+          checkAllDomains(true)
+        }
+      } else {
+        toast.info('Mode manual check diaktifkan')
+        setIsPaused(true)
+      }
+      return newState
     })
   }
 
@@ -296,6 +333,8 @@ function App() {
   }
 
   useEffect(() => {
+    if (!autoRefreshEnabled) return
+
     checkAllDomains()
     setCountdown(60)
 
@@ -307,10 +346,10 @@ function App() {
     }, 60000)
 
     return () => clearInterval(interval)
-  }, [domains, isPaused])
+  }, [domains, isPaused, autoRefreshEnabled])
 
   useEffect(() => {
-    if (isPaused) return
+    if (!autoRefreshEnabled || isPaused) return
 
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
@@ -320,7 +359,7 @@ function App() {
     }, 1000)
 
     return () => clearInterval(countdownInterval)
-  }, [isPaused])
+  }, [isPaused, autoRefreshEnabled])
 
   useEffect(() => {
     setSelectedDomains(new Set())
@@ -448,19 +487,35 @@ function App() {
                   variant="outline"
                   size="sm"
                   onClick={handleExportCSV}
+                  disabled={isRefreshing}
                   className="h-8"
                 >
                   <DownloadSimple size={14} />
                 </Button>
 
+                <div className="h-6 w-px bg-border" />
+
                 <Button
-                  variant="outline"
+                  variant={autoRefreshEnabled ? "default" : "outline"}
                   size="sm"
-                  onClick={handleTogglePause}
-                  className="h-8"
+                  onClick={handleToggleAutoRefresh}
+                  className="h-8 text-xs"
+                  title={autoRefreshEnabled ? "Switch ke Mode Manual" : "Switch ke Mode Auto-refresh"}
                 >
-                  {isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}
+                  {autoRefreshEnabled ? "Auto" : "Manual"}
                 </Button>
+
+                {autoRefreshEnabled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTogglePause}
+                    className="h-8"
+                    title={isPaused ? "Resume Auto-refresh" : "Pause Auto-refresh"}
+                  >
+                    {isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}
+                  </Button>
+                )}
 
                 <Button
                   variant="outline"
@@ -468,11 +523,13 @@ function App() {
                   onClick={handleManualRefresh}
                   disabled={isRefreshing}
                   className="h-8"
+                  title="Check Sekarang"
                 >
                   <ArrowClockwise 
                     size={14} 
                     className={isRefreshing ? 'animate-spin' : ''} 
                   />
+                  {isRefreshing && <span className="text-xs ml-1.5">Checking...</span>}
                 </Button>
               </div>
             </div>
@@ -503,6 +560,33 @@ function App() {
           </TabsList>
 
           <TabsContent value="domains" className="space-y-4 flex flex-col h-[calc(100vh-220px)]">
+            {!autoRefreshEnabled && hasChecked && !isRefreshing && totalCount > 0 && (
+              <div className="bg-success/10 border border-success/30 rounded-lg p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
+                      <CheckSquare size={18} weight="duotone" className="text-success" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-success">Check Selesai!</p>
+                      <p className="text-xs text-muted-foreground">
+                        Online: {onlineCount} • DNS Only: {dnsOnlyCount} • Offline: {offlineCount}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    className="h-8 bg-success text-success-foreground hover:bg-success/90"
+                  >
+                    <DownloadSimple size={14} />
+                    Export Hasil
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {viewMode === 'group-detail' && selectedGroup && (
               <div className="flex items-center justify-between gap-2 px-1">
                 <div className="flex items-center gap-2">
@@ -584,14 +668,16 @@ function App() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">
-                      {isPaused ? 'Dijeda' : `Refresh dalam ${countdown}s`} • {totalCount} domain
+                      {autoRefreshEnabled 
+                        ? (isPaused ? 'Dijeda' : `Refresh dalam ${countdown}s`) 
+                        : 'Mode Manual'} • {totalCount} domain
                     </span>
                     {filteredDomains.length !== totalCount && (
                       <Badge variant="secondary" className="text-xs font-mono">
                         {filteredDomains.length} ditampilkan
                       </Badge>
                     )}
-                    {!isPaused && (
+                    {autoRefreshEnabled && !isPaused && (
                       <Progress 
                         value={(countdown / 60) * 100} 
                         className="w-16 h-1.5"
@@ -701,6 +787,33 @@ function App() {
 
             {!domains || domains.length === 0 ? (
               <EmptyState />
+            ) : !hasChecked && !autoRefreshEnabled ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center space-y-4">
+                  <div className="w-20 h-20 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center">
+                    <ArrowClockwise size={40} weight="duotone" className="text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold">Mode Manual Check</h3>
+                    <p className="text-sm text-muted-foreground max-w-md">
+                      Klik tombol <strong>Check</strong> untuk memeriksa status semua domain.<br />
+                      Setelah selesai, Anda dapat langsung export hasilnya.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                    size="lg"
+                    className="mt-2"
+                  >
+                    <ArrowClockwise 
+                      size={18} 
+                      className={isRefreshing ? 'animate-spin' : ''} 
+                    />
+                    {isRefreshing ? 'Memeriksa...' : `Check ${totalCount} Domain`}
+                  </Button>
+                </div>
+              </div>
             ) : filteredDomains.length === 0 ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center space-y-2">
