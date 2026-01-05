@@ -13,11 +13,18 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 ## Essential Features
 
 ### Domain List Management
-- **Functionality**: Add, view, and remove .kendalkab.go.id domains to monitor
-- **Purpose**: Allows customization of which government websites to track
-- **Trigger**: User clicks "Add Domain" button or delete icon on existing domain
+- **Functionality**: Add, view, and remove .kendalkab.go.id domains to monitor with bulk operations and grouping
+- **Purpose**: Allows customization of which government websites to track with efficient management of large domain lists
+- **Trigger**: User clicks "Add Domain" button, imports CSV, or uses bulk delete in manage tab
 - **Progression**: Click Add → Input domain name → Validate format → Save to list → Begin monitoring
-- **Success criteria**: Domain persists after page refresh, validates .kendalkab.go.id format, prevents duplicates
+- **Success criteria**: Domain persists after page refresh, validates .kendalkab.go.id format, prevents duplicates, handles 300+ domains smoothly
+
+### Performance Optimization
+- **Functionality**: Debounced search input (300ms delay), memoized filtering/sorting operations, optimized rendering with React.memo
+- **Purpose**: Ensures smooth, fluid user experience when filtering and searching through 300+ domains
+- **Trigger**: User types in search field or changes filters
+- **Progression**: User input → Debounce delay → Memoized filter calculation → Optimized re-render of visible items only
+- **Success criteria**: No visible lag or stutter when typing in search with 300 domains, filter changes are instant, smooth scrolling through large lists
 
 ### Real-time Status Monitoring
 - **Functionality**: Periodically checks each domain's DNS resolution and HTTP/HTTPS accessibility (testing both protocols), displaying color-coded status with distinction between server reachability and web service availability, with enhanced error detection for network-specific issues. **Now supports both Auto-refresh mode (checks every 60s) and Manual mode (on-demand checking)**.

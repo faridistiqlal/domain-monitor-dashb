@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
@@ -19,10 +19,13 @@ import { InfoDialog } from '@/components/InfoDialog'
 import { GroupCard } from '@/components/GroupCard'
 import { GroupFormDialog } from '@/components/GroupFormDialog'
 import { AssignDomainsDialog } from '@/components/AssignDomainsDialog'
+import { OptimizedDomainList } from '@/components/VirtualizedDomainList'
 import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
 import { toast } from 'sonner'
+import { useDebounce } from '@/hooks/use-debounce'
+import { useFilteredDomains } from '@/hooks/use-filtered-domains'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
@@ -35,6 +38,7 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const [sortBy, setSortBy] = useState<SortType>('none')
   const [countdown, setCountdown] = useState(60)
   const [isPaused, setIsPaused] = useState(false)
@@ -47,6 +51,7 @@ function App() {
   const [editingGroup, setEditingGroup] = useState<DomainGroup | null>(null)
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set())
   const [manageSearchQuery, setManageSearchQuery] = useState('')
+  const debouncedManageSearchQuery = useDebounce(manageSearchQuery, 300)
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
 
   const checkAllDomains = async (showToast = false) => {
@@ -363,85 +368,80 @@ function App() {
 
   useEffect(() => {
     setSelectedDomains(new Set())
-  }, [filter, searchQuery, sortBy, viewMode, selectedGroupId, activeTab, manageGroupFilter])
+  }, [filter, debouncedSearchQuery, sortBy, viewMode, selectedGroupId, activeTab, manageGroupFilter])
 
-  const currentViewDomains = (() => {
+  const currentViewDomains = useMemo(() => {
     if (viewMode === 'group-detail' && selectedGroupId) {
       return domains?.filter(d => d.groupId === selectedGroupId) || []
     }
     return domains || []
-  })()
+  }, [domains, viewMode, selectedGroupId])
 
-  const onlineCount = currentViewDomains.filter(d => statuses[d.id]?.status === 'online').length
-  const offlineCount = currentViewDomains.filter(d => statuses[d.id]?.status === 'offline').length
-  const dnsOnlyCount = currentViewDomains.filter(d => statuses[d.id]?.status === 'dns-only').length
+  const onlineCount = useMemo(() => 
+    currentViewDomains.filter(d => statuses[d.id]?.status === 'online').length,
+    [currentViewDomains, statuses]
+  )
+  const offlineCount = useMemo(() => 
+    currentViewDomains.filter(d => statuses[d.id]?.status === 'offline').length,
+    [currentViewDomains, statuses]
+  )
+  const dnsOnlyCount = useMemo(() => 
+    currentViewDomains.filter(d => statuses[d.id]?.status === 'dns-only').length,
+    [currentViewDomains, statuses]
+  )
   const totalCount = currentViewDomains.length
 
-  const globalOnlineCount = (domains || []).filter(d => statuses[d.id]?.status === 'online').length
-  const globalOfflineCount = (domains || []).filter(d => statuses[d.id]?.status === 'offline').length
-  const globalDnsOnlyCount = (domains || []).filter(d => statuses[d.id]?.status === 'dns-only').length
+  const globalOnlineCount = useMemo(() => 
+    (domains || []).filter(d => statuses[d.id]?.status === 'online').length,
+    [domains, statuses]
+  )
+  const globalOfflineCount = useMemo(() => 
+    (domains || []).filter(d => statuses[d.id]?.status === 'offline').length,
+    [domains, statuses]
+  )
+  const globalDnsOnlyCount = useMemo(() => 
+    (domains || []).filter(d => statuses[d.id]?.status === 'dns-only').length,
+    [domains, statuses]
+  )
   const globalTotalCount = domains?.length || 0
 
-  const filteredDomains = currentViewDomains.filter(domain => {
-    const matchesFilter = filter === 'all' || (() => {
-      const status = statuses[domain.id]?.status
-      if (!status || status === 'checking') return true
-      return status === filter
-    })()
-    
-    const matchesSearch = searchQuery === '' || 
-      domain.url.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    return matchesFilter && matchesSearch
+  const filteredDomains = useMemo(() => 
+    currentViewDomains.filter(domain => {
+      const matchesFilter = filter === 'all' || (() => {
+        const status = statuses[domain.id]?.status
+        if (!status || status === 'checking') return true
+        return status === filter
+      })()
+      
+      const matchesSearch = debouncedSearchQuery === '' || 
+        domain.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+      
+      return matchesFilter && matchesSearch
+    }),
+    [currentViewDomains, filter, debouncedSearchQuery, statuses]
+  )
+
+  const sortedDomains = useFilteredDomains({
+    domains: filteredDomains,
+    statuses,
+    filter: 'all',
+    searchQuery: '',
+    sortBy,
   })
 
-  const sortedDomains = (() => {
-    if (sortBy === 'none') return filteredDomains
-
-    const domainsCopy = [...filteredDomains]
-
-    if (sortBy === 'name-asc') {
-      return domainsCopy.sort((a, b) => a.url.localeCompare(b.url))
-    }
-
-    if (sortBy === 'name-desc') {
-      return domainsCopy.sort((a, b) => b.url.localeCompare(a.url))
-    }
-
-    if (sortBy === 'status-online-first') {
-      return domainsCopy.sort((a, b) => {
-        const statusA = statuses[a.id]?.status || 'checking'
-        const statusB = statuses[b.id]?.status || 'checking'
-        
-        const statusOrder: Record<string, number> = {
-          'online': 1,
-          'dns-only': 2,
-          'offline': 3,
-          'checking': 4
-        }
-        
-        return (statusOrder[statusA] || 999) - (statusOrder[statusB] || 999)
-      })
-    }
-
-    if (sortBy === 'status-offline-first') {
-      return domainsCopy.sort((a, b) => {
-        const statusA = statuses[a.id]?.status || 'checking'
-        const statusB = statuses[b.id]?.status || 'checking'
-        
-        const statusOrder: Record<string, number> = {
-          'offline': 1,
-          'dns-only': 2,
-          'online': 3,
-          'checking': 4
-        }
-        
-        return (statusOrder[statusA] || 999) - (statusOrder[statusB] || 999)
-      })
-    }
-
-    return domainsCopy
-  })()
+  const filteredManageDomains = useMemo(() => 
+    (domains || []).filter(domain => {
+      const matchesSearch = debouncedManageSearchQuery === '' || 
+        domain.url.toLowerCase().includes(debouncedManageSearchQuery.toLowerCase())
+      
+      const matchesGroup = manageGroupFilter === 'all' || 
+        (manageGroupFilter === 'ungrouped' && !domain.groupId) ||
+        domain.groupId === manageGroupFilter
+      
+      return matchesSearch && matchesGroup
+    }),
+    [domains, debouncedManageSearchQuery, manageGroupFilter]
+  )
 
   const selectedGroup = selectedGroupId ? groups?.find(g => g.id === selectedGroupId) : null
 
@@ -850,21 +850,13 @@ function App() {
               </div>
             ) : (
               <ScrollArea className="flex-1">
-                <div className="space-y-2 pr-4">
-                  {sortedDomains.map(domain => {
-                    return (
-                      <DomainCard
-                        key={domain.id}
-                        domain={domain}
-                        status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
-                        onDelete={() => {}}
-                        group={undefined}
-                        isSelected={false}
-                        onSelect={() => {}}
-                        showCheckbox={false}
-                      />
-                    )
-                  })}
+                <div className="pr-4">
+                  <OptimizedDomainList
+                    domains={sortedDomains}
+                    statuses={statuses}
+                    showCheckbox={false}
+                    simpleMode={false}
+                  />
                 </div>
               </ScrollArea>
             )}
@@ -1001,18 +993,7 @@ function App() {
 
             {!domains || domains.length === 0 ? (
               <EmptyState />
-            ) : (() => {
-              const filteredManageDomains = (domains || []).filter(domain => {
-                const matchesSearch = manageSearchQuery === '' || 
-                  domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
-                
-                const matchesGroup = manageGroupFilter === 'all' || 
-                  (manageGroupFilter === 'ungrouped' && !domain.groupId) ||
-                  domain.groupId === manageGroupFilter
-                
-                return matchesSearch && matchesGroup
-              })
-              return filteredManageDomains.length === 0 ? (
+            ) : filteredManageDomains.length === 0 ? (
                 <div className="flex items-center justify-center h-[calc(100vh-400px)]">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-muted-foreground">
@@ -1062,30 +1043,21 @@ function App() {
                     </span>
                   </div>
                   <ScrollArea className="h-[calc(100vh-380px)]">
-                    <div className="space-y-2 pr-4">
-                      {filteredManageDomains.map(domain => {
-                        const domainGroup = domain.groupId 
-                          ? groups?.find(g => g.id === domain.groupId)
-                          : undefined
-                        return (
-                          <DomainCard
-                            key={domain.id}
-                            domain={domain}
-                            status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
-                            onDelete={handleDeleteDomain}
-                            group={domainGroup}
-                            isSelected={selectedDomains.has(domain.id)}
-                            onSelect={handleSelectDomain}
-                            showCheckbox={true}
-                            simpleMode={true}
-                          />
-                        )
-                      })}
+                    <div className="pr-4">
+                      <OptimizedDomainList
+                        domains={filteredManageDomains}
+                        statuses={statuses}
+                        groups={groups}
+                        onDelete={handleDeleteDomain}
+                        selectedDomains={selectedDomains}
+                        onSelect={handleSelectDomain}
+                        showCheckbox={true}
+                        simpleMode={true}
+                      />
                     </div>
                   </ScrollArea>
                 </div>
-              )
-            })()}
+              )}
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-4">
