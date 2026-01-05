@@ -19,12 +19,12 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 - **Progression**: Click Add → Input domain name → Validate format → Save to list → Begin monitoring
 - **Success criteria**: Domain persists after page refresh, validates .kendalkab.go.id format, prevents duplicates, handles 300+ domains smoothly
 
-### Performance Optimization
-- **Functionality**: Debounced search input (300ms delay), memoized filtering/sorting operations, optimized rendering with React.memo
-- **Purpose**: Ensures smooth, fluid user experience when filtering and searching through 300+ domains
-- **Trigger**: User types in search field or changes filters
-- **Progression**: User input → Debounce delay → Memoized filter calculation → Optimized re-render of visible items only
-- **Success criteria**: No visible lag or stutter when typing in search with 300 domains, filter changes are instant, smooth scrolling through large lists
+### Performance Optimization & Virtual Scrolling
+- **Functionality**: Progressive loading with automatic and manual "Load More" functionality, displaying 50 domains initially and loading 50 more as user scrolls. Includes debounced search input (300ms delay), memoized filtering/sorting operations, optimized rendering with React.memo. Search and filter work on ALL data, but only visible items are rendered.
+- **Purpose**: Ensures instant, fluid user experience when filtering and searching through 300+ domains without any lag or stutter
+- **Trigger**: User scrolls near bottom of list (intersection observer) or clicks "Load More" button, types in search field, or changes filters
+- **Progression**: Initial render (50 items) → User scrolls down → Auto-detect viewport approach → Load next 50 → Repeat. Search applies to all domains but only renders visible chunk.
+- **Success criteria**: Zero perceived lag with 300+ domains, instant filter/search response, smooth scrolling, clear indicator showing "X of Y domains" displayed, load more button as fallback
 
 ### Real-time Status Monitoring
 - **Functionality**: Periodically checks each domain's DNS resolution and HTTP/HTTPS accessibility (testing both protocols), displaying color-coded status with distinction between server reachability and web service availability, with enhanced error detection for network-specific issues. **Now supports both Auto-refresh mode (checks every 60s) and Manual mode (on-demand checking)**.

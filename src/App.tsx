@@ -849,16 +849,18 @@ function App() {
                 </div>
               </div>
             ) : (
-              <ScrollArea className="flex-1">
-                <div className="pr-4">
-                  <OptimizedDomainList
-                    domains={sortedDomains}
-                    statuses={statuses}
-                    showCheckbox={false}
-                    simpleMode={false}
-                  />
-                </div>
-              </ScrollArea>
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="pr-4">
+                    <OptimizedDomainList
+                      domains={sortedDomains}
+                      statuses={statuses}
+                      showCheckbox={false}
+                      simpleMode={false}
+                    />
+                  </div>
+                </ScrollArea>
+              </div>
             )}
           </TabsContent>
 

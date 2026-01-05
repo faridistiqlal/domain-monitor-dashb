@@ -1,6 +1,8 @@
-import { memo } from 'react'
+import { memo, useState, useEffect, useCallback, useRef } from 'react'
 import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
 import { DomainCard } from './DomainCard'
+import { Button } from './ui/button'
+import { CaretDown } from '@phosphor-icons/react'
 
 interface OptimizedDomainListProps {
   domains: Domain[]
@@ -38,9 +40,46 @@ export const OptimizedDomainList = memo(({
   showCheckbox = false,
   simpleMode = false,
 }: OptimizedDomainListProps) => {
+  const ITEMS_PER_PAGE = 50
+  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setDisplayCount(ITEMS_PER_PAGE)
+  }, [domains])
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && displayCount < domains.length) {
+          setDisplayCount(prev => Math.min(prev + ITEMS_PER_PAGE, domains.length))
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    )
+
+    const currentRef = loadMoreRef.current
+    if (currentRef) {
+      observer.observe(currentRef)
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef)
+      }
+    }
+  }, [displayCount, domains.length])
+
+  const visibleDomains = domains.slice(0, displayCount)
+  const hasMore = displayCount < domains.length
+
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount(prev => Math.min(prev + ITEMS_PER_PAGE, domains.length))
+  }, [domains.length])
+
   return (
     <div className="space-y-2">
-      {domains.map(domain => {
+      {visibleDomains.map(domain => {
         const status = statuses[domain.id] || { id: domain.id, status: 'checking' as const }
         const group = domain.groupId && groups
           ? groups.find(g => g.id === domain.groupId)
@@ -60,6 +99,23 @@ export const OptimizedDomainList = memo(({
           />
         )
       })}
+      
+      {hasMore && (
+        <div ref={loadMoreRef} className="pt-4 pb-2 flex flex-col items-center gap-3">
+          <div className="text-xs text-muted-foreground">
+            Menampilkan {displayCount} dari {domains.length} domain
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLoadMore}
+            className="h-8"
+          >
+            <CaretDown size={14} />
+            Muat {Math.min(ITEMS_PER_PAGE, domains.length - displayCount)} Lagi
+          </Button>
+        </div>
+      )}
     </div>
   )
 })
