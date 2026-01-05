@@ -15,10 +15,13 @@ import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
 import { toast } from 'sonner'
 
+type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
+
 function App() {
   const [domains, setDomains] = useKV<Domain[]>('monitoring-domains', [])
   const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [filter, setFilter] = useState<FilterType>('all')
 
   const checkAllDomains = async () => {
     if (!domains || domains.length === 0) return
@@ -118,6 +121,13 @@ function App() {
   const dnsOnlyCount = Object.values(statuses).filter(s => s.status === 'dns-only').length
   const totalCount = domains?.length || 0
 
+  const filteredDomains = domains?.filter(domain => {
+    if (filter === 'all') return true
+    const status = statuses[domain.id]?.status
+    if (!status || status === 'checking') return true
+    return status === filter
+  }) || []
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-4 max-w-5xl">
@@ -208,38 +218,94 @@ function App() {
           <AddDomainForm onAdd={handleAddDomain} />
 
           {totalCount > 0 && (
-            <div className="flex items-center justify-between text-xs px-1">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
-                  <span className="text-muted-foreground">Online</span>
-                  <span className="font-semibold text-success">{onlineCount}</span>
-                </div>
-                {dnsOnlyCount > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs px-1">
+                <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-                    <span className="text-muted-foreground">DNS Only</span>
-                    <span className="font-semibold text-amber-500">{dnsOnlyCount}</span>
+                    <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
+                    <span className="text-muted-foreground">Online</span>
+                    <span className="font-semibold text-success">{onlineCount}</span>
                   </div>
-                )}
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
-                  <span className="text-muted-foreground">Offline</span>
-                  <span className="font-semibold text-destructive">{offlineCount}</span>
+                  {dnsOnlyCount > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                      <span className="text-muted-foreground">DNS Only</span>
+                      <span className="font-semibold text-amber-500">{dnsOnlyCount}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)]" />
+                    <span className="text-muted-foreground">Offline</span>
+                    <span className="font-semibold text-destructive">{offlineCount}</span>
+                  </div>
+                </div>
+                <div className="text-muted-foreground">
+                  Auto-refresh 60s • {totalCount} domain
                 </div>
               </div>
-              <div className="text-muted-foreground">
-                Auto-refresh 60s • {totalCount} domain
+
+              <div className="flex items-center gap-2 px-1">
+                <span className="text-xs text-muted-foreground">Filter:</span>
+                <div className="flex gap-1.5">
+                  <Button
+                    variant={filter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('all')}
+                    className="h-7 px-3 text-xs"
+                  >
+                    Semua
+                  </Button>
+                  <Button
+                    variant={filter === 'online' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('online')}
+                    className="h-7 px-3 text-xs"
+                  >
+                    Online
+                  </Button>
+                  {dnsOnlyCount > 0 && (
+                    <Button
+                      variant={filter === 'dns-only' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setFilter('dns-only')}
+                      className="h-7 px-3 text-xs"
+                    >
+                      DNS Only
+                    </Button>
+                  )}
+                  <Button
+                    variant={filter === 'offline' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('offline')}
+                    className="h-7 px-3 text-xs"
+                  >
+                    Offline
+                  </Button>
+                </div>
               </div>
             </div>
           )}
 
           {!domains || domains.length === 0 ? (
             <EmptyState />
+          ) : filteredDomains.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <p className="text-sm text-muted-foreground">Tidak ada domain dengan status ini</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilter('all')}
+                  className="text-xs"
+                >
+                  Tampilkan Semua
+                </Button>
+              </div>
+            </div>
           ) : (
             <ScrollArea className="flex-1">
               <div className="space-y-2 pr-4">
-                {domains.map(domain => (
+                {filteredDomains.map(domain => (
                   <DomainCard
                     key={domain.id}
                     domain={domain}
