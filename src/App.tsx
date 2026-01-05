@@ -789,13 +789,13 @@ function App() {
               <EmptyState />
             ) : !hasChecked && !autoRefreshEnabled ? (
               <div className="flex-1 flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <div className="w-20 h-20 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center">
-                    <ArrowClockwise size={40} weight="duotone" className="text-primary" />
+                <div className="text-center space-y-6 max-w-md mx-auto">
+                  <div className="w-24 h-24 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center">
+                    <ArrowClockwise size={48} weight="duotone" className="text-primary" />
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold">Mode Manual Check</h3>
-                    <p className="text-sm text-muted-foreground max-w-md">
+                  <div className="space-y-3">
+                    <h3 className="text-xl font-semibold">Mode Manual Check</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Klik tombol <strong>Check</strong> untuk memeriksa status semua domain.<br />
                       Setelah selesai, Anda dapat langsung export hasilnya.
                     </p>
@@ -852,16 +852,13 @@ function App() {
               <ScrollArea className="flex-1">
                 <div className="space-y-2 pr-4">
                   {sortedDomains.map(domain => {
-                    const domainGroup = domain.groupId 
-                      ? groups?.find(g => g.id === domain.groupId)
-                      : undefined
                     return (
                       <DomainCard
                         key={domain.id}
                         domain={domain}
                         status={statuses[domain.id] || { id: domain.id, status: 'checking' }}
                         onDelete={() => {}}
-                        group={domainGroup}
+                        group={undefined}
                         isSelected={false}
                         onSelect={() => {}}
                         showCheckbox={false}
