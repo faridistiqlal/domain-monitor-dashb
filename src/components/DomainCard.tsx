@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, CaretDown } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusIndicator } from './StatusIndicator'
@@ -9,6 +9,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 
 interface DomainCardProps {
@@ -18,9 +24,17 @@ interface DomainCardProps {
 }
 
 export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
-  const handleCopyUrl = async () => {
+  const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
     try {
-      await navigator.clipboard.writeText(domain.url)
+      let textToCopy = domain.url
+      
+      if (format === 'https') {
+        textToCopy = `https://${domain.url}`
+      } else if (format === 'http') {
+        textToCopy = `http://${domain.url}`
+      }
+      
+      await navigator.clipboard.writeText(textToCopy)
       toast.success('URL berhasil disalin')
     } catch (error) {
       toast.error('Gagal menyalin URL')
@@ -96,21 +110,41 @@ export function DomainCard({ domain, status, onDelete }: DomainCardProps) {
                   <p>Buka di tab baru</p>
                 </TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleCopyUrl}
-                    className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  >
-                    <Copy size={14} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Salin URL</p>
-                </TooltipContent>
-              </Tooltip>
+              
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                      >
+                        <Copy size={14} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Salin URL</p>
+                  </TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => handleCopyUrl('plain')} className="text-xs cursor-pointer">
+                    <Copy size={14} className="mr-2" />
+                    Salin domain
+                    <span className="ml-auto text-muted-foreground">{domain.url}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleCopyUrl('https')} className="text-xs cursor-pointer">
+                    <Copy size={14} className="mr-2" />
+                    Salin dengan HTTPS
+                    <span className="ml-auto text-success">✓</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleCopyUrl('http')} className="text-xs cursor-pointer">
+                    <Copy size={14} className="mr-2" />
+                    Salin dengan HTTP
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
