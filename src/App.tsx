@@ -205,6 +205,11 @@ function App() {
       toast.error('Tidak ada data untuk diekspor')
       return
     }
+
+    if (!autoRefreshEnabled && !hasChecked) {
+      toast.error('Silakan check domain terlebih dahulu sebelum export')
+      return
+    }
     
     const result = exportDomainsToCSV(domains, statuses)
     
@@ -222,6 +227,11 @@ function App() {
   const handleExportFilteredCSV = () => {
     if (filteredDomains.length === 0) {
       toast.error('Tidak ada domain yang terfilter untuk diekspor')
+      return
+    }
+
+    if (!autoRefreshEnabled && !hasChecked) {
+      toast.error('Silakan check domain terlebih dahulu sebelum export')
       return
     }
     
@@ -248,6 +258,11 @@ function App() {
   const handleExportGroupCSV = (groupId: string) => {
     const group = groups?.find(g => g.id === groupId)
     if (!group) return
+
+    if (!autoRefreshEnabled && !hasChecked) {
+      toast.error('Silakan check domain terlebih dahulu sebelum export')
+      return
+    }
 
     const groupDomains = domains?.filter(d => d.groupId === groupId) || []
     
@@ -487,8 +502,9 @@ function App() {
                   variant="outline"
                   size="sm"
                   onClick={handleExportCSV}
-                  disabled={isRefreshing}
+                  disabled={isRefreshing || (!autoRefreshEnabled && !hasChecked) || !domains || domains.length === 0}
                   className="h-8"
+                  title={!autoRefreshEnabled && !hasChecked ? "Check domain terlebih dahulu" : "Export semua domain"}
                 >
                   <DownloadSimple size={14} />
                 </Button>
@@ -623,8 +639,9 @@ function App() {
                       variant="outline"
                       size="sm"
                       onClick={handleExportFilteredCSV}
-                      disabled={filteredDomains.length === 0}
+                      disabled={filteredDomains.length === 0 || (!autoRefreshEnabled && !hasChecked)}
                       className="h-7 text-xs"
+                      title={!autoRefreshEnabled && !hasChecked ? "Check domain terlebih dahulu" : ""}
                     >
                       <DownloadSimple size={14} />
                       Export Terfilter ({filteredDomains.length})
@@ -634,8 +651,9 @@ function App() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleExportGroupCSV(selectedGroup.id)}
-                    disabled={currentViewDomains.length === 0}
+                    disabled={currentViewDomains.length === 0 || (!autoRefreshEnabled && !hasChecked)}
                     className="h-7 text-xs"
+                    title={!autoRefreshEnabled && !hasChecked ? "Check domain terlebih dahulu" : ""}
                   >
                     <DownloadSimple size={14} />
                     Export Semua
@@ -688,7 +706,9 @@ function App() {
                         variant="outline"
                         size="sm"
                         onClick={handleExportFilteredCSV}
+                        disabled={!autoRefreshEnabled && !hasChecked}
                         className="h-7 text-xs ml-2"
+                        title={!autoRefreshEnabled && !hasChecked ? "Check domain terlebih dahulu" : ""}
                       >
                         <DownloadSimple size={14} />
                         Export Terfilter
@@ -1148,6 +1168,7 @@ function App() {
                         onDelete={handleDeleteGroup}
                         onViewDomains={handleViewGroupDomains}
                         onExport={handleExportGroupCSV}
+                        disableExport={!autoRefreshEnabled && !hasChecked}
                       />
                     )
                   })}

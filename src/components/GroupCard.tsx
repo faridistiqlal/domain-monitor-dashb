@@ -20,6 +20,7 @@ interface GroupCardProps {
   onDelete: (groupId: string) => void
   onViewDomains: (groupId: string) => void
   onExport: (groupId: string) => void
+  disableExport?: boolean
 }
 
 export function GroupCard({
@@ -32,6 +33,7 @@ export function GroupCard({
   onDelete,
   onViewDomains,
   onExport,
+  disableExport = false,
 }: GroupCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -91,7 +93,7 @@ export function GroupCard({
                 e.stopPropagation()
                 onExport(group.id)
               }}
-              disabled={domainCount === 0}
+              disabled={domainCount === 0 || disableExport}
             >
               <DownloadSimple size={14} className="mr-2" />
               Export CSV
