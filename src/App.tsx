@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -614,29 +614,48 @@ function App() {
 
           <TabsContent value="domains" className="space-y-4 flex flex-col h-[calc(100vh-220px)]">
             {!autoRefreshEnabled && hasChecked && !isRefreshing && totalCount > 0 && (
-              <div className="bg-success/10 border border-success/30 rounded-lg p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
-                      <CheckSquare size={18} weight="duotone" className="text-success" />
+              <div className="space-y-3">
+                <div className="bg-success/10 border border-success/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
+                        <CheckSquare size={18} weight="duotone" className="text-success" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-success">Check Selesai!</p>
+                        <p className="text-xs text-muted-foreground">
+                          Online: {onlineCount} • DNS Only: {dnsOnlyCount} • Offline: {offlineCount}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-success">Check Selesai!</p>
-                      <p className="text-xs text-muted-foreground">
-                        Online: {onlineCount} • DNS Only: {dnsOnlyCount} • Offline: {offlineCount}
-                      </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportCSV}
+                      className="h-8 bg-success text-success-foreground hover:bg-success/90"
+                    >
+                      <DownloadSimple size={14} />
+                      Export Hasil
+                    </Button>
+                  </div>
+                </div>
+                
+                {dnsOnlyCount > onlineCount && dnsOnlyCount > 5 && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                        <Info size={18} weight="duotone" className="text-amber-500" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-amber-500">Banyak Status DNS Only Terdeteksi</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Jika website sebenarnya bisa diakses normal, kemungkinan masalahnya adalah <span className="font-semibold text-foreground">browser security (CORS)</span> yang memblokir monitoring cross-origin dari aplikasi ini. 
+                          Klik icon <Globe size={12} weight="duotone" className="inline" /> untuk verifikasi manual ke website asli.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportCSV}
-                    className="h-8 bg-success text-success-foreground hover:bg-success/90"
-                  >
-                    <DownloadSimple size={14} />
-                    Export Hasil
-                  </Button>
-                </div>
+                )}
               </div>
             )}
 

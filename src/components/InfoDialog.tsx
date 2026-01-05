@@ -56,7 +56,7 @@ export function InfoDialog() {
                     <div className="font-semibold text-amber-500">DNS Only</div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       Server DNS berfungsi dan domain dapat di-resolve ke IP address (bisa di-ping), 
-                      <span className="font-medium text-foreground"> tetapi web server HTTP/HTTPS tidak merespons</span>. 
+                      <span className="font-medium text-foreground"> tetapi web server HTTP/HTTPS tidak merespons atau timeout</span>. 
                       Kemungkinan penyebab:
                     </p>
                     <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
@@ -64,10 +64,12 @@ export function InfoDialog() {
                       <li>Konfigurasi firewall memblokir port 80/443</li>
                       <li>Service web hosting belum diaktifkan di cPanel/VM</li>
                       <li>Virtual host tidak dikonfigurasi dengan benar</li>
+                      <li>Server timeout/sangat lambat (&gt;6 detik)</li>
                       <li><span className="font-medium text-foreground">Network-specific issue:</span> Website hanya bisa diakses dari jaringan tertentu karena pembatasan IP/firewall</li>
+                      <li><span className="font-medium text-foreground">CORS/Browser security:</span> Browser memblokir akses cross-origin dari aplikasi monitoring ini</li>
                     </ul>
                     <p className="text-sm text-amber-500 font-medium pt-1">
-                      ⚠️ Pengunjung tidak dapat mengakses website meski domain valid
+                      ⚠️ Pengunjung mungkin tidak dapat mengakses website atau akses sangat lambat
                     </p>
                   </div>
                 </div>
@@ -134,10 +136,22 @@ export function InfoDialog() {
             <AccordionContent>
               <div className="space-y-3 pt-2">
                 <div className="bg-card border rounded-lg p-3">
-                  <p className="text-sm font-semibold text-amber-500 mb-1">Status "DNS Only":</p>
+                  <p className="text-sm font-semibold text-amber-500 mb-1">Status "DNS Only" setelah publish:</p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Jika banyak domain menunjukkan status DNS Only setelah aplikasi di-publish, kemungkinan:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
+                    <li><span className="font-semibold text-foreground">Browser Security (CORS):</span> Browser memblokir cross-origin request dari aplikasi ke domain yang tidak mengizinkan akses cross-origin. Solusi: cek langsung ke website aslinya untuk memastikan.</li>
+                    <li><span className="font-semibold text-foreground">Firewall/IP Restriction:</span> Server hanya mengizinkan akses dari IP tertentu. Monitoring dari GitHub App mungkin terblokir.</li>
+                    <li><span className="font-semibold text-foreground">Server Slow/Overload:</span> Timeout 6 detik tercapai karena server lambat atau overload.</li>
+                  </ul>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="text-sm font-semibold text-amber-500 mb-1">Verifikasi Manual:</p>
                   <p className="text-sm text-muted-foreground">
-                    Cek service web server di cPanel/VM, pastikan Apache/Nginx berjalan. 
-                    Periksa juga konfigurasi firewall dan virtual host.
+                    Untuk domain yang status DNS Only, <span className="font-semibold text-foreground">klik icon globe</span> untuk membuka website di tab baru. 
+                    Jika website terbuka dengan baik, berarti masalahnya adalah browser security/CORS, bukan server mati.
                   </p>
                 </div>
                 
@@ -150,12 +164,10 @@ export function InfoDialog() {
                 </div>
 
                 <div className="bg-card border rounded-lg p-3">
-                  <p className="text-sm font-semibold text-accent mb-1">Kasus Network-Specific:</p>
+                  <p className="text-sm font-semibold text-accent mb-1">Response Time 6000ms:</p>
                   <p className="text-sm text-muted-foreground">
-                    Jika domain bisa di-ping tapi website tidak bisa diakses dari jaringan tertentu, 
-                    kemungkinan ada pembatasan firewall berdasarkan IP. Coba akses dari jaringan lain 
-                    atau gunakan VPN. Periksa konfigurasi <span className="font-mono">.htaccess</span>, 
-                    iptables, atau firewall cPanel untuk whitelist/blacklist IP.
+                    Jika response time menunjukkan 6000ms, artinya koneksi timeout. 
+                    Server tidak merespons dalam 6 detik. Cek apakah server overload, network lambat, atau ada blocking.
                   </p>
                 </div>
               </div>

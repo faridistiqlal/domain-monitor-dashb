@@ -3,7 +3,14 @@ import { DomainStatus } from './types'
 async function getIPAddress(domain: string): Promise<string | undefined> {
   try {
     const cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0]
-    const response = await fetch(`https://dns.google/resolve?name=${cleanDomain}&type=A`)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+    
+    const response = await fetch(`https://dns.google/resolve?name=${cleanDomain}&type=A`, {
+      signal: controller.signal
+    })
+    clearTimeout(timeoutId)
+    
     const data = await response.json()
     
     if (data.Answer && data.Answer.length > 0) {
@@ -15,7 +22,7 @@ async function getIPAddress(domain: string): Promise<string | undefined> {
   return undefined
 }
 
-async function checkHTTPAccess(url: string, timeout: number = 15000): Promise<{ accessible: boolean; responseTime?: number; error?: string; statusCode?: number }> {
+async function checkHTTPAccess(url: string, timeout: number = 6000): Promise<{ accessible: boolean; responseTime?: number; error?: string; statusCode?: number }> {
   const startTime = Date.now()
   const fullUrl = url.startsWith('http') ? url : `https://${url}`
   
@@ -24,7 +31,7 @@ async function checkHTTPAccess(url: string, timeout: number = 15000): Promise<{ 
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
     const response = await fetch(fullUrl, {
-      method: 'GET',
+      method: 'HEAD',
       mode: 'no-cors',
       cache: 'no-store',
       signal: controller.signal,
@@ -44,7 +51,7 @@ async function checkHTTPAccess(url: string, timeout: number = 15000): Promise<{ 
     
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
-        return { accessible: false, error: 'Connection Timeout', responseTime }
+        return { accessible: false, error: 'Connection Timeout', responseTime: timeout }
       }
       
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
@@ -65,13 +72,13 @@ async function checkHTTPAccess(url: string, timeout: number = 15000): Promise<{ 
 async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; responseTime?: number; error?: string; protocol?: string }> {
   const cleanUrl = url.replace(/^https?:\/\//, '')
   
-  const httpsResult = await checkHTTPAccess(`https://${cleanUrl}`, 15000)
+  const httpsResult = await checkHTTPAccess(`https://${cleanUrl}`, 6000)
   
   if (httpsResult.accessible) {
     return { ...httpsResult, protocol: 'https' }
   }
   
-  const httpResult = await checkHTTPAccess(`http://${cleanUrl}`, 15000)
+  const httpResult = await checkHTTPAccess(`http://${cleanUrl}`, 6000)
   
   if (httpResult.accessible) {
     return { ...httpResult, protocol: 'http' }
@@ -80,7 +87,7 @@ async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; re
   return {
     accessible: false,
     error: httpsResult.error || httpResult.error || 'Both HTTP and HTTPS failed',
-    responseTime: Math.min(httpsResult.responseTime || 15000, httpResult.responseTime || 15000)
+    responseTime: Math.min(httpsResult.responseTime || 6000, httpResult.responseTime || 6000)
   }
 }
 
@@ -94,14 +101,22 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
   let status: 'online' | 'offline' | 'dns-only' = 'offline'
   let error: string | undefined
   
-  if (dnsResolvable && httpAccessible) {
+  if (httpAccessible) {
     status = 'online'
   } else if (dnsResolvable && !httpAccessible) {
     status = 'dns-only'
-    error = httpResult.error || 'Server dapat di-ping tetapi website tidak dapat diakses'
-  } else if (!dnsResolvable) {
+    error = httpResult.error || 'DNS resolve berhasil tetapi HTTP/HTTPS tidak dapat diakses'
+  } else if (!dnsResolvable && !httpAccessible) {
+    if (httpResult.error === 'Connection Timeout') {
+      status = 'dns-only'
+      error = 'Timeout - Server lambat atau tidak merespons'
+    } else {
+      status = 'offline'
+      error = 'DNS tidak dapat di-resolve dan HTTP tidak accessible'
+    }
+  } else {
     status = 'offline'
-    error = 'DNS tidak dapat di-resolve (Domain tidak terdaftar atau DNS down)'
+    error = httpResult.error || 'Domain tidak dapat diakses'
   }
 
   return {
