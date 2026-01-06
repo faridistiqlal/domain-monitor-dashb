@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +23,7 @@ import { TagFormDialog } from '@/components/TagFormDialog'
 import { AssignTagsDialog } from '@/components/AssignTagsDialog'
 import { TagCard } from '@/components/TagCard'
 import { OptimizedDomainList } from '@/components/VirtualizedDomainList'
+import { StatisticsView } from '@/components/StatisticsView'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -48,7 +49,7 @@ function App() {
   const [isPaused, setIsPaused] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
-  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags'>('domains')
+  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics'>('domains')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
@@ -664,16 +665,20 @@ function App() {
         <Separator className="mb-4" />
 
         <Tabs value={activeTab} onValueChange={(val) => {
-          setActiveTab(val as 'domains' | 'groups' | 'manage' | 'tags')
+          setActiveTab(val as 'domains' | 'groups' | 'manage' | 'tags' | 'statistics')
           if (val === 'domains' && viewMode === 'group-detail') {
             setViewMode('all')
             setSelectedGroupId(null)
           }
         }} className="space-y-4">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5">
             <TabsTrigger value="domains" className="gap-1.5">
               <ListBullets size={14} />
               Monitoring
+            </TabsTrigger>
+            <TabsTrigger value="statistics" className="gap-1.5">
+              <ChartBar size={14} />
+              Statistik
             </TabsTrigger>
             <TabsTrigger value="groups" className="gap-1.5">
               <FolderOpen size={14} />
@@ -1266,6 +1271,28 @@ function App() {
                   </ScrollArea>
                 </div>
               )}
+          </TabsContent>
+
+          <TabsContent value="statistics" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Statistik & Analisis</h2>
+                <p className="text-sm text-muted-foreground">
+                  Ringkasan dan analisis performa monitoring domain
+                </p>
+              </div>
+            </div>
+            
+            <Separator />
+
+            <StatisticsView
+              domains={domains || []}
+              statuses={statuses}
+              groups={groups || []}
+              tags={tags || []}
+              hasChecked={hasChecked}
+              autoRefreshEnabled={autoRefreshEnabled}
+            />
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-4">
