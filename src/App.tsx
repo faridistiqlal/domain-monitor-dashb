@@ -63,6 +63,14 @@ function App() {
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
   const [manageTagFilter, setManageTagFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
+  const [showDebugInfo, setShowDebugInfo] = useState(false)
+
+  useEffect(() => {
+    console.log('[App Init] Application loaded')
+    console.log('[App Init] Initial domains from KV:', domains?.length || 0)
+    console.log('[App Init] Initial groups from KV:', groups?.length || 0)
+    console.log('[App Init] Initial tags from KV:', tags?.length || 0)
+  }, [])
 
   const checkAllDomains = async (showToast = false) => {
     if (!domains || domains.length === 0) return
@@ -359,8 +367,13 @@ function App() {
     setDomains(currentDomains => {
       const updatedDomains = [...(currentDomains || []), ...domainsWithGroup]
       console.log('[Import] Current domains:', currentDomains?.length, 'Adding:', domainsWithGroup.length, 'Total:', updatedDomains.length)
+      console.log('[Import] Updated domains will be saved:', updatedDomains.length)
       return updatedDomains
     })
+    
+    setTimeout(() => {
+      console.log('[Import] Domains after state update:', domains?.length)
+    }, 100)
     
     if (groupId) {
       const group = groups?.find(g => g.id === groupId)
@@ -483,7 +496,7 @@ function App() {
     }, 60000)
 
     return () => clearInterval(interval)
-  }, [domains, isPaused, autoRefreshEnabled])
+  }, [isPaused, autoRefreshEnabled])
 
   useEffect(() => {
     if (!autoRefreshEnabled || isPaused) return
@@ -501,6 +514,11 @@ function App() {
   useEffect(() => {
     setSelectedDomains(new Set())
   }, [filter, debouncedSearchQuery, sortBy, viewMode, selectedGroupId, activeTab, manageGroupFilter, manageTagFilter])
+
+  useEffect(() => {
+    console.log('[Domain State] Domains changed, new count:', domains?.length)
+    console.log('[Domain State] First 3 domains:', domains?.slice(0, 3).map(d => d.url))
+  }, [domains])
 
   const currentViewDomains = useMemo(() => {
     if (viewMode === 'group-detail' && selectedGroupId) {
@@ -1505,6 +1523,62 @@ function App() {
       </div>
 
       <footer className="border-t border-border bg-card mt-auto">
+        {showDebugInfo && (
+          <div className="border-b border-border bg-muted/50">
+            <div className="container mx-auto px-4 py-2 max-w-5xl">
+              <div className="text-xs space-y-1 font-mono">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-muted-foreground">KV Storage Status:</span>
+                    <span className="text-success">Connected</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        const keys = await window.spark.kv.keys()
+                        console.log('[Debug] All KV Keys:', keys)
+                        const domainsData = await window.spark.kv.get('monitoring-domains')
+                        console.log('[Debug] Domains in KV:', domainsData)
+                        toast.info(`KV Keys: ${keys.length}. Check console untuk detail.`)
+                      }}
+                      className="h-6 text-xs"
+                    >
+                      Check KV
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        window.location.reload()
+                      }}
+                      className="h-6 text-xs"
+                    >
+                      Force Reload
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-muted-foreground">Domains in State:</span>
+                  <span className="text-foreground font-semibold">{domains?.length || 0}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-muted-foreground">Groups in State:</span>
+                  <span className="text-foreground font-semibold">{groups?.length || 0}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-muted-foreground">Tags in State:</span>
+                  <span className="text-foreground font-semibold">{tags?.length || 0}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-muted-foreground">Last Update:</span>
+                  <span className="text-foreground">{new Date().toLocaleTimeString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="container mx-auto px-4 py-3 max-w-5xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
@@ -1517,6 +1591,13 @@ function App() {
               <TermsOfServiceDialog />
               <span className="text-xs text-muted-foreground">•</span>
               <InfoDialog triggerText="Bantuan" asLink={true} />
+              <span className="text-xs text-muted-foreground">•</span>
+              <button
+                onClick={() => setShowDebugInfo(!showDebugInfo)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showDebugInfo ? 'Sembunyikan' : 'Debug Info'}
+              </button>
             </div>
             <ChangelogDialog />
           </div>

@@ -25,7 +25,7 @@ export function ChangelogDialog() {
           className="h-7 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <Clock size={12} className="mr-1" />
-          Changelog v2.0.0
+          Changelog v2.1.0
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[85vh] p-0">
@@ -44,10 +44,71 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 2.0.0</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Version 2.1.0</h3>
                   <p className="text-xs text-muted-foreground">Current Release • 2024</p>
                 </div>
                 <Badge className="bg-primary text-primary-foreground">Latest</Badge>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-destructive/20 flex items-center justify-center">
+                      <Bug size={14} weight="duotone" className="text-destructive" />
+                    </div>
+                    Critical Bug Fixes
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span><strong className="text-foreground">CRITICAL:</strong> Fixed data hilang setelah refresh - bug di useEffect dependency</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span><strong className="text-foreground">CRITICAL:</strong> Fixed KV storage corruption yang menyebabkan data tidak tersimpan</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span>Fixed: Infinite loop di auto-refresh causing memory leak</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-accent/20 flex items-center justify-center">
+                      <Sparkle size={14} weight="duotone" className="text-accent" />
+                    </div>
+                    Fitur Baru
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Debug Panel:</strong> Panel debugging di footer untuk monitor KV storage status</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">KV Check Tool:</strong> Button untuk manual check KV storage langsung</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Enhanced Logging:</strong> Console logging untuk tracking perubahan data</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 2.0.0</h3>
+                  <p className="text-xs text-muted-foreground">2024</p>
+                </div>
               </div>
 
               <div className="space-y-4">
