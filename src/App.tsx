@@ -40,7 +40,9 @@ import {
   syncTagsToFirestore,
   subscribeToDomainsUpdates,
   subscribeToGroupsUpdates,
-  subscribeToTagsUpdates
+  subscribeToTagsUpdates,
+  loadPassword,
+  syncPasswordToFirestore
 } from '@/lib/firestore-sync'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -91,14 +93,16 @@ function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [loadedDomains, loadedGroups, loadedTags] = await Promise.all([
+        const [loadedDomains, loadedGroups, loadedTags, loadedPassword] = await Promise.all([
           loadDomains(),
           loadGroups(),
-          loadTags()
+          loadTags(),
+          loadPassword()
         ])
         setDomains(loadedDomains)
         setGroups(loadedGroups)
         setTags(loadedTags)
+        // Password already synced to localStorage by loadPassword()
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -200,6 +204,8 @@ function App() {
 
   const handlePasswordChange = (newPassword: string) => {
     localStorage.setItem('app-password', newPassword)
+    syncPasswordToFirestore(newPassword).catch(console.error)
+    toast.success('Password berhasil diubah dan disinkronkan ke cloud')
   }
 
   // Check if user can edit (authenticated only)

@@ -204,3 +204,54 @@ export const loadTags = async (): Promise<DomainTag[]> => {
   const saved = localStorage.getItem('domain-tags')
   return saved ? JSON.parse(saved) : []
 }
+
+// === USER SETTINGS (Password) ===
+
+export const syncPasswordToFirestore = async (password: string) => {
+  const userId = getUserId()
+  const userDocRef = doc(db, COLLECTIONS.USERS, userId)
+  
+  try {
+    await setDoc(userDocRef, {
+      password: password,
+      updatedAt: Date.now()
+    }, { merge: true })
+    console.log('✅ Password synced to Firebase')
+    return true
+  } catch (error) {
+    console.error('❌ Error syncing password:', error)
+    return false
+  }
+}
+
+export const getPasswordFromFirestore = async (): Promise<string | null> => {
+  const userId = getUserId()
+  const userDocRef = doc(db, COLLECTIONS.USERS, userId)
+  
+  try {
+    const docSnap = await getDoc(userDocRef)
+    if (docSnap.exists() && docSnap.data().password) {
+      return docSnap.data().password
+    }
+    return null
+  } catch (error) {
+    console.error('❌ Error getting password:', error)
+    return null
+  }
+}
+
+export const loadPassword = async (): Promise<string> => {
+  try {
+    const firebasePassword = await getPasswordFromFirestore()
+    if (firebasePassword) {
+      // Sync to localStorage
+      localStorage.setItem('app-password', firebasePassword)
+      return firebasePassword
+    }
+  } catch (error) {
+    console.log('Firebase not available, using localStorage')
+  }
+  
+  // Fallback to localStorage
+  return localStorage.getItem('app-password') || 'admin123'
+}
