@@ -63,14 +63,6 @@ function App() {
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
   const [manageTagFilter, setManageTagFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
-  const [showDebugInfo, setShowDebugInfo] = useState(false)
-
-  useEffect(() => {
-    console.log('[App Init] Application loaded')
-    console.log('[App Init] Initial domains from KV:', domains?.length || 0)
-    console.log('[App Init] Initial groups from KV:', groups?.length || 0)
-    console.log('[App Init] Initial tags from KV:', tags?.length || 0)
-  }, [])
 
   const checkAllDomains = async (showToast = false) => {
     if (!domains || domains.length === 0) return
@@ -124,16 +116,12 @@ function App() {
       addedAt: Date.now(),
     }
 
-    setDomains(currentDomains => {
-      const updatedDomains = [...(currentDomains || []), newDomain]
-      console.log('[Add Domain] Current:', currentDomains?.length, 'Adding 1, Total:', updatedDomains.length)
-      return updatedDomains
-    })
+    setDomains(current => [...(current || []), newDomain])
     toast.success('Domain berhasil ditambahkan')
   }
 
   const handleDeleteDomain = (id: string) => {
-    setDomains(currentDomains => (currentDomains || []).filter(d => d.id !== id))
+    setDomains(current => (current || []).filter(d => d.id !== id))
     setStatuses(current => {
       const newStatuses = { ...current }
       delete newStatuses[id]
@@ -148,8 +136,8 @@ function App() {
   }
 
   const handleEditDomain = (id: string, newUrl: string) => {
-    setDomains(currentDomains =>
-      (currentDomains || []).map(d =>
+    setDomains(current =>
+      (current || []).map(d =>
         d.id === id ? { ...d, url: newUrl } : d
       )
     )
@@ -165,7 +153,7 @@ function App() {
     const count = selectedDomains.size
     if (count === 0) return
 
-    setDomains(currentDomains => (currentDomains || []).filter(d => !selectedDomains.has(d.id)))
+    setDomains(current => (current || []).filter(d => !selectedDomains.has(d.id)))
     setStatuses(current => {
       const newStatuses = { ...current }
       selectedDomains.forEach(id => delete newStatuses[id])
@@ -364,16 +352,7 @@ function App() {
       ? importedDomains.map(d => ({ ...d, groupId }))
       : importedDomains
 
-    setDomains(currentDomains => {
-      const updatedDomains = [...(currentDomains || []), ...domainsWithGroup]
-      console.log('[Import] Current domains:', currentDomains?.length, 'Adding:', domainsWithGroup.length, 'Total:', updatedDomains.length)
-      console.log('[Import] Updated domains will be saved:', updatedDomains.length)
-      return updatedDomains
-    })
-    
-    setTimeout(() => {
-      console.log('[Import] Domains after state update:', domains?.length)
-    }, 100)
+    setDomains(current => [...(current || []), ...domainsWithGroup])
     
     if (groupId) {
       const group = groups?.find(g => g.id === groupId)
@@ -389,15 +368,15 @@ function App() {
       id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: Date.now(),
     }
-    setGroups(currentGroups => [...(currentGroups || []), newGroup])
+    setGroups(current => [...(current || []), newGroup])
     toast.success('Grup berhasil dibuat')
   }
 
   const handleEditGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
     if (!editingGroup) return
     
-    setGroups(currentGroups =>
-      (currentGroups || []).map(g =>
+    setGroups(current =>
+      (current || []).map(g =>
         g.id === editingGroup.id
           ? { ...g, ...groupData }
           : g
@@ -408,9 +387,9 @@ function App() {
   }
 
   const handleDeleteGroup = (groupId: string) => {
-    setGroups(currentGroups => (currentGroups || []).filter(g => g.id !== groupId))
-    setDomains(currentDomains =>
-      (currentDomains || []).map(d =>
+    setGroups(current => (current || []).filter(g => g.id !== groupId))
+    setDomains(current =>
+      (current || []).map(d =>
         d.groupId === groupId ? { ...d, groupId: undefined } : d
       )
     )
@@ -418,8 +397,8 @@ function App() {
   }
 
   const handleAssignDomains = (domainIds: string[], groupId: string | null) => {
-    setDomains(currentDomains =>
-      (currentDomains || []).map(d =>
+    setDomains(current =>
+      (current || []).map(d =>
         domainIds.includes(d.id)
           ? { ...d, groupId: groupId || undefined }
           : d
@@ -440,15 +419,15 @@ function App() {
       id: `tag-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: Date.now(),
     }
-    setTags(currentTags => [...(currentTags || []), newTag])
+    setTags(current => [...(current || []), newTag])
     toast.success('Tag berhasil dibuat')
   }
 
   const handleEditTag = (tagData: Omit<DomainTag, 'id' | 'createdAt'>) => {
     if (!editingTag) return
     
-    setTags(currentTags =>
-      (currentTags || []).map(t =>
+    setTags(current =>
+      (current || []).map(t =>
         t.id === editingTag.id
           ? { ...t, ...tagData }
           : t
@@ -459,9 +438,9 @@ function App() {
   }
 
   const handleDeleteTag = (tagId: string) => {
-    setTags(currentTags => (currentTags || []).filter(t => t.id !== tagId))
-    setDomains(currentDomains =>
-      (currentDomains || []).map(d => ({
+    setTags(current => (current || []).filter(t => t.id !== tagId))
+    setDomains(current =>
+      (current || []).map(d => ({
         ...d,
         tags: d.tags?.filter(t => t !== tagId)
       }))
@@ -470,8 +449,8 @@ function App() {
   }
 
   const handleAssignTags = (domainIds: string[], tagIds: string[]) => {
-    setDomains(currentDomains =>
-      (currentDomains || []).map(d => {
+    setDomains(current =>
+      (current || []).map(d => {
         if (!domainIds.includes(d.id)) return d
         
         const existingTags = d.tags || []
@@ -496,7 +475,7 @@ function App() {
     }, 60000)
 
     return () => clearInterval(interval)
-  }, [isPaused, autoRefreshEnabled])
+  }, [domains, isPaused, autoRefreshEnabled])
 
   useEffect(() => {
     if (!autoRefreshEnabled || isPaused) return
@@ -514,11 +493,6 @@ function App() {
   useEffect(() => {
     setSelectedDomains(new Set())
   }, [filter, debouncedSearchQuery, sortBy, viewMode, selectedGroupId, activeTab, manageGroupFilter, manageTagFilter])
-
-  useEffect(() => {
-    console.log('[Domain State] Domains changed, new count:', domains?.length)
-    console.log('[Domain State] First 3 domains:', domains?.slice(0, 3).map(d => d.url))
-  }, [domains])
 
   const currentViewDomains = useMemo(() => {
     if (viewMode === 'group-detail' && selectedGroupId) {
@@ -631,8 +605,6 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
-                <InfoDialog />
-                
                 <ImportDialog
                   existingDomains={domains || []}
                   groups={groups || []}
@@ -1523,62 +1495,6 @@ function App() {
       </div>
 
       <footer className="border-t border-border bg-card mt-auto">
-        {showDebugInfo && (
-          <div className="border-b border-border bg-muted/50">
-            <div className="container mx-auto px-4 py-2 max-w-5xl">
-              <div className="text-xs space-y-1 font-mono">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="text-muted-foreground">KV Storage Status:</span>
-                    <span className="text-success">Connected</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        const keys = await window.spark.kv.keys()
-                        console.log('[Debug] All KV Keys:', keys)
-                        const domainsData = await window.spark.kv.get('monitoring-domains')
-                        console.log('[Debug] Domains in KV:', domainsData)
-                        toast.info(`KV Keys: ${keys.length}. Check console untuk detail.`)
-                      }}
-                      className="h-6 text-xs"
-                    >
-                      Check KV
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        window.location.reload()
-                      }}
-                      className="h-6 text-xs"
-                    >
-                      Force Reload
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-muted-foreground">Domains in State:</span>
-                  <span className="text-foreground font-semibold">{domains?.length || 0}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-muted-foreground">Groups in State:</span>
-                  <span className="text-foreground font-semibold">{groups?.length || 0}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-muted-foreground">Tags in State:</span>
-                  <span className="text-foreground font-semibold">{tags?.length || 0}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-muted-foreground">Last Update:</span>
-                  <span className="text-foreground">{new Date().toLocaleTimeString()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         <div className="container mx-auto px-4 py-3 max-w-5xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
@@ -1591,13 +1507,6 @@ function App() {
               <TermsOfServiceDialog />
               <span className="text-xs text-muted-foreground">•</span>
               <InfoDialog triggerText="Bantuan" asLink={true} />
-              <span className="text-xs text-muted-foreground">•</span>
-              <button
-                onClick={() => setShowDebugInfo(!showDebugInfo)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showDebugInfo ? 'Sembunyikan' : 'Debug Info'}
-              </button>
             </div>
             <ChangelogDialog />
           </div>
