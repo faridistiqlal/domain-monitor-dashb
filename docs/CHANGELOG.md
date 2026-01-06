@@ -1,6 +1,32 @@
 # Changelog
 
-## Version 2.0.0 - Current
+## Version 2.1.0 - Current
+**Tanggal Rilis:** 6 Januari 2026
+
+### ✨ Fitur Baru
+- **Firebase Cloud Sync**: Sinkronisasi data domain, grup, dan tag secara real-time antar device
+- **Cross-Device Support**: Data tersimpan di cloud, bisa diakses dari PC, tablet, atau HP
+- **Offline Fallback**: Tetap bisa bekerja offline dengan localStorage fallback
+- **Password Authentication**: Akses terbatas dengan sistem login password
+- **Auto-Logout**: Otomatis logout setelah 30 menit tidak aktif untuk keamanan
+- **Settings Dialog**: Ubah password admin melalui interface yang mudah
+
+### 🎨 Peningkatan UI/UX
+- Logo dan favicon dioptimasi (WebP format, 75% lebih kecil)
+- Transparent favicon dengan aspect ratio yang benar
+
+### 🚀 Peningkatan Performa
+- Hybrid storage: Firebase + localStorage untuk kecepatan maksimal
+- Real-time data sync tanpa perlu refresh manual
+
+### 🔒 Keamanan
+- Password-based access control
+- Activity tracking untuk auto-logout
+- Firestore security rules untuk isolasi data per user
+
+---
+
+## Version 2.0.0
 **Tanggal Rilis:** 2024
 
 ### ✨ Fitur Baru
