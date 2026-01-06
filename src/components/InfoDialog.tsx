@@ -188,17 +188,68 @@ export function InfoDialog() {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="fitur" className="border-b-0">
+          <AccordionItem value="mode-monitoring">
             <AccordionTrigger className="text-sm font-semibold">
-              Fitur Aplikasi
+              Mode Monitoring
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="text-sm font-semibold mb-2 text-foreground">Mode Auto-Refresh</p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Monitoring berjalan otomatis setiap 60 detik. Status domain diperbarui secara berkala tanpa perlu intervensi manual.
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
+                    <li>Countdown timer menunjukkan waktu tersisa hingga refresh berikutnya</li>
+                    <li>Progress bar visual untuk indikasi waktu</li>
+                    <li>Tombol Pause/Resume untuk menghentikan sementara atau melanjutkan auto-refresh</li>
+                    <li>Ideal untuk monitoring real-time dalam waktu lama</li>
+                  </ul>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="text-sm font-semibold mb-2 text-foreground">Mode Manual Check</p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Check domain sekali klik, hasil ditampilkan, kemudian langsung bisa di-export. Tidak ada auto-refresh.
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
+                    <li>Klik tombol "Check" untuk memeriksa semua domain</li>
+                    <li>Hasil ditampilkan dengan ringkasan Online/DNS Only/Offline</li>
+                    <li>Tombol "Export Hasil" muncul setelah check selesai</li>
+                    <li>Tombol "Reset" untuk menghapus hasil dan mulai check baru</li>
+                    <li>Ideal untuk audit berkala atau export data untuk laporan</li>
+                  </ul>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="text-sm font-semibold mb-1 text-accent" style={{ color: 'oklch(0.70 0.18 200)' }}>Switch Mode</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tombol "Auto" / "Manual" di header untuk beralih mode kapan saja. Pilih mode sesuai kebutuhan monitoring Anda.
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="fitur-monitoring">
+            <AccordionTrigger className="text-sm font-semibold">
+              Fitur Monitoring
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-3 text-sm text-muted-foreground pt-2">
                 <div className="flex gap-2 items-start">
                   <span className="font-mono text-accent font-semibold">•</span>
                   <p>
-                    <span className="font-semibold text-foreground">Filter & Search:</span> Filter domain berdasarkan 
-                    status (Online/DNS Only/Offline) dan cari domain spesifik dengan fitur pencarian
+                    <span className="font-semibold text-foreground">Filter Status:</span> Filter domain berdasarkan 
+                    status (Semua / Online / DNS Only / Offline) untuk fokus pada domain dengan kondisi tertentu
+                  </p>
+                </div>
+                
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Search:</span> Cari domain spesifik dengan 
+                    fitur pencarian real-time. Ketik URL atau bagian dari domain
                   </p>
                 </div>
                 
@@ -206,31 +257,268 @@ export function InfoDialog() {
                   <span className="font-mono text-accent font-semibold">•</span>
                   <p>
                     <span className="font-semibold text-foreground">Sorting:</span> Urutkan domain secara 
-                    alfabetis (A-Z atau Z-A) atau berdasarkan status (Online pertama atau Offline pertama)
-                  </p>
-                </div>
-                
-                <div className="flex gap-2 items-start">
-                  <span className="font-mono text-accent font-semibold">•</span>
-                  <p>
-                    <span className="font-semibold text-foreground">Export/Import CSV:</span> Export daftar 
-                    domain beserta statusnya ke file CSV, atau import domain dalam jumlah banyak dari CSV
+                    alfabetis (Nama A-Z, Z-A) atau berdasarkan status (Online/Offline Pertama)
                   </p>
                 </div>
 
                 <div className="flex gap-2 items-start">
                   <span className="font-mono text-accent font-semibold">•</span>
                   <p>
-                    <span className="font-semibold text-foreground">Informasi IP:</span> Setiap domain 
-                    menampilkan IP address hasil DNS resolution untuk memudahkan troubleshooting
+                    <span className="font-semibold text-foreground">Informasi Detail:</span> Setiap domain 
+                    menampilkan IP address, response time, dan error message jika ada
                   </p>
                 </div>
 
                 <div className="flex gap-2 items-start">
                   <span className="font-mono text-accent font-semibold">•</span>
                   <p>
-                    <span className="font-semibold text-foreground">Manual Refresh:</span> Selain auto-refresh 
-                    60 detik, Anda dapat memperbarui status secara manual kapan saja
+                    <span className="font-semibold text-foreground">Quick Actions:</span> Icon globe untuk 
+                    membuka website di tab baru, icon copy untuk salin URL ke clipboard
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Export Terfilter:</span> Export hanya 
+                    domain yang sedang ditampilkan sesuai filter dan pencarian aktif
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="fitur-grup">
+            <AccordionTrigger className="text-sm font-semibold">
+              Kelola Grup Domain
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 text-sm text-muted-foreground pt-2">
+                <p className="text-foreground">
+                  Organisir domain ke dalam grup untuk manajemen yang lebih terstruktur.
+                </p>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Buat Grup:</span> Klik "Buat Grup" di tab Grup, 
+                    beri nama, deskripsi, dan pilih warna untuk identifikasi visual
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Assign Domain:</span> Tombol "Atur Grup" untuk 
+                    memilih domain dan memasukkannya ke grup tertentu
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Statistik Grup:</span> Setiap grup menampilkan 
+                    jumlah domain dan statistik status (Online/DNS Only/Offline) per grup
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">View & Export Grup:</span> Klik grup untuk 
+                    melihat detail domain di dalamnya, export domain per grup ke CSV
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Import ke Grup:</span> Saat import CSV, 
+                    bisa langsung pilih grup tujuan untuk domain yang diimport
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="fitur-tag">
+            <AccordionTrigger className="text-sm font-semibold">
+              Kelola Tag Domain
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 text-sm text-muted-foreground pt-2">
+                <p className="text-foreground">
+                  Label domain dengan tag untuk kategorisasi dan filtering lebih fleksibel. Satu domain bisa memiliki banyak tag.
+                </p>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Buat Tag:</span> Klik "Buat Tag" di tab Tag, 
+                    beri nama dan pilih warna untuk identifikasi
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Assign Tag:</span> Tombol "Atur Tag" untuk 
+                    memilih domain dan menambahkan tag ke domain tersebut
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Filter by Tag:</span> Di tab Kelola Data, 
+                    filter domain berdasarkan tag tertentu untuk edit/hapus massal
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Badge Visual:</span> Tag ditampilkan sebagai 
+                    badge berwarna di setiap domain card untuk identifikasi cepat
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="fitur-kelola">
+            <AccordionTrigger className="text-sm font-semibold">
+              Kelola Data Domain
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 text-sm text-muted-foreground pt-2">
+                <p className="text-foreground">
+                  Tab khusus untuk menambah, edit, dan hapus domain. Fokus pada manajemen data.
+                </p>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Tambah Domain:</span> Input URL domain baru 
+                    dan klik "Tambah Domain". Sistem otomatis validasi duplikasi
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Edit Domain:</span> Klik icon pensil pada 
+                    domain untuk mengubah URL. Cocok untuk koreksi typo atau perubahan domain
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Hapus Domain:</span> Klik icon trash untuk 
+                    hapus satu domain, atau select multiple dan hapus massal
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Bulk Selection:</span> Checkbox untuk memilih 
+                    banyak domain sekaligus, kemudian hapus semua yang dipilih
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Filter Multi-Dimensi:</span> Filter berdasarkan 
+                    Grup dan Tag secara bersamaan untuk isolasi data spesifik
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="fitur-statistik">
+            <AccordionTrigger className="text-sm font-semibold">
+              Statistik & Analisis
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 text-sm text-muted-foreground pt-2">
+                <p className="text-foreground">
+                  Dashboard analitik untuk memahami performa monitoring domain secara keseluruhan.
+                </p>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Ringkasan Status:</span> Diagram pie chart 
+                    untuk visualisasi distribusi status Online/DNS Only/Offline
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Response Time Average:</span> Statistik 
+                    rata-rata waktu respons domain untuk mengukur performa server
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Statistik per Grup:</span> Analisis performa 
+                    setiap grup domain dengan perbandingan visual
+                  </p>
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <span className="font-mono text-accent font-semibold">•</span>
+                  <p>
+                    <span className="font-semibold text-foreground">Domain Bermasalah:</span> Daftar domain dengan 
+                    response time tertinggi atau sering offline
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="fitur-export-import" className="border-b-0">
+            <AccordionTrigger className="text-sm font-semibold">
+              Export & Import CSV
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 text-sm text-muted-foreground pt-2">
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="text-sm font-semibold mb-2 text-foreground">Export CSV</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
+                    <li><span className="font-semibold text-foreground">Export Semua:</span> Tombol "Export" di header untuk export seluruh domain dengan status terkini</li>
+                    <li><span className="font-semibold text-foreground">Export Terfilter:</span> Tombol muncul saat ada filter/search aktif, hanya export domain yang ditampilkan</li>
+                    <li><span className="font-semibold text-foreground">Export per Grup:</span> Di view detail grup, export hanya domain dalam grup tersebut</li>
+                    <li><span className="font-semibold text-foreground">Format CSV:</span> URL, Status, IP, Response Time, Error Message (jika ada)</li>
+                    <li>CSV otomatis download ke browser setelah klik export</li>
+                    <li>Nama file disesuaikan (monitoring-domains.csv, nama-grup.csv, dll)</li>
+                  </ul>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="text-sm font-semibold mb-2 text-foreground">Import CSV</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
+                    <li>Klik tombol "Import" di header, upload file CSV dengan list domain</li>
+                    <li><span className="font-semibold text-foreground">Format CSV:</span> Kolom "url" atau "domain" (satu kolom saja). Header optional.</li>
+                    <li>Sistem otomatis deteksi duplikasi dan skip domain yang sudah ada</li>
+                    <li>Bisa pilih grup tujuan saat import untuk langsung masukkan ke grup tertentu</li>
+                    <li>Preview domain sebelum import untuk validasi data</li>
+                    <li>Notifikasi jumlah domain berhasil diimport</li>
+                  </ul>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="text-sm font-semibold mb-1 text-accent" style={{ color: 'oklch(0.70 0.18 200)' }}>Tips</p>
+                  <p className="text-sm text-muted-foreground">
+                    Untuk Mode Manual, pastikan sudah klik "Check" sebelum export agar mendapat status terkini. 
+                    Untuk Mode Auto, bisa export kapan saja karena status selalu update otomatis.
                   </p>
                 </div>
               </div>
