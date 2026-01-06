@@ -581,8 +581,8 @@ function App() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-4 max-w-5xl">
+      <div className="h-screen bg-background overflow-hidden flex flex-col">
+        <div className="container mx-auto px-4 py-4 max-w-5xl flex-1 flex flex-col overflow-hidden">
           <header className="mb-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2.5">
@@ -670,7 +670,7 @@ function App() {
             setViewMode('all')
             setSelectedGroupId(null)
           }
-        }} className="space-y-4">
+        }} className="space-y-4 flex-1 flex flex-col overflow-hidden">
           <TabsList className="grid w-full max-w-3xl grid-cols-5">
             <TabsTrigger value="domains" className="gap-1.5">
               <ListBullets size={14} />
@@ -694,7 +694,7 @@ function App() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="domains" className="space-y-4">
+          <TabsContent value="domains" className="space-y-4 flex-1 flex flex-col overflow-hidden">
             {!autoRefreshEnabled && hasChecked && !isRefreshing && totalCount > 0 && (
               <div className="space-y-3">
                 <div className="bg-success/10 border border-success/30 rounded-lg p-3">
@@ -961,7 +961,7 @@ function App() {
             {!domains || domains.length === 0 ? (
               <EmptyState />
             ) : !hasChecked && !autoRefreshEnabled ? (
-              <div className="flex items-center justify-center h-[calc(100vh-380px)]">
+              <div className="flex-1 flex items-center justify-center">
                 <div className="text-center space-y-6 max-w-md mx-auto">
                   <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
                     <ArrowClockwise size={48} weight="duotone" className="text-primary" />
@@ -988,7 +988,7 @@ function App() {
                 </div>
               </div>
             ) : filteredDomains.length === 0 ? (
-              <div className="flex items-center justify-center h-[calc(100vh-380px)]">
+              <div className="flex-1 flex items-center justify-center">
                 <div className="text-center space-y-2">
                   <p className="text-sm text-muted-foreground">
                     {searchQuery 
@@ -1022,7 +1022,7 @@ function App() {
                 </div>
               </div>
             ) : (
-              <ScrollArea className="h-[calc(100vh-380px)]">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="pr-4">
                   <OptimizedDomainList
                     domains={sortedDomains}
@@ -1036,7 +1036,7 @@ function App() {
             )}
           </TabsContent>
 
-          <TabsContent value="manage" className="space-y-4">
+          <TabsContent value="manage" className="space-y-4 flex-1 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Kelola domain - tambah, hapus, dan edit data domain
@@ -1194,7 +1194,7 @@ function App() {
             {!domains || domains.length === 0 ? (
               <EmptyState />
             ) : filteredManageDomains.length === 0 ? (
-                <div className="flex items-center justify-center h-[calc(100vh-400px)]">
+                <div className="flex-1 flex items-center justify-center">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-muted-foreground">
                       {manageSearchQuery 
@@ -1236,7 +1236,7 @@ function App() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1 flex flex-col overflow-hidden">
                   <div className="flex items-center gap-2 px-1">
                     <Checkbox
                       checked={selectedDomains.size === filteredManageDomains.length && filteredManageDomains.length > 0}
@@ -1252,7 +1252,7 @@ function App() {
                       {selectedDomains.size > 0 ? `${selectedDomains.size} terpilih` : 'Pilih semua'}
                     </span>
                   </div>
-                  <ScrollArea className="h-[calc(100vh-380px)]">
+                  <ScrollArea className="flex-1 min-h-0">
                     <div className="pr-4">
                       <OptimizedDomainList
                         domains={filteredManageDomains}
@@ -1273,7 +1273,7 @@ function App() {
               )}
           </TabsContent>
 
-          <TabsContent value="statistics" className="space-y-4">
+          <TabsContent value="statistics" className="space-y-4 flex-1 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Statistik & Analisis</h2>
@@ -1295,7 +1295,7 @@ function App() {
             />
           </TabsContent>
 
-          <TabsContent value="groups" className="space-y-4">
+          <TabsContent value="groups" className="space-y-4 flex-1 flex flex-col overflow-hidden">
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs px-1">
                 <div className="flex items-center gap-3">
@@ -1350,7 +1350,7 @@ function App() {
             </div>
 
             {!groups || groups.length === 0 ? (
-              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+              <div className="flex-1 flex items-center justify-center">
                 <div className="text-center space-y-3">
                   <div className="w-16 h-16 rounded-2xl bg-muted mx-auto flex items-center justify-center">
                     <FolderOpen size={32} weight="duotone" className="text-muted-foreground" />
@@ -1365,7 +1365,7 @@ function App() {
                 </div>
               </div>
             ) : (
-              <ScrollArea className="h-[calc(100vh-300px)]">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-4">
                   {groups.map(group => {
                     const stats = getGroupStats(group.id)
@@ -1390,7 +1390,7 @@ function App() {
             )}
           </TabsContent>
 
-          <TabsContent value="tags" className="space-y-4">
+          <TabsContent value="tags" className="space-y-4 flex-1 flex flex-col overflow-hidden">
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs px-1">
                 <div className="flex items-center gap-3">
@@ -1423,7 +1423,7 @@ function App() {
             </div>
 
             {!tags || tags.length === 0 ? (
-              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+              <div className="flex-1 flex items-center justify-center">
                 <div className="text-center space-y-3">
                   <div className="w-16 h-16 rounded-2xl bg-muted mx-auto flex items-center justify-center">
                     <Tag size={32} weight="duotone" className="text-muted-foreground" />
@@ -1438,7 +1438,7 @@ function App() {
                 </div>
               </div>
             ) : (
-              <ScrollArea className="h-[calc(100vh-300px)]">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-4">
                   {tags.map(tag => {
                     const domainCount = (domains || []).filter(d => 
