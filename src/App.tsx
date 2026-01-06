@@ -1507,6 +1507,8 @@ function App() {
               <PrivacyPolicyDialog />
               <span className="text-xs text-muted-foreground">•</span>
               <TermsOfServiceDialog />
+              <span className="text-xs text-muted-foreground">•</span>
+              <InfoDialog triggerText="Bantuan" asLink={true} />
             </div>
             <ChangelogDialog />
           </div>

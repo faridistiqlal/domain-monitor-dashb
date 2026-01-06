@@ -15,14 +15,25 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 
-export function InfoDialog() {
+interface InfoDialogProps {
+  triggerText?: string
+  asLink?: boolean
+}
+
+export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8">
-          <Info size={14} />
-          <span className="ml-1.5">Bantuan</span>
-        </Button>
+        {asLink ? (
+          <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            {triggerText}
+          </button>
+        ) : (
+          <Button variant="outline" size="sm" className="h-8">
+            <Info size={14} />
+            <span className="ml-1.5">{triggerText}</span>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
