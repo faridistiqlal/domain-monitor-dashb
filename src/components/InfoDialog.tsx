@@ -21,6 +21,7 @@ export function InfoDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-8">
           <Info size={14} />
+          <span className="ml-1.5">Bantuan</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -30,8 +31,47 @@ export function InfoDialog() {
             Penjelasan status monitoring dan cara kerja sistem
           </DialogDescription>
         </DialogHeader>
+
+        <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-4">
+          <h3 className="text-sm font-semibold mb-2 text-foreground">🚀 Quick Start</h3>
+          <ol className="text-sm text-muted-foreground space-y-1.5 pl-5 list-decimal">
+            <li><span className="font-semibold text-foreground">Tambah Domain:</span> Buka tab "Kelola Data", masukkan URL domain, klik "Tambah Domain"</li>
+            <li><span className="font-semibold text-foreground">Pilih Mode:</span> Pilih "Auto" untuk monitoring real-time atau "Manual" untuk check sekali</li>
+            <li><span className="font-semibold text-foreground">Monitor Status:</span> Lihat status Online (hijau), DNS Only (kuning), Offline (merah)</li>
+            <li><span className="font-semibold text-foreground">Export Data:</span> Klik tombol "Export" untuk download hasil monitoring ke CSV</li>
+          </ol>
+        </div>
         
-        <Accordion type="multiple" defaultValue={[]} className="w-full pt-2">
+        <Accordion type="multiple" defaultValue={["quick-tips"]} className="w-full pt-2">
+          <AccordionItem value="quick-tips">
+            <AccordionTrigger className="text-sm font-semibold">
+              💡 Tips Cepat
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 text-sm text-muted-foreground pt-2">
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Gunakan <span className="font-semibold text-foreground">Grup</span> untuk mengorganisir domain berdasarkan kategori (misalnya: Dinas, SKPD, Kecamatan)</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Gunakan <span className="font-semibold text-foreground">Tag</span> untuk label domain dengan atribut (misalnya: Prioritas Tinggi, Maintenance, Testing)</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Klik icon <span className="font-semibold text-foreground">globe</span> pada domain untuk buka website di tab baru dan verifikasi manual</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Export terfilter: Gunakan filter/search lalu klik "Export Terfilter" untuk export subset data</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Import CSV: Format sederhana dengan kolom "url" atau "domain", satu URL per baris</p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
           <AccordionItem value="status">
             <AccordionTrigger className="text-sm font-semibold">
               Status Monitoring
@@ -484,7 +524,7 @@ export function InfoDialog() {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="fitur-export-import" className="border-b-0">
+          <AccordionItem value="fitur-export-import">
             <AccordionTrigger className="text-sm font-semibold">
               Export & Import CSV
             </AccordionTrigger>
@@ -524,7 +564,60 @@ export function InfoDialog() {
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="faq" className="border-b-0">
+            <AccordionTrigger className="text-sm font-semibold">
+              ❓ FAQ (Frequently Asked Questions)
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 text-sm pt-2">
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="font-semibold text-foreground mb-1">Q: Kenapa banyak domain status "DNS Only"?</p>
+                  <p className="text-muted-foreground">
+                    A: Kemungkinan browser security (CORS) memblokir monitoring cross-origin, atau web server bermasalah. 
+                    Klik icon globe untuk verifikasi manual ke website aslinya.
+                  </p>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="font-semibold text-foreground mb-1">Q: Bagaimana cara export data monitoring?</p>
+                  <p className="text-muted-foreground">
+                    A: Untuk Mode Manual, klik "Check" terlebih dahulu, lalu klik "Export Hasil". 
+                    Untuk Mode Auto, klik tombol "Export" kapan saja.
+                  </p>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="font-semibold text-foreground mb-1">Q: Apakah bisa monitoring domain non-.kendalkab.go.id?</p>
+                  <p className="text-muted-foreground">
+                    A: Ya, sistem dapat memonitor domain apa saja. Tidak terbatas hanya subdomain kendalkab.go.id.
+                  </p>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="font-semibold text-foreground mb-1">Q: Berapa lama timeout untuk check domain?</p>
+                  <p className="text-muted-foreground">
+                    A: Sistem menunggu 6 detik per domain. Jika tidak ada respons dalam 6 detik, domain dianggap timeout (status DNS Only atau Offline).
+                  </p>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3">
+                  <p className="font-semibold text-foreground mb-1">Q: Apakah data monitoring tersimpan otomatis?</p>
+                  <p className="text-muted-foreground">
+                    A: Ya, semua data (domain list, grup, tag) otomatis tersimpan di browser. 
+                    Data akan tetap ada meskipun browser ditutup atau refresh halaman.
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
+
+        <div className="mt-6 pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center">
+            Butuh bantuan lebih lanjut? Hubungi Administrator Sistem
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   )
