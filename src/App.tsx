@@ -738,7 +738,7 @@ function App() {
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2.5">
                 <img 
-                  src="https://www.kendalkab.go.id/assets/img/logo_kendal.png" 
+                  src="/logo.webp" 
                   alt="Logo Kendal"
                   className="w-10 h-10 object-contain"
                 />
