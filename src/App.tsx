@@ -1031,6 +1031,7 @@ function App() {
                     domains={sortedDomains}
                     statuses={statuses}
                     tags={tags}
+                    onDelete={handleDeleteDomain}
                     showCheckbox={false}
                     simpleMode={false}
                   />
