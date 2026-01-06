@@ -613,7 +613,7 @@ function App() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="domains" className="space-y-4 flex flex-col h-[calc(100vh-220px)]">
+          <TabsContent value="domains" className="space-y-4">
             {!autoRefreshEnabled && hasChecked && !isRefreshing && totalCount > 0 && (
               <div className="space-y-3">
                 <div className="bg-success/10 border border-success/30 rounded-lg p-3">
@@ -865,7 +865,7 @@ function App() {
             {!domains || domains.length === 0 ? (
               <EmptyState />
             ) : !hasChecked && !autoRefreshEnabled ? (
-              <div className="flex-1 flex items-center justify-center py-12">
+              <div className="flex items-center justify-center h-[calc(100vh-380px)]">
                 <div className="text-center space-y-6 max-w-md mx-auto">
                   <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
                     <ArrowClockwise size={48} weight="duotone" className="text-primary" />
@@ -892,7 +892,7 @@ function App() {
                 </div>
               </div>
             ) : filteredDomains.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex items-center justify-center h-[calc(100vh-380px)]">
                 <div className="text-center space-y-2">
                   <p className="text-sm text-muted-foreground">
                     {searchQuery 
@@ -926,18 +926,16 @@ function App() {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-full">
-                  <div className="pr-4">
-                    <OptimizedDomainList
-                      domains={sortedDomains}
-                      statuses={statuses}
-                      showCheckbox={false}
-                      simpleMode={false}
-                    />
-                  </div>
-                </ScrollArea>
-              </div>
+              <ScrollArea className="h-[calc(100vh-380px)]">
+                <div className="pr-4">
+                  <OptimizedDomainList
+                    domains={sortedDomains}
+                    statuses={statuses}
+                    showCheckbox={false}
+                    simpleMode={false}
+                  />
+                </div>
+              </ScrollArea>
             )}
           </TabsContent>
 
