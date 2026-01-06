@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { StatusIndicator } from './StatusIndicator'
+import { EditDomainDialog } from './EditDomainDialog'
 import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
 import {
   Tooltip,
@@ -16,6 +17,8 @@ interface DomainCardProps {
   domain: Domain
   status: DomainStatus
   onDelete: (id: string) => void
+  onEdit?: (id: string, newUrl: string) => void
+  existingUrls?: string[]
   group?: DomainGroup
   isSelected?: boolean
   onSelect?: (id: string, selected: boolean) => void
@@ -23,7 +26,7 @@ interface DomainCardProps {
   simpleMode?: boolean
 }
 
-export function DomainCard({ domain, status, onDelete, group, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
+export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, group, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
     try {
       let textToCopy = domain.url
@@ -113,14 +116,23 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
               )}
             </div>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(domain.id)}
-              className="shrink-0 h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash size={16} />
-            </Button>
+            <div className="flex items-center gap-1 shrink-0">
+              {onEdit && existingUrls && (
+                <EditDomainDialog
+                  domain={domain}
+                  onEdit={onEdit}
+                  existingUrls={existingUrls}
+                />
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(domain.id)}
+                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash size={16} />
+              </Button>
+            </div>
           </div>
         </Card>
       </motion.div>

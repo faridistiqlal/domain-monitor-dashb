@@ -9,6 +9,8 @@ interface OptimizedDomainListProps {
   statuses: Record<string, DomainStatus>
   groups?: DomainGroup[]
   onDelete?: (id: string) => void
+  onEdit?: (id: string, newUrl: string) => void
+  existingUrls?: string[]
   selectedDomains?: Set<string>
   onSelect?: (id: string, selected: boolean) => void
   showCheckbox?: boolean
@@ -18,6 +20,7 @@ interface OptimizedDomainListProps {
 const DomainCardMemo = memo(DomainCard, (prev, next) => {
   return (
     prev.domain.id === next.domain.id &&
+    prev.domain.url === next.domain.url &&
     prev.status.status === next.status.status &&
     prev.status.ipAddress === next.status.ipAddress &&
     prev.status.dnsResolvable === next.status.dnsResolvable &&
@@ -35,6 +38,8 @@ export const OptimizedDomainList = memo(({
   statuses,
   groups,
   onDelete,
+  onEdit,
+  existingUrls,
   selectedDomains,
   onSelect,
   showCheckbox = false,
@@ -91,6 +96,8 @@ export const OptimizedDomainList = memo(({
             domain={domain}
             status={status}
             onDelete={onDelete || (() => {})}
+            onEdit={onEdit}
+            existingUrls={existingUrls}
             group={group}
             isSelected={selectedDomains?.has(domain.id) || false}
             onSelect={onSelect || (() => {})}

@@ -1,0 +1,117 @@
+import { useState } from 'react'
+import { PencilSimple } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Domain } from '@/lib/types'
+import { toast } from 'sonner'
+
+interface EditDomainDialogProps {
+  domain: Domain
+  onEdit: (id: string, newUrl: string) => void
+  existingUrls: string[]
+}
+
+export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [url, setUrl] = useState(domain.url)
+  const [error, setError] = useState('')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    const trimmedUrl = url.trim()
+    
+    if (!trimmedUrl) {
+      setError('Domain tidak boleh kosong')
+      return
+    }
+
+    if (trimmedUrl === domain.url) {
+      setOpen(false)
+      return
+    }
+
+    if (existingUrls.includes(trimmedUrl)) {
+      setError('Domain sudah ada dalam daftar')
+      return
+    }
+
+    onEdit(domain.id, trimmedUrl)
+    setOpen(false)
+    setUrl(trimmedUrl)
+    setError('')
+  }
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setUrl(domain.url)
+      setError('')
+    }
+    setOpen(newOpen)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+        >
+          <PencilSimple size={16} />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Edit Domain</DialogTitle>
+            <DialogDescription>
+              Ubah URL domain yang ingin dimonitor
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="domain-url">Domain URL</Label>
+              <Input
+                id="domain-url"
+                type="text"
+                placeholder="example.com"
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value)
+                  setError('')
+                }}
+                className={error ? 'border-destructive' : ''}
+              />
+              {error && (
+                <p className="text-xs text-destructive">{error}</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+            >
+              Batal
+            </Button>
+            <Button type="submit">
+              Simpan Perubahan
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

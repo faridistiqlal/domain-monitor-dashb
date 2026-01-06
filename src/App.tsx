@@ -125,6 +125,20 @@ function App() {
     toast.success('Domain dihapus dari daftar')
   }
 
+  const handleEditDomain = (id: string, newUrl: string) => {
+    setDomains(current =>
+      (current || []).map(d =>
+        d.id === id ? { ...d, url: newUrl } : d
+      )
+    )
+    setStatuses(current => {
+      const newStatuses = { ...current }
+      delete newStatuses[id]
+      return newStatuses
+    })
+    toast.success('Domain berhasil diperbarui')
+  }
+
   const handleBulkDelete = () => {
     const count = selectedDomains.size
     if (count === 0) return
@@ -1141,6 +1155,8 @@ function App() {
                         statuses={statuses}
                         groups={groups}
                         onDelete={handleDeleteDomain}
+                        onEdit={handleEditDomain}
+                        existingUrls={(domains || []).filter(d => !filteredManageDomains.some(fd => fd.id === d.id)).map(d => d.url)}
                         selectedDomains={selectedDomains}
                         onSelect={handleSelectDomain}
                         showCheckbox={true}
