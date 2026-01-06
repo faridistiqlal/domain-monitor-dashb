@@ -1,16 +1,15 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 
-// Firebase configuration
-// TODO: Ganti dengan Firebase config Anda sendiri dari https://console.firebase.google.com/
-// Untuk sekarang pakai demo - data akan hilang setelah beberapa jam
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBTEMPORARY_DEMO_KEY_FOR_TESTING_ONLY",
-  authDomain: "kendal-monitor-demo.firebaseapp.com",
-  projectId: "kendal-monitor-demo",
-  storageBucket: "kendal-monitor-demo.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:demo123456789"
+  apiKey: "AIzaSyDsONdN5q1vz5Gp6Irk0K7T4-GexuJ6Meo",
+  authDomain: "kendal-monitor.firebaseapp.com",
+  projectId: "kendal-monitor",
+  storageBucket: "kendal-monitor.firebasestorage.app",
+  messagingSenderId: "769565947746",
+  appId: "1:769565947746:web:90ae2c85d894b0da44de3b",
+  measurementId: "G-C3RLK090HK"
 }
 
 // Initialize Firebase
