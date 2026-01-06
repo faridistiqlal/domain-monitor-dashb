@@ -6,9 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from './StatusIndicator'
 import { EditDomainDialog } from './EditDomainDialog'
-import { UptimeTimeline } from './UptimeTimeline'
-import { UptimeDetailsDialog } from './UptimeDetailsDialog'
-import { Domain, DomainStatus, DomainGroup, DomainTag, DomainHistory } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import {
   Tooltip,
   TooltipContent,
@@ -28,10 +26,9 @@ interface DomainCardProps {
   onSelect?: (id: string, selected: boolean) => void
   showCheckbox?: boolean
   simpleMode?: boolean
-  history?: DomainHistory
 }
 
-export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode, history }: DomainCardProps) {
+export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
     try {
       let textToCopy = domain.url
@@ -256,13 +253,6 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
           </div>
 
           <div className="flex items-center gap-2 shrink-0 text-xs">
-            {history && history.records && history.records.length > 0 && (
-              <>
-                <UptimeTimeline history={history} timeRangeHours={48} compact />
-                <span className="text-border">|</span>
-              </>
-            )}
-            
             {status.ipAddress && (
               <>
                 <span className="font-mono text-accent">
@@ -343,19 +333,14 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
             )}
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            {history && history.records && history.records.length > 0 && (
-              <UptimeDetailsDialog domain={domain} history={history} />
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(domain.id)}
-              className="shrink-0 h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash size={16} />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(domain.id)}
+            className="shrink-0 h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash size={16} />
+          </Button>
         </div>
       </Card>
     </motion.div>

@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback, useRef } from 'react'
-import { Domain, DomainStatus, DomainGroup, DomainTag, DomainHistory } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { DomainCard } from './DomainCard'
 import { Button } from './ui/button'
 import { CaretDown } from '@phosphor-icons/react'
@@ -16,7 +16,6 @@ interface OptimizedDomainListProps {
   onSelect?: (id: string, selected: boolean) => void
   showCheckbox?: boolean
   simpleMode?: boolean
-  histories?: DomainHistory[]
 }
 
 const DomainCardMemo = memo(DomainCard, (prev, next) => {
@@ -30,8 +29,7 @@ const DomainCardMemo = memo(DomainCard, (prev, next) => {
     prev.group?.id === next.group?.id &&
     prev.domain.tags?.join(',') === next.domain.tags?.join(',') &&
     prev.showCheckbox === next.showCheckbox &&
-    prev.simpleMode === next.simpleMode &&
-    prev.history?.records?.length === next.history?.records?.length
+    prev.simpleMode === next.simpleMode
   )
 })
 
@@ -49,7 +47,6 @@ export const OptimizedDomainList = memo(({
   onSelect,
   showCheckbox = false,
   simpleMode = false,
-  histories = [],
 }: OptimizedDomainListProps) => {
   const ITEMS_PER_PAGE = 50
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE)
@@ -95,7 +92,6 @@ export const OptimizedDomainList = memo(({
         const group = domain.groupId && groups
           ? groups.find(g => g.id === domain.groupId)
           : undefined
-        const history = histories.find(h => h.domainId === domain.id)
 
         return (
           <DomainCardMemo
@@ -111,7 +107,6 @@ export const OptimizedDomainList = memo(({
             onSelect={onSelect || (() => {})}
             showCheckbox={showCheckbox}
             simpleMode={simpleMode}
-            history={history}
           />
         )
       })}

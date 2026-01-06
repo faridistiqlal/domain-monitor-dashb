@@ -47,13 +47,6 @@ This is a monitoring dashboard with domain management (add/remove), periodic hea
 - **Progression**: User modifies domain list → Save to KV store → Load on next visit
 - **Success criteria**: Domain list persists after browser close/reopen
 
-### Historical Uptime Tracking
-- **Functionality**: Automatically records and stores domain status history with each check (up to 168 records per domain, approximately 7 days of hourly data). Displays compact timeline visualization inline with domain cards showing uptime percentage and visual status bars. Full detailed view available via dialog showing 24-hour, 48-hour, and 7-day uptime timelines with interactive hover tooltips.
-- **Purpose**: Provides visibility into domain reliability trends over time, helps identify intermittent issues, and gives context beyond current status. Enables users to see patterns of uptime/downtime and make data-driven decisions about infrastructure reliability.
-- **Trigger**: Automatic recording with every domain check (both auto-refresh and manual modes). User clicks "Riwayat" button on domain card to view detailed history dialog.
-- **Progression**: Domain check completes → Record status + response time + timestamp → Add to history array → Trim to max 168 records → Display compact timeline in card (48 hours by default) → User clicks for detailed view → Dialog shows full timeline with selectable time ranges (24h/48h/7d) → Hover over timeline bars to see exact timestamp and status
-- **Success criteria**: History persists across sessions, shows uptime percentage accurately, timeline visualization is easy to read at a glance, detailed dialog provides comprehensive view with interactive elements, no performance degradation with 300+ domains each having 168 history records, smooth hover interactions on timeline bars
-
 ## Edge Case Handling
 
 - **Empty State**: Show helpful onboarding message with example domain when no domains are configured
