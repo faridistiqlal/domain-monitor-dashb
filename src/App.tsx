@@ -517,7 +517,7 @@ function App() {
                   <Globe size={24} weight="duotone" className="text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight">
+                  <h1 className="text-2xl font-bold tracking-tight text-foreground">
                     Domain Monitor
                   </h1>
                   <p className="text-xs text-muted-foreground tracking-wide">
@@ -622,7 +622,7 @@ function App() {
                         <CheckSquare size={18} weight="duotone" className="text-success" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-success">Check Selesai!</p>
+                        <p className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.22 145)' }}>Check Selesai!</p>
                         <p className="text-xs text-muted-foreground">
                           Online: {onlineCount} • DNS Only: {dnsOnlyCount} • Offline: {offlineCount}
                         </p>
@@ -647,7 +647,7 @@ function App() {
                         <Info size={18} weight="duotone" className="text-amber-500" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-semibold text-amber-500">Banyak Status DNS Only Terdeteksi</p>
+                        <p className="text-sm font-semibold" style={{ color: 'rgb(245, 158, 11)' }}>Banyak Status DNS Only Terdeteksi</p>
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           Jika website sebenarnya bisa diakses normal, kemungkinan masalahnya adalah <span className="font-semibold text-foreground">browser security (CORS)</span> yang memblokir monitoring cross-origin dari aplikasi ini. 
                           Klik icon <Globe size={12} weight="duotone" className="inline" /> untuk verifikasi manual ke website asli.
@@ -683,7 +683,7 @@ function App() {
                         style={{ backgroundColor: selectedGroup.color }}
                       />
                     </div>
-                    <span className="text-sm font-semibold">{selectedGroup.name}</span>
+                    <span className="text-sm font-semibold text-foreground">{selectedGroup.name}</span>
                     <span className="text-xs text-muted-foreground">
                       ({currentViewDomains.length} domain)
                     </span>
@@ -725,13 +725,13 @@ function App() {
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
                       <span className="text-muted-foreground">Online</span>
-                      <span className="font-semibold text-success">{onlineCount}</span>
+                      <span className="font-semibold" style={{ color: 'oklch(0.70 0.22 145)' }}>{onlineCount}</span>
                     </div>
                     {dnsOnlyCount > 0 && (
                       <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
                         <span className="text-muted-foreground">DNS Only</span>
-                        <span className="font-semibold text-amber-500">{dnsOnlyCount}</span>
+                        <span className="font-semibold" style={{ color: 'rgb(245, 158, 11)' }}>{dnsOnlyCount}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-1.5">
@@ -1051,7 +1051,7 @@ function App() {
                             }
                           }}
                         />
-                        <span className="text-sm font-medium text-primary">
+                        <span className="text-sm font-medium" style={{ color: 'oklch(0.55 0.15 250)' }}>
                           {selectedDomains.size} domain dipilih
                         </span>
                       </div>
@@ -1155,13 +1155,13 @@ function App() {
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
                     <span className="text-muted-foreground">Online</span>
-                    <span className="font-semibold text-success">{globalOnlineCount}</span>
+                    <span className="font-semibold" style={{ color: 'oklch(0.70 0.22 145)' }}>{globalOnlineCount}</span>
                   </div>
                   {globalDnsOnlyCount > 0 && (
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
                       <span className="text-muted-foreground">DNS Only</span>
-                      <span className="font-semibold text-amber-500">{globalDnsOnlyCount}</span>
+                      <span className="font-semibold" style={{ color: 'rgb(245, 158, 11)' }}>{globalDnsOnlyCount}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1.5">
@@ -1199,7 +1199,7 @@ function App() {
                     <FolderOpen size={32} weight="duotone" className="text-muted-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-1">Belum Ada Grup</h3>
+                    <h3 className="text-sm font-semibold mb-1 text-foreground">Belum Ada Grup</h3>
                     <p className="text-xs text-muted-foreground mb-3">
                       Buat grup untuk mengelompokkan domain
                     </p>

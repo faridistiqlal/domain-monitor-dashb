@@ -41,7 +41,7 @@ export function InfoDialog() {
                 <div className="flex gap-3 items-start">
                   <div className="w-3 h-3 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)] mt-1 flex-shrink-0" />
                   <div className="space-y-1">
-                    <div className="font-semibold text-success">Online</div>
+                    <div className="font-semibold" style={{ color: 'oklch(0.70 0.22 145)' }}>Online</div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       Website dapat diakses dengan sempurna. Server DNS merespons (domain dapat di-resolve) 
                       dan web server HTTP/HTTPS juga merespons dengan baik (status 200-299). 
@@ -53,7 +53,7 @@ export function InfoDialog() {
                 <div className="flex gap-3 items-start">
                   <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] mt-1 flex-shrink-0" />
                   <div className="space-y-1">
-                    <div className="font-semibold text-amber-500">DNS Only</div>
+                    <div className="font-semibold" style={{ color: 'rgb(245, 158, 11)' }}>DNS Only</div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       Server DNS berfungsi dan domain dapat di-resolve ke IP address (bisa di-ping), 
                       <span className="font-medium text-foreground"> tetapi web server HTTP/HTTPS tidak merespons atau timeout</span>. 
@@ -69,7 +69,7 @@ export function InfoDialog() {
                       <li><span className="font-medium text-foreground">Network-specific issue:</span> Website hanya bisa diakses dari jaringan tertentu karena pembatasan IP/firewall</li>
                       <li><span className="font-medium text-foreground">CORS/Browser security:</span> Browser memblokir akses cross-origin dari aplikasi monitoring ini</li>
                     </ul>
-                    <p className="text-sm text-amber-500 font-medium pt-1">
+                    <p className="text-sm font-medium pt-1" style={{ color: 'rgb(245, 158, 11)' }}>
                       ⚠️ Pengunjung mungkin tidak dapat mengakses website atau akses sangat lambat
                     </p>
                   </div>
@@ -137,7 +137,7 @@ export function InfoDialog() {
             <AccordionContent>
               <div className="space-y-3 pt-2">
                 <div className="bg-card border rounded-lg p-3">
-                  <p className="text-sm font-semibold text-amber-500 mb-1">Status "DNS Only" setelah publish:</p>
+                  <p className="text-sm font-semibold mb-1" style={{ color: 'rgb(245, 158, 11)' }}>Status "DNS Only" setelah publish:</p>
                   <p className="text-sm text-muted-foreground mb-2">
                     Jika banyak domain menunjukkan status DNS Only setelah aplikasi di-publish, kemungkinan:
                   </p>
@@ -149,7 +149,7 @@ export function InfoDialog() {
                 </div>
 
                 <div className="bg-card border rounded-lg p-3">
-                  <p className="text-sm font-semibold text-amber-500 mb-1">Verifikasi Manual:</p>
+                  <p className="text-sm font-semibold mb-1" style={{ color: 'rgb(245, 158, 11)' }}>Verifikasi Manual:</p>
                   <p className="text-sm text-muted-foreground">
                     Untuk domain yang status DNS Only, <span className="font-semibold text-foreground">klik icon globe</span> untuk membuka website di tab baru. 
                     Jika website terbuka dengan baik, berarti masalahnya adalah browser security/CORS, bukan server mati. 
@@ -158,7 +158,7 @@ export function InfoDialog() {
                 </div>
                 
                 <div className="bg-card border rounded-lg p-3">
-                  <p className="text-sm font-semibold text-amber-500 mb-1">Sertifikat SSL Bermasalah:</p>
+                  <p className="text-sm font-semibold mb-1" style={{ color: 'rgb(245, 158, 11)' }}>Sertifikat SSL Bermasalah:</p>
                   <p className="text-sm text-muted-foreground mb-2">
                     Jika error message menunjukkan masalah SSL (Sertifikat Kadaluarsa, Tidak Valid, dll):
                   </p>
@@ -178,7 +178,7 @@ export function InfoDialog() {
                 </div>
 
                 <div className="bg-card border rounded-lg p-3">
-                  <p className="text-sm font-semibold text-accent mb-1">Response Time 6000ms:</p>
+                  <p className="text-sm font-semibold text-accent mb-1" style={{ color: 'oklch(0.70 0.18 200)' }}>Response Time 6000ms:</p>
                   <p className="text-sm text-muted-foreground">
                     Jika response time menunjukkan 6000ms, artinya koneksi timeout. 
                     Server tidak merespons dalam 6 detik. Cek apakah server overload, network lambat, atau ada blocking.

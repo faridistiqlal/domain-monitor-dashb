@@ -210,9 +210,14 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
               <>
                 <span className={`font-mono uppercase px-1.5 py-0.5 rounded ${
                   status.protocol === 'https' 
-                    ? 'bg-success/20 text-success' 
-                    : 'bg-amber-500/20 text-amber-500'
-                }`}>
+                    ? 'bg-success/20' 
+                    : 'bg-amber-500/20'
+                }`}
+                style={
+                  status.protocol === 'https' 
+                    ? { color: 'oklch(0.70 0.22 145)' }
+                    : { color: 'rgb(245, 158, 11)' }
+                }>
                   {status.protocol}
                 </span>
                 <span className="text-border">|</span>
@@ -221,11 +226,16 @@ export function DomainCard({ domain, status, onDelete, group, isSelected, onSele
             
             <div className="flex items-center gap-1">
               <span className={`font-medium ${
-                status.status === 'online' ? 'text-success' :
-                status.status === 'dns-only' ? 'text-amber-500' :
+                status.status === 'online' ? '' :
+                status.status === 'dns-only' ? '' :
                 status.status === 'offline' ? 'text-destructive' :
                 'text-muted-foreground'
-              }`}>
+              }`}
+              style={
+                status.status === 'online' ? { color: 'oklch(0.70 0.22 145)' } :
+                status.status === 'dns-only' ? { color: 'rgb(245, 158, 11)' } :
+                undefined
+              }>
                 {getStatusText()}
               </span>
               

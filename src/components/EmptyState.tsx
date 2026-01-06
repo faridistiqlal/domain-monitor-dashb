@@ -7,7 +7,7 @@ export function EmptyState() {
         <Globe size={40} className="text-primary" weight="duotone" />
       </div>
       
-      <h3 className="text-xl font-semibold mb-2">
+      <h3 className="text-xl font-semibold mb-2 text-foreground">
         Belum Ada Domain yang Dipantau
       </h3>
       

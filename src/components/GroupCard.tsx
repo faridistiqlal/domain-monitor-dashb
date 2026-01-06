@@ -57,7 +57,7 @@ export function GroupCard({
             <Folder size={20} weight="duotone" style={{ color: group.color }} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm truncate">{group.name}</h3>
+            <h3 className="font-semibold text-sm truncate text-foreground">{group.name}</h3>
             {group.description && (
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                 {group.description}
@@ -72,8 +72,8 @@ export function GroupCard({
                 <>
                   <span className="text-muted-foreground">•</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-success">{onlineCount}</span>
-                    {dnsOnlyCount > 0 && <span className="text-amber-500">{dnsOnlyCount}</span>}
+                    <span style={{ color: 'oklch(0.70 0.22 145)' }}>{onlineCount}</span>
+                    {dnsOnlyCount > 0 && <span style={{ color: 'rgb(245, 158, 11)' }}>{dnsOnlyCount}</span>}
                     <span className="text-destructive">{offlineCount}</span>
                   </div>
                 </>
