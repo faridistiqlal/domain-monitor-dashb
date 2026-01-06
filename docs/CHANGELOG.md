@@ -4,25 +4,48 @@
 **Tanggal Rilis:** 6 Januari 2026
 
 ### ✨ Fitur Baru
-- **Firebase Cloud Sync**: Sinkronisasi data domain, grup, dan tag secara real-time antar device
-- **Cross-Device Support**: Data tersimpan di cloud, bisa diakses dari PC, tablet, atau HP
-- **Offline Fallback**: Tetap bisa bekerja offline dengan localStorage fallback
-- **Password Authentication**: Akses terbatas dengan sistem login password
-- **Auto-Logout**: Otomatis logout setelah 30 menit tidak aktif untuk keamanan
-- **Settings Dialog**: Ubah password admin melalui interface yang mudah
+- **Firebase Cloud Sync**: Data domain, grup, dan tag otomatis tersimpan di cloud Firebase Firestore
+- **Cross-Device Support**: Buka aplikasi di PC, data yang sama muncul di tablet/HP secara real-time
+- **Hybrid Storage**: Kombinasi Firebase (cloud) + localStorage (offline) untuk reliability maksimal
+- **Password Authentication**: Login dengan password untuk membatasi akses edit dan delete
+- **Auto-Logout Timer**: Sistem otomatis logout setelah 30 menit tidak ada aktivitas (klik, ketik, scroll)
+- **Change Password Dialog**: Dialog untuk mengganti password admin dari aplikasi
+- **Activity Tracking**: Deteksi aktivitas user (mousedown, keydown, scroll, touchstart) untuk reset timer logout
 
 ### 🎨 Peningkatan UI/UX
-- Logo dan favicon dioptimasi (WebP format, 75% lebih kecil)
-- Transparent favicon dengan aspect ratio yang benar
+- **Logo Optimasi**: Logo dikonversi dari PNG (105KB) ke WebP (26KB) - hemat 75% ukuran file
+- **Favicon Transparent**: Favicon PNG 32x32 dengan background transparan dan aspect ratio benar
+- **Loading State**: Indikator loading saat data sedang dimuat dari Firebase
+- **Login Dialog**: Modal login dengan password input (show/hide toggle) dan validasi
+- **Settings Dialog**: Modal untuk ubah password (current, new, confirm) dengan validasi minimal 6 karakter
 
 ### 🚀 Peningkatan Performa
-- Hybrid storage: Firebase + localStorage untuk kecepatan maksimal
-- Real-time data sync tanpa perlu refresh manual
+- **Firestore Real-time Sync**: Perubahan data di satu device langsung ter-update di device lain tanpa refresh
+- **Automatic Sync**: Data otomatis di-sync ke Firebase setiap kali ada perubahan (add, edit, delete)
+- **Fallback Mechanism**: Jika Firebase error, aplikasi fallback ke localStorage tanpa data hilang
+- **Efficient Loading**: Load data dari Firebase hanya sekali saat aplikasi pertama kali dibuka
 
-### 🔒 Keamanan
-- Password-based access control
-- Activity tracking untuk auto-logout
-- Firestore security rules untuk isolasi data per user
+### 🔒 Keamanan & Deployment
+- **Password Protection**: Fitur edit dan delete hanya bisa diakses setelah login
+- **Session Management**: Session login dengan auto-expire 30 menit inactivity
+- **Firestore Security Rules**: Data per-user dengan rules `allow read, write: if true` di Firebase Console
+- **Vercel Deployment**: Deploy otomatis ke Vercel production (https://kendal-uptime.vercel.app)
+- **Firebase Project**: Integrated dengan project "kendal-monitor" di Firebase Console
+- **Environment Config**: Firebase config tersimpan di `src/lib/firebase.ts` dengan production credentials
+
+### 🔧 Technical Implementation
+- **Firebase SDK**: Menggunakan `firebase/app` dan `firebase/firestore` versi terbaru
+- **Firestore Collections**: 3 collection (domains, groups, tags) dengan userId sebagai document ID
+- **Sync Functions**: `syncDomainsToFirestore()`, `getDomainsFromFirestore()`, `loadDomains()` dengan error handling
+- **Real-time Listener**: `subscribeToDomainsUpdates()` untuk listen perubahan data secara real-time
+- **localStorage Backup**: Data tetap tersimpan di localStorage sebagai backup lokal
+- **TypeScript**: Full TypeScript dengan proper typing untuk Firebase operations
+
+### 🐛 Bug Fixes
+- Fixed: Data tidak sync antar device (sebelumnya hanya localStorage)
+- Fixed: Logo dan favicon tidak muncul (URL external blocked)
+- Fixed: Favicon stretched karena aspect ratio salah
+- Fixed: Read-only mode toggle dihapus (simplified untuk single admin use case)
 
 ---
 
