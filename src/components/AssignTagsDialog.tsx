@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Tag, Check } from '@phosphor-icons/react'
+import { Tag, Check, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,7 +13,9 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Domain, DomainTag } from '@/lib/types'
+import { useDebounce } from '@/hooks/use-debounce'
 
 interface AssignTagsDialogProps {
   domains: Domain[]
@@ -25,12 +27,18 @@ export function AssignTagsDialog({ domains, tags, onAssign }: AssignTagsDialogPr
   const [open, setOpen] = useState(false)
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set())
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
+  const [domainSearchQuery, setDomainSearchQuery] = useState('')
+  const [tagSearchQuery, setTagSearchQuery] = useState('')
+  const debouncedDomainSearch = useDebounce(domainSearchQuery, 300)
+  const debouncedTagSearch = useDebounce(tagSearchQuery, 300)
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen)
     if (!newOpen) {
       setSelectedDomains(new Set())
       setSelectedTags(new Set())
+      setDomainSearchQuery('')
+      setTagSearchQuery('')
     }
   }
 
@@ -65,10 +73,21 @@ export function AssignTagsDialog({ domains, tags, onAssign }: AssignTagsDialogPr
   }
 
   const domainsByGroup = useMemo(() => {
-    const ungrouped = domains.filter(d => !d.groupId)
-    const grouped = domains.filter(d => d.groupId)
-    return { ungrouped, grouped }
-  }, [domains])
+    const filtered = domains.filter(d => 
+      debouncedDomainSearch === '' || 
+      d.url.toLowerCase().includes(debouncedDomainSearch.toLowerCase())
+    )
+    const ungrouped = filtered.filter(d => !d.groupId)
+    const grouped = filtered.filter(d => d.groupId)
+    return { ungrouped, grouped, all: filtered }
+  }, [domains, debouncedDomainSearch])
+
+  const filteredTags = useMemo(() => {
+    return tags.filter(t =>
+      debouncedTagSearch === '' ||
+      t.name.toLowerCase().includes(debouncedTagSearch.toLowerCase())
+    )
+  }, [tags, debouncedTagSearch])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -97,22 +116,51 @@ export function AssignTagsDialog({ domains, tags, onAssign }: AssignTagsDialogPr
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  if (selectedDomains.size === domains.length) {
+                  if (selectedDomains.size === domainsByGroup.all.length) {
                     setSelectedDomains(new Set())
                   } else {
-                    setSelectedDomains(new Set(domains.map(d => d.id)))
+                    setSelectedDomains(new Set(domainsByGroup.all.map(d => d.id)))
                   }
                 }}
                 className="h-7 text-xs"
               >
-                {selectedDomains.size === domains.length ? 'Batalkan' : 'Pilih Semua'}
+                {selectedDomains.size === domainsByGroup.all.length && domainsByGroup.all.length > 0 ? 'Batalkan' : 'Pilih Semua'}
               </Button>
             </div>
-            <ScrollArea className="h-[300px] border rounded-lg">
+            
+            <div className="relative">
+              <MagnifyingGlass 
+                size={14} 
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
+              />
+              <Input
+                type="text"
+                placeholder="Cari domain..."
+                value={domainSearchQuery}
+                onChange={(e) => setDomainSearchQuery(e.target.value)}
+                className="h-8 pl-8 pr-8 text-xs"
+              />
+              {domainSearchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDomainSearchQuery('')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
+                >
+                  <X size={14} className="text-muted-foreground hover:text-foreground" />
+                </Button>
+              )}
+            </div>
+            
+            <ScrollArea className="h-[280px] border rounded-lg">
               <div className="p-3 space-y-2">
                 {domains.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-8">
                     Tidak ada domain
+                  </p>
+                ) : domainsByGroup.all.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    Tidak ada domain yang cocok dengan "{debouncedDomainSearch}"
                   </p>
                 ) : (
                   <>
@@ -215,25 +263,54 @@ export function AssignTagsDialog({ domains, tags, onAssign }: AssignTagsDialogPr
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  if (selectedTags.size === tags.length) {
+                  if (selectedTags.size === filteredTags.length) {
                     setSelectedTags(new Set())
                   } else {
-                    setSelectedTags(new Set(tags.map(t => t.id)))
+                    setSelectedTags(new Set(filteredTags.map(t => t.id)))
                   }
                 }}
                 className="h-7 text-xs"
               >
-                {selectedTags.size === tags.length ? 'Batalkan' : 'Pilih Semua'}
+                {selectedTags.size === filteredTags.length && filteredTags.length > 0 ? 'Batalkan' : 'Pilih Semua'}
               </Button>
             </div>
-            <ScrollArea className="h-[300px] border rounded-lg">
+            
+            <div className="relative">
+              <MagnifyingGlass 
+                size={14} 
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
+              />
+              <Input
+                type="text"
+                placeholder="Cari tag..."
+                value={tagSearchQuery}
+                onChange={(e) => setTagSearchQuery(e.target.value)}
+                className="h-8 pl-8 pr-8 text-xs"
+              />
+              {tagSearchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTagSearchQuery('')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
+                >
+                  <X size={14} className="text-muted-foreground hover:text-foreground" />
+                </Button>
+              )}
+            </div>
+            
+            <ScrollArea className="h-[280px] border rounded-lg">
               <div className="p-3 space-y-2">
                 {tags.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-8">
                     Belum ada tag. Buat tag terlebih dahulu.
                   </p>
+                ) : filteredTags.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    Tidak ada tag yang cocok dengan "{debouncedTagSearch}"
+                  </p>
                 ) : (
-                  tags.map(tag => (
+                  filteredTags.map(tag => (
                     <div
                       key={tag.id}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
