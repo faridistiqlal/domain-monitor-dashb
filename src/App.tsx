@@ -24,6 +24,7 @@ import { AssignTagsDialog } from '@/components/AssignTagsDialog'
 import { TagCard } from '@/components/TagCard'
 import { OptimizedDomainList } from '@/components/VirtualizedDomainList'
 import { StatisticsView } from '@/components/StatisticsView'
+import { ChangelogDialog } from '@/components/ChangelogDialog'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -1490,6 +1491,17 @@ function App() {
           />
         )}
       </div>
+
+      <footer className="border-t border-border bg-card mt-auto">
+        <div className="container mx-auto px-4 py-3 max-w-5xl">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              © 2024 Domain Monitor • Kabupaten Kendal
+            </p>
+            <ChangelogDialog />
+          </div>
+        </div>
+      </footer>
     </div>
     </TooltipProvider>
   )
