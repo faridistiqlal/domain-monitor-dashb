@@ -25,6 +25,8 @@ import { TagCard } from '@/components/TagCard'
 import { OptimizedDomainList } from '@/components/VirtualizedDomainList'
 import { StatisticsView } from '@/components/StatisticsView'
 import { ChangelogDialog } from '@/components/ChangelogDialog'
+import { PrivacyPolicyDialog } from '@/components/PrivacyPolicyDialog'
+import { TermsOfServiceDialog } from '@/components/TermsOfServiceDialog'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -1495,9 +1497,15 @@ function App() {
       <footer className="border-t border-border bg-card mt-auto">
         <div className="container mx-auto px-4 py-3 max-w-5xl">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              © 2024 Domain Monitor • Kabupaten Kendal
-            </p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">
+                © 2024 Domain Monitor • Kabupaten Kendal
+              </p>
+              <span className="text-xs text-muted-foreground">•</span>
+              <PrivacyPolicyDialog />
+              <span className="text-xs text-muted-foreground">•</span>
+              <TermsOfServiceDialog />
+            </div>
             <ChangelogDialog />
           </div>
         </div>
