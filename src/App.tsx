@@ -589,9 +589,11 @@ function App() {
           <header className="mb-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                  <Globe size={24} weight="duotone" className="text-primary-foreground" />
-                </div>
+                <img 
+                  src="https://www.kendalkab.go.id/assets/img/logo_kendal.png" 
+                  alt="Logo Kendal"
+                  className="w-10 h-10 object-contain"
+                />
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight text-foreground">
                     Domain Monitor
