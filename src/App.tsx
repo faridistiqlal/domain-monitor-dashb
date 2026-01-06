@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -39,9 +38,18 @@ type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'sta
 type ViewMode = 'all' | 'groups' | 'group-detail'
 
 function App() {
-  const [domains, setDomains] = useKV<Domain[]>('monitoring-domains', [])
-  const [groups, setGroups] = useKV<DomainGroup[]>('domain-groups', [])
-  const [tags, setTags] = useKV<DomainTag[]>('domain-tags', [])
+  const [domains, setDomains] = useState<Domain[]>(() => {
+    const saved = localStorage.getItem('monitoring-domains')
+    return saved ? JSON.parse(saved) : []
+  })
+  const [groups, setGroups] = useState<DomainGroup[]>(() => {
+    const saved = localStorage.getItem('domain-groups')
+    return saved ? JSON.parse(saved) : []
+  })
+  const [tags, setTags] = useState<DomainTag[]>(() => {
+    const saved = localStorage.getItem('domain-tags')
+    return saved ? JSON.parse(saved) : []
+  })
   const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
@@ -63,6 +71,19 @@ function App() {
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
   const [manageTagFilter, setManageTagFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('monitoring-domains', JSON.stringify(domains))
+  }, [domains])
+
+  useEffect(() => {
+    localStorage.setItem('domain-groups', JSON.stringify(groups))
+  }, [groups])
+
+  useEffect(() => {
+    localStorage.setItem('domain-tags', JSON.stringify(tags))
+  }, [tags])
 
   const checkAllDomains = async (showToast = false) => {
     if (!domains || domains.length === 0) return
