@@ -31,6 +31,17 @@ import { SettingsDialog } from '@/components/SettingsDialog'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
+import { 
+  loadDomains, 
+  loadGroups, 
+  loadTags,
+  syncDomainsToFirestore,
+  syncGroupsToFirestore,
+  syncTagsToFirestore,
+  subscribeToDomainsUpdates,
+  subscribeToGroupsUpdates,
+  subscribeToTagsUpdates
+} from '@/lib/firestore-sync'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useFilteredDomains } from '@/hooks/use-filtered-domains'
@@ -50,18 +61,10 @@ function App() {
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now())
 
   // Domain & App States
-  const [domains, setDomains] = useState<Domain[]>(() => {
-    const saved = localStorage.getItem('monitoring-domains')
-    return saved ? JSON.parse(saved) : []
-  })
-  const [groups, setGroups] = useState<DomainGroup[]>(() => {
-    const saved = localStorage.getItem('domain-groups')
-    return saved ? JSON.parse(saved) : []
-  })
-  const [tags, setTags] = useState<DomainTag[]>(() => {
-    const saved = localStorage.getItem('domain-tags')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [domains, setDomains] = useState<Domain[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [groups, setGroups] = useState<DomainGroup[]>([])
+  const [tags, setTags] = useState<DomainTag[]>([])
   const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
@@ -84,18 +87,48 @@ function App() {
   const [manageTagFilter, setManageTagFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
 
-  // Save to localStorage whenever data changes
+  // Load data from Firebase on mount
   useEffect(() => {
-    localStorage.setItem('monitoring-domains', JSON.stringify(domains))
-  }, [domains])
+    const loadData = async () => {
+      try {
+        const [loadedDomains, loadedGroups, loadedTags] = await Promise.all([
+          loadDomains(),
+          loadGroups(),
+          loadTags()
+        ])
+        setDomains(loadedDomains)
+        setGroups(loadedGroups)
+        setTags(loadedTags)
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setIsLoadingData(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  // Sync to Firebase whenever data changes (with localStorage fallback)
+  useEffect(() => {
+    if (!isLoadingData && domains.length >= 0) {
+      localStorage.setItem('monitoring-domains', JSON.stringify(domains))
+      syncDomainsToFirestore(domains).catch(console.error)
+    }
+  }, [domains, isLoadingData])
 
   useEffect(() => {
-    localStorage.setItem('domain-groups', JSON.stringify(groups))
-  }, [groups])
+    if (!isLoadingData && groups.length >= 0) {
+      localStorage.setItem('domain-groups', JSON.stringify(groups))
+      syncGroupsToFirestore(groups).catch(console.error)
+    }
+  }, [groups, isLoadingData])
 
   useEffect(() => {
-    localStorage.setItem('domain-tags', JSON.stringify(tags))
-  }, [tags])
+    if (!isLoadingData && tags.length >= 0) {
+      localStorage.setItem('domain-tags', JSON.stringify(tags))
+      syncTagsToFirestore(tags).catch(console.error)
+    }
+  }, [tags, isLoadingData])
 
   // Auto-logout after 30 minutes of inactivity
   useEffect(() => {
