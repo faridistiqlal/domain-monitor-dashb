@@ -32,3 +32,25 @@ export interface DomainStatus {
   dnsResolvable?: boolean
   protocol?: string
 }
+
+export interface UptimeRecord {
+  timestamp: number
+  status: 'online' | 'offline' | 'dns-only'
+  responseTime?: number
+}
+
+export interface DomainHistory {
+  domainId: string
+  records: UptimeRecord[]
+}
+
+export interface UptimeStats {
+  uptimePercentage: number
+  totalChecks: number
+  onlineCount: number
+  offlineCount: number
+  dnsOnlyCount: number
+  averageResponseTime?: number
+  lastOnlineAt?: number
+  lastOfflineAt?: number
+}

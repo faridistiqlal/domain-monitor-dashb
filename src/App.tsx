@@ -24,9 +24,10 @@ import { AssignTagsDialog } from '@/components/AssignTagsDialog'
 import { TagCard } from '@/components/TagCard'
 import { OptimizedDomainList } from '@/components/VirtualizedDomainList'
 import { StatisticsView } from '@/components/StatisticsView'
-import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag, DomainHistory } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
+import { addUptimeRecord } from '@/lib/uptime-tracker'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useFilteredDomains } from '@/hooks/use-filtered-domains'
@@ -39,6 +40,7 @@ function App() {
   const [domains, setDomains] = useKV<Domain[]>('monitoring-domains', [])
   const [groups, setGroups] = useKV<DomainGroup[]>('domain-groups', [])
   const [tags, setTags] = useKV<DomainTag[]>('domain-tags', [])
+  const [histories, setHistories] = useKV<DomainHistory[]>('domain-histories', [])
   const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
@@ -88,6 +90,21 @@ function App() {
     setStatuses(newStatuses)
     setHasChecked(true)
 
+    setHistories(currentHistories => {
+      let updatedHistories = currentHistories || []
+      results.forEach(result => {
+        if (result.status !== 'checking') {
+          updatedHistories = addUptimeRecord(
+            updatedHistories,
+            result.id,
+            result.status,
+            result.responseTime
+          )
+        }
+      })
+      return updatedHistories
+    })
+
     if (showToast) {
       const online = results.filter(r => r.status === 'online').length
       const offline = results.filter(r => r.status === 'offline').length
@@ -124,6 +141,7 @@ function App() {
       delete newStatuses[id]
       return newStatuses
     })
+    setHistories(current => (current || []).filter(h => h.domainId !== id))
     setSelectedDomains(prev => {
       const newSet = new Set(prev)
       newSet.delete(id)
@@ -156,6 +174,7 @@ function App() {
       selectedDomains.forEach(id => delete newStatuses[id])
       return newStatuses
     })
+    setHistories(current => (current || []).filter(h => !selectedDomains.has(h.domainId)))
     setSelectedDomains(new Set())
     toast.success(`${count} domain berhasil dihapus`)
   }
@@ -1030,6 +1049,7 @@ function App() {
                     tags={tags}
                     showCheckbox={false}
                     simpleMode={false}
+                    histories={histories || []}
                   />
                 </div>
               </ScrollArea>
@@ -1266,6 +1286,7 @@ function App() {
                         onSelect={handleSelectDomain}
                         showCheckbox={true}
                         simpleMode={true}
+                        histories={histories || []}
                       />
                     </div>
                   </ScrollArea>
