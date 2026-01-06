@@ -6,8 +6,15 @@
     @apply border-border
   }
   
+  html {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+  
   body {
     font-family: 'Space Grotesk', sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
   }
   
   .font-mono {
@@ -48,6 +55,8 @@
   --ring: oklch(0.75 0.15 200);
 
   --radius: 0.5rem;
+  
+  color-scheme: dark;
 }
 
 @theme {
