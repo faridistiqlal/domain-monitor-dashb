@@ -45,37 +45,12 @@ export function ChangelogDialog() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">Version 2.1.0</h3>
-                  <p className="text-xs text-muted-foreground">Current Release • 2024</p>
+                  <p className="text-xs text-muted-foreground">Current Release • 6 Januari 2026</p>
                 </div>
                 <Badge className="bg-primary text-primary-foreground">Latest</Badge>
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <div className="w-6 h-6 rounded-md bg-destructive/20 flex items-center justify-center">
-                      <Bug size={14} weight="duotone" className="text-destructive" />
-                    </div>
-                    Critical Bug Fixes
-                  </div>
-                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <span className="text-destructive mt-1">•</span>
-                      <span><strong className="text-foreground">CRITICAL:</strong> Fixed data hilang setelah refresh - bug di useEffect dependency</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-destructive mt-1">•</span>
-                      <span><strong className="text-foreground">CRITICAL:</strong> Fixed KV storage corruption yang menyebabkan data tidak tersimpan</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-destructive mt-1">•</span>
-                      <span>Fixed: Infinite loop di auto-refresh causing memory leak</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <Separator />
-
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                     <div className="w-6 h-6 rounded-md bg-accent/20 flex items-center justify-center">
@@ -86,15 +61,110 @@ export function ChangelogDialog() {
                   <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="text-accent mt-1">•</span>
-                      <span><strong className="text-foreground">Debug Panel:</strong> Panel debugging di footer untuk monitor KV storage status</span>
+                      <span><strong className="text-foreground">Firebase Cloud Sync:</strong> Data domain, grup, dan tag otomatis tersimpan di cloud Firebase Firestore</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-accent mt-1">•</span>
-                      <span><strong className="text-foreground">KV Check Tool:</strong> Button untuk manual check KV storage langsung</span>
+                      <span><strong className="text-foreground">Cross-Device Support:</strong> Buka aplikasi di PC, data yang sama muncul di tablet/HP secara real-time</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-accent mt-1">•</span>
-                      <span><strong className="text-foreground">Enhanced Logging:</strong> Console logging untuk tracking perubahan data</span>
+                      <span><strong className="text-foreground">Hybrid Storage:</strong> Kombinasi Firebase (cloud) + localStorage (offline) untuk reliability maksimal</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Password Authentication:</strong> Login dengan password untuk membatasi akses edit dan delete</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Auto-Logout Timer:</strong> Sistem otomatis logout setelah 30 menit tidak ada aktivitas</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Change Password Dialog:</strong> Dialog untuk mengganti password admin dari aplikasi</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center">
+                      <Palette size={14} weight="duotone" className="text-primary" />
+                    </div>
+                    Peningkatan UI/UX
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Logo Optimasi:</strong> Logo dikonversi dari PNG (105KB) ke WebP (26KB) - hemat 75%</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Favicon Transparent:</strong> Favicon PNG 32x32 dengan background transparan</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Loading State:</strong> Indikator loading saat data sedang dimuat dari Firebase</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Login Dialog:</strong> Modal login dengan password input (show/hide toggle)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Settings Dialog:</strong> Modal untuk ubah password dengan validasi minimal 6 karakter</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-success/20 flex items-center justify-center">
+                      <Rocket size={14} weight="duotone" className="text-success" />
+                    </div>
+                    Peningkatan Performa
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-success mt-1">•</span>
+                      <span><strong className="text-foreground">Firestore Real-time Sync:</strong> Perubahan data di satu device langsung ter-update di device lain</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-success mt-1">•</span>
+                      <span><strong className="text-foreground">Automatic Sync:</strong> Data otomatis di-sync ke Firebase setiap kali ada perubahan</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-success mt-1">•</span>
+                      <span><strong className="text-foreground">Fallback Mechanism:</strong> Jika Firebase error, aplikasi fallback ke localStorage</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-destructive/20 flex items-center justify-center">
+                      <Bug size={14} weight="duotone" className="text-destructive" />
+                    </div>
+                    Bug Fixes
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span>Fixed: Data tidak sync antar device (sebelumnya hanya localStorage)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span>Fixed: Logo dan favicon tidak muncul (URL external blocked)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span>Fixed: Favicon stretched karena aspect ratio salah</span>
                     </li>
                   </ul>
                 </div>
