@@ -9,12 +9,19 @@
   html {
     background-color: var(--background);
     color: var(--foreground);
+    min-height: 100%;
   }
   
   body {
     font-family: 'Space Grotesk', sans-serif;
     background-color: var(--background);
     color: var(--foreground);
+    min-height: 100vh;
+  }
+  
+  #root {
+    background-color: var(--background);
+    min-height: 100vh;
   }
   
   .font-mono {
