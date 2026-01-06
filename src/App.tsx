@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar, SignOut, LockKey } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,8 @@ import { StatisticsView } from '@/components/StatisticsView'
 import { ChangelogDialog } from '@/components/ChangelogDialog'
 import { PrivacyPolicyDialog } from '@/components/PrivacyPolicyDialog'
 import { TermsOfServiceDialog } from '@/components/TermsOfServiceDialog'
+import { LoginDialog } from '@/components/LoginDialog'
+import { SettingsDialog } from '@/components/SettingsDialog'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -38,6 +40,16 @@ type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'sta
 type ViewMode = 'all' | 'groups' | 'group-detail'
 
 function App() {
+  // Authentication & Security States
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const auth = localStorage.getItem('app-authenticated')
+    return auth === 'true'
+  })
+  const [showLoginDialog, setShowLoginDialog] = useState(!isAuthenticated)
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false)
+  const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now())
+
+  // Domain & App States
   const [domains, setDomains] = useState<Domain[]>(() => {
     const saved = localStorage.getItem('monitoring-domains')
     return saved ? JSON.parse(saved) : []
@@ -85,6 +97,81 @@ function App() {
     localStorage.setItem('domain-tags', JSON.stringify(tags))
   }, [tags])
 
+  // Auto-logout after 30 minutes of inactivity
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const TIMEOUT_DURATION = 30 * 60 * 1000 // 30 minutes in milliseconds
+    const WARNING_DURATION = 2 * 60 * 1000 // 2 minutes before logout
+
+    // Update activity time on user interactions
+    const updateActivity = () => {
+      const now = Date.now()
+      setLastActivityTime(now)
+      localStorage.setItem('app-last-activity', now.toString())
+    }
+
+    // Add event listeners for user activity
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click']
+    events.forEach(event => window.addEventListener(event, updateActivity))
+
+    // Check for timeout every minute
+    const timeoutChecker = setInterval(() => {
+      const lastActivity = parseInt(localStorage.getItem('app-last-activity') || Date.now().toString())
+      const now = Date.now()
+      const timeSinceActivity = now - lastActivity
+
+      // Show warning 2 minutes before logout
+      if (timeSinceActivity >= TIMEOUT_DURATION - WARNING_DURATION && timeSinceActivity < TIMEOUT_DURATION) {
+        const minutesLeft = Math.ceil((TIMEOUT_DURATION - timeSinceActivity) / 60000)
+        toast.warning(`Session akan berakhir dalam ${minutesLeft} menit karena tidak ada aktivitas`)
+      }
+
+      // Auto-logout if timeout reached
+      if (timeSinceActivity >= TIMEOUT_DURATION) {
+        handleLogout()
+        toast.error('Session berakhir karena tidak ada aktivitas selama 30 menit')
+      }
+    }, 60000) // Check every minute
+
+    // Cleanup
+    return () => {
+      events.forEach(event => window.removeEventListener(event, updateActivity))
+      clearInterval(timeoutChecker)
+    }
+  }, [isAuthenticated])
+
+  // Authentication Handlers
+  const handleLogin = (password: string) => {
+    const storedPassword = localStorage.getItem('app-password') || 'admin123'
+    
+    if (password === storedPassword) {
+      setIsAuthenticated(true)
+      localStorage.setItem('app-authenticated', 'true')
+      localStorage.setItem('app-last-activity', Date.now().toString())
+      setLastActivityTime(Date.now())
+      setShowLoginDialog(false)
+      toast.success('Login berhasil! Selamat datang')
+    } else {
+      toast.error('Password salah! Silakan coba lagi')
+    }
+  }
+
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    localStorage.setItem('app-authenticated', 'false')
+    localStorage.removeItem('app-last-activity')
+    setShowLoginDialog(true)
+    toast.info('Anda telah logout')
+  }
+
+  const handlePasswordChange = (newPassword: string) => {
+    localStorage.setItem('app-password', newPassword)
+  }
+
+  // Check if user can edit (authenticated only)
+  const canEdit = isAuthenticated
+
   const checkAllDomains = async (showToast = false) => {
     if (!domains || domains.length === 0) return
 
@@ -125,6 +212,11 @@ function App() {
   }
 
   const handleAddDomain = (url: string) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk menambah domain')
+      return
+    }
+
     const isDuplicate = domains?.some(d => d.url === url)
     if (isDuplicate) {
       toast.error('Domain sudah ada dalam daftar')
@@ -142,6 +234,11 @@ function App() {
   }
 
   const handleDeleteDomain = (id: string) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk menghapus domain')
+      return
+    }
+
     setDomains(current => (current || []).filter(d => d.id !== id))
     setStatuses(current => {
       const newStatuses = { ...current }
@@ -157,6 +254,11 @@ function App() {
   }
 
   const handleEditDomain = (id: string, newUrl: string) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk mengedit domain')
+      return
+    }
+
     setDomains(current =>
       (current || []).map(d =>
         d.id === id ? { ...d, url: newUrl } : d
@@ -171,6 +273,11 @@ function App() {
   }
 
   const handleBulkDelete = () => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk menghapus domain')
+      return
+    }
+
     const count = selectedDomains.size
     if (count === 0) return
 
@@ -384,6 +491,11 @@ function App() {
   }
 
   const handleCreateGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk membuat grup')
+      return
+    }
+
     const newGroup: DomainGroup = {
       ...groupData,
       id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -408,6 +520,11 @@ function App() {
   }
 
   const handleDeleteGroup = (groupId: string) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk menghapus grup')
+      return
+    }
+
     setGroups(current => (current || []).filter(g => g.id !== groupId))
     setDomains(current =>
       (current || []).map(d =>
@@ -435,6 +552,11 @@ function App() {
   }
 
   const handleCreateTag = (tagData: Omit<DomainTag, 'id' | 'createdAt'>) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk membuat tag')
+      return
+    }
+
     const newTag: DomainTag = {
       ...tagData,
       id: `tag-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -459,6 +581,11 @@ function App() {
   }
 
   const handleDeleteTag = (tagId: string) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk menghapus tag')
+      return
+    }
+
     setTags(current => (current || []).filter(t => t.id !== tagId))
     setDomains(current =>
       (current || []).map(d => ({
@@ -626,11 +753,41 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
-                <ImportDialog
-                  existingDomains={domains || []}
-                  groups={groups || []}
-                  onImport={handleImportDomains}
-                />
+                {/* Settings Button */}
+                {isAuthenticated && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSettingsDialog(true)}
+                    className="h-8"
+                    title="Ubah Password"
+                  >
+                    <LockKey size={14} />
+                  </Button>
+                )}
+
+                {/* Logout Button */}
+                {isAuthenticated && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="h-8"
+                    title="Logout"
+                  >
+                    <SignOut size={14} />
+                  </Button>
+                )}
+
+                <div className="h-6 w-px bg-border" />
+
+                {canEdit && (
+                  <ImportDialog
+                    existingDomains={domains || []}
+                    groups={groups || []}
+                    onImport={handleImportDomains}
+                  />
+                )}
 
                 <Button
                   variant="outline"
@@ -1067,7 +1224,7 @@ function App() {
               </p>
             </div>
 
-            <AddDomainForm onAdd={handleAddDomain} />
+            {canEdit && <AddDomainForm onAdd={handleAddDomain} />}
 
             {globalTotalCount > 0 && (
               <div className="space-y-3">
@@ -1148,7 +1305,7 @@ function App() {
                     )}
                   </div>
                   
-                  {selectedDomains.size > 0 && (
+                  {canEdit && selectedDomains.size > 0 && (
                     <Button
                       variant="destructive"
                       size="sm"
@@ -1283,12 +1440,12 @@ function App() {
                         statuses={statuses}
                         groups={groups}
                         tags={tags}
-                        onDelete={handleDeleteDomain}
-                        onEdit={handleEditDomain}
+                        onDelete={canEdit ? handleDeleteDomain : undefined}
+                        onEdit={canEdit ? handleEditDomain : undefined}
                         existingUrls={(domains || []).filter(d => !filteredManageDomains.some(fd => fd.id === d.id)).map(d => d.url)}
                         selectedDomains={selectedDomains}
-                        onSelect={handleSelectDomain}
-                        showCheckbox={true}
+                        onSelect={canEdit ? handleSelectDomain : undefined}
+                        showCheckbox={canEdit}
                         simpleMode={true}
                       />
                     </div>
@@ -1357,19 +1514,21 @@ function App() {
                 <p className="text-sm text-muted-foreground">
                   Kelola grup domain untuk organisasi yang lebih baik
                 </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAssignDialogOpen(true)}
-                    disabled={!domains || domains.length === 0}
-                    className="h-8"
-                  >
-                    <Tag size={14} />
-                    Atur Grup
-                  </Button>
-                  <GroupFormDialog onSave={handleCreateGroup} />
-                </div>
+                {canEdit && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAssignDialogOpen(true)}
+                      disabled={!domains || domains.length === 0}
+                      className="h-8"
+                    >
+                      <Tag size={14} />
+                      Atur Grup
+                    </Button>
+                    <GroupFormDialog onSave={handleCreateGroup} />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1401,8 +1560,8 @@ function App() {
                         onlineCount={stats.online}
                         offlineCount={stats.offline}
                         dnsOnlyCount={stats.dnsOnly}
-                        onEdit={(g) => setEditingGroup(g)}
-                        onDelete={handleDeleteGroup}
+                        onEdit={canEdit ? (g) => setEditingGroup(g) : undefined}
+                        onDelete={canEdit ? handleDeleteGroup : undefined}
                         onViewDomains={handleViewGroupDomains}
                         onExport={handleExportGroupCSV}
                         disableExport={!autoRefreshEnabled && !hasChecked}
@@ -1435,14 +1594,16 @@ function App() {
                 <p className="text-sm text-muted-foreground">
                   Kelola tag untuk mengorganisir domain
                 </p>
-                <div className="flex gap-2">
-                  <AssignTagsDialog
-                    domains={domains || []}
-                    tags={tags || []}
-                    onAssign={handleAssignTags}
-                  />
-                  <TagFormDialog onSave={handleCreateTag} />
-                </div>
+                {canEdit && (
+                  <div className="flex gap-2">
+                    <AssignTagsDialog
+                      domains={domains || []}
+                      tags={tags || []}
+                      onAssign={handleAssignTags}
+                    />
+                    <TagFormDialog onSave={handleCreateTag} />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1473,8 +1634,8 @@ function App() {
                         key={tag.id}
                         tag={tag}
                         domainCount={domainCount}
-                        onEdit={(t) => setEditingTag(t)}
-                        onDelete={handleDeleteTag}
+                        onEdit={canEdit ? (t) => setEditingTag(t) : undefined}
+                        onDelete={canEdit ? handleDeleteTag : undefined}
                       />
                     )
                   })}
@@ -1513,6 +1674,19 @@ function App() {
             }}
           />
         )}
+
+        {/* Login Dialog */}
+        <LoginDialog 
+          open={showLoginDialog} 
+          onLogin={handleLogin}
+        />
+
+        {/* Settings Dialog */}
+        <SettingsDialog
+          open={showSettingsDialog}
+          onOpenChange={setShowSettingsDialog}
+          onPasswordChange={handlePasswordChange}
+        />
       </div>
 
       <footer className="border-t border-border bg-card mt-auto">

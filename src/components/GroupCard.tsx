@@ -16,8 +16,8 @@ interface GroupCardProps {
   onlineCount: number
   offlineCount: number
   dnsOnlyCount: number
-  onEdit: (group: DomainGroup) => void
-  onDelete: (groupId: string) => void
+  onEdit?: (group: DomainGroup) => void
+  onDelete?: (groupId: string) => void
   onViewDomains: (groupId: string) => void
   onExport: (groupId: string) => void
   disableExport?: boolean
@@ -98,24 +98,28 @@ export function GroupCard({
               <DownloadSimple size={14} className="mr-2" />
               Export CSV
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => {
-              e.stopPropagation()
-              onEdit(group)
-            }}>
-              <PencilSimple size={14} className="mr-2" />
-              Edit Grup
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={(e) => {
+            {onEdit && (
+              <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation()
-                handleDelete()
-              }}
-              disabled={isDeleting}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash size={14} className="mr-2" />
-              Hapus Grup
-            </DropdownMenuItem>
+                onEdit(group)
+              }}>
+                <PencilSimple size={14} className="mr-2" />
+                Edit Grup
+              </DropdownMenuItem>
+            )}
+            {onDelete && (
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete()
+                }}
+                disabled={isDeleting}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash size={14} className="mr-2" />
+                Hapus Grup
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

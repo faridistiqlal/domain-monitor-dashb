@@ -17,8 +17,8 @@ import { DomainTag } from '@/lib/types'
 interface TagCardProps {
   tag: DomainTag
   domainCount: number
-  onEdit: (tag: DomainTag) => void
-  onDelete: (tagId: string) => void
+  onEdit?: (tag: DomainTag) => void
+  onDelete?: (tagId: string) => void
 }
 
 export function TagCard({ tag, domainCount, onEdit, onDelete }: TagCardProps) {
@@ -44,43 +44,47 @@ export function TagCard({ tag, domainCount, onEdit, onDelete }: TagCardProps) {
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(tag)}
-            className="h-8 w-8 p-0"
-          >
-            <Pencil size={14} />
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-              >
-                <Trash size={14} />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Hapus Tag</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Yakin ingin menghapus tag "{tag.name}"? Tag akan dihapus dari {domainCount} domain.
-                  Aksi ini tidak dapat dibatalkan.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Batal</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDelete(tag.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(tag)}
+              className="h-8 w-8 p-0"
+            >
+              <Pencil size={14} />
+            </Button>
+          )}
+          {onDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                 >
-                  Hapus
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash size={14} />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Hapus Tag</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Yakin ingin menghapus tag "{tag.name}"? Tag akan dihapus dari {domainCount} domain.
+                    Aksi ini tidak dapat dibatalkan.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onDelete(tag.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Hapus
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
     </Card>
