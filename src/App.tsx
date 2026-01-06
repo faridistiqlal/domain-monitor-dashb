@@ -876,8 +876,6 @@ function App() {
             </div>
           </header>
 
-        <Separator className="mb-4" />
-
         <Tabs value={activeTab} onValueChange={(val) => {
           setActiveTab(val as 'domains' | 'groups' | 'manage' | 'tags' | 'statistics')
           if (val === 'domains' && viewMode === 'group-detail') {
