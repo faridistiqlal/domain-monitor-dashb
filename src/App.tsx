@@ -605,8 +605,6 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
-                <InfoDialog />
-                
                 <ImportDialog
                   existingDomains={domains || []}
                   groups={groups || []}
