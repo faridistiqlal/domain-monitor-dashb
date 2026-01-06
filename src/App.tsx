@@ -629,15 +629,30 @@ function App() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleExportCSV}
-                      className="h-8 bg-success text-success-foreground hover:bg-success/90"
-                    >
-                      <DownloadSimple size={14} />
-                      Export Hasil
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setHasChecked(false)
+                          setStatuses({})
+                          toast.info('Status domain direset')
+                        }}
+                        className="h-8"
+                      >
+                        <X size={14} />
+                        Reset
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportCSV}
+                        className="h-8 bg-success text-success-foreground hover:bg-success/90"
+                      >
+                        <DownloadSimple size={14} />
+                        Export Hasil
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 
