@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback, useRef } from 'react'
-import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { DomainCard } from './DomainCard'
 import { Button } from './ui/button'
 import { CaretDown } from '@phosphor-icons/react'
@@ -8,6 +8,7 @@ interface OptimizedDomainListProps {
   domains: Domain[]
   statuses: Record<string, DomainStatus>
   groups?: DomainGroup[]
+  tags?: DomainTag[]
   onDelete?: (id: string) => void
   onEdit?: (id: string, newUrl: string) => void
   existingUrls?: string[]
@@ -26,6 +27,7 @@ const DomainCardMemo = memo(DomainCard, (prev, next) => {
     prev.status.dnsResolvable === next.status.dnsResolvable &&
     prev.isSelected === next.isSelected &&
     prev.group?.id === next.group?.id &&
+    prev.domain.tags?.join(',') === next.domain.tags?.join(',') &&
     prev.showCheckbox === next.showCheckbox &&
     prev.simpleMode === next.simpleMode
   )
@@ -37,6 +39,7 @@ export const OptimizedDomainList = memo(({
   domains,
   statuses,
   groups,
+  tags,
   onDelete,
   onEdit,
   existingUrls,
@@ -99,6 +102,7 @@ export const OptimizedDomainList = memo(({
             onEdit={onEdit}
             existingUrls={existingUrls}
             group={group}
+            tags={tags}
             isSelected={selectedDomains?.has(domain.id) || false}
             onSelect={onSelect || (() => {})}
             showCheckbox={showCheckbox}

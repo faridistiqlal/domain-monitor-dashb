@@ -3,9 +3,10 @@ import { Trash, Warning, Globe, Copy, Tag } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from './StatusIndicator'
 import { EditDomainDialog } from './EditDomainDialog'
-import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import {
   Tooltip,
   TooltipContent,
@@ -20,13 +21,14 @@ interface DomainCardProps {
   onEdit?: (id: string, newUrl: string) => void
   existingUrls?: string[]
   group?: DomainGroup
+  tags?: DomainTag[]
   isSelected?: boolean
   onSelect?: (id: string, selected: boolean) => void
   showCheckbox?: boolean
   simpleMode?: boolean
 }
 
-export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, group, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
+export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
     try {
       let textToCopy = domain.url
@@ -43,6 +45,8 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
       toast.error('Gagal menyalin URL')
     }
   }
+
+  const domainTags = domain.tags?.map(tagId => tags?.find(t => t.id === tagId)).filter(Boolean) as DomainTag[] | undefined
 
   const getStatusText = () => {
     if (status.status === 'online') return 'Online'
@@ -101,17 +105,37 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
               </div>
             )}
             
-            <div className="flex-1 min-w-0 flex items-center gap-1.5">
-              <h3 className="font-mono text-sm font-medium text-foreground truncate">
-                {domain.url}
-              </h3>
-              {group && (
-                <div 
-                  className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
-                  style={{ backgroundColor: `${group.color}20`, color: group.color }}
-                >
-                  <Tag size={10} weight="fill" />
-                  <span className="font-medium">{group.name}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-1">
+                <h3 className="font-mono text-sm font-medium text-foreground truncate">
+                  {domain.url}
+                </h3>
+                {group && (
+                  <div 
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
+                    style={{ backgroundColor: `${group.color}20`, color: group.color }}
+                  >
+                    <Tag size={10} weight="fill" />
+                    <span className="font-medium">{group.name}</span>
+                  </div>
+                )}
+              </div>
+              {domainTags && domainTags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {domainTags.map(tag => (
+                    <Badge
+                      key={tag.id}
+                      variant="secondary"
+                      className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                      style={{
+                        backgroundColor: `${tag.color}20`,
+                        color: tag.color,
+                        borderColor: `${tag.color}40`,
+                      }}
+                    >
+                      {tag.name}
+                    </Badge>
+                  ))}
                 </div>
               )}
             </div>
@@ -159,53 +183,73 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
           )}
           <StatusIndicator status={status.status} className="shrink-0" />
           
-          <div className="flex-1 min-w-0 flex items-center gap-1.5">
-            <h3 className="font-mono text-sm font-medium text-foreground truncate">
-              {domain.url}
-            </h3>
-            {group && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div 
-                    className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
-                    style={{ backgroundColor: `${group.color}20`, color: group.color }}
-                  >
-                    <Tag size={10} weight="fill" />
-                    <span className="font-medium">{group.name}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Grup: {group.name}</p>
-                  {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            <div className="flex items-center shrink-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
-                    className="h-6 w-6 text-muted-foreground hover:text-accent hover:bg-accent/10"
-                  >
-                    <Globe size={14} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Buka di tab baru</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleCopyUrl('plain')}
-                className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              >
-                <Copy size={14} />
-              </Button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <h3 className="font-mono text-sm font-medium text-foreground truncate">
+                {domain.url}
+              </h3>
+              {group && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
+                      style={{ backgroundColor: `${group.color}20`, color: group.color }}
+                    >
+                      <Tag size={10} weight="fill" />
+                      <span className="font-medium">{group.name}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Grup: {group.name}</p>
+                    {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <div className="flex items-center shrink-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
+                      className="h-6 w-6 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                    >
+                      <Globe size={14} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Buka di tab baru</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleCopyUrl('plain')}
+                  className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  <Copy size={14} />
+                </Button>
+              </div>
             </div>
+            {domainTags && domainTags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {domainTags.map(tag => (
+                  <Badge
+                    key={tag.id}
+                    variant="secondary"
+                    className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                    style={{
+                      backgroundColor: `${tag.color}20`,
+                      color: tag.color,
+                      borderColor: `${tag.color}40`,
+                    }}
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 shrink-0 text-xs">

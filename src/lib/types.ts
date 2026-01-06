@@ -3,6 +3,14 @@ export interface Domain {
   url: string
   addedAt: number
   groupId?: string
+  tags?: string[]
+}
+
+export interface DomainTag {
+  id: string
+  name: string
+  color: string
+  createdAt: number
 }
 
 export interface DomainGroup {

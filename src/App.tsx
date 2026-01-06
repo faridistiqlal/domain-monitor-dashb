@@ -19,8 +19,11 @@ import { InfoDialog } from '@/components/InfoDialog'
 import { GroupCard } from '@/components/GroupCard'
 import { GroupFormDialog } from '@/components/GroupFormDialog'
 import { AssignDomainsDialog } from '@/components/AssignDomainsDialog'
+import { TagFormDialog } from '@/components/TagFormDialog'
+import { AssignTagsDialog } from '@/components/AssignTagsDialog'
+import { TagCard } from '@/components/TagCard'
 import { OptimizedDomainList } from '@/components/VirtualizedDomainList'
-import { Domain, DomainStatus, DomainGroup } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
 import { toast } from 'sonner'
@@ -34,6 +37,7 @@ type ViewMode = 'all' | 'groups' | 'group-detail'
 function App() {
   const [domains, setDomains] = useKV<Domain[]>('monitoring-domains', [])
   const [groups, setGroups] = useKV<DomainGroup[]>('domain-groups', [])
+  const [tags, setTags] = useKV<DomainTag[]>('domain-tags', [])
   const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
@@ -44,7 +48,7 @@ function App() {
   const [isPaused, setIsPaused] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
-  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage'>('domains')
+  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags'>('domains')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
@@ -53,6 +57,8 @@ function App() {
   const [manageSearchQuery, setManageSearchQuery] = useState('')
   const debouncedManageSearchQuery = useDebounce(manageSearchQuery, 300)
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
+  const [manageTagFilter, setManageTagFilter] = useState<string>('all')
+  const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
 
   const checkAllDomains = async (showToast = false) => {
     if (!domains || domains.length === 0) return
@@ -403,6 +409,54 @@ function App() {
     setActiveTab('domains')
   }
 
+  const handleCreateTag = (tagData: Omit<DomainTag, 'id' | 'createdAt'>) => {
+    const newTag: DomainTag = {
+      ...tagData,
+      id: `tag-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: Date.now(),
+    }
+    setTags(current => [...(current || []), newTag])
+    toast.success('Tag berhasil dibuat')
+  }
+
+  const handleEditTag = (tagData: Omit<DomainTag, 'id' | 'createdAt'>) => {
+    if (!editingTag) return
+    
+    setTags(current =>
+      (current || []).map(t =>
+        t.id === editingTag.id
+          ? { ...t, ...tagData }
+          : t
+      )
+    )
+    toast.success('Tag berhasil diperbarui')
+    setEditingTag(null)
+  }
+
+  const handleDeleteTag = (tagId: string) => {
+    setTags(current => (current || []).filter(t => t.id !== tagId))
+    setDomains(current =>
+      (current || []).map(d => ({
+        ...d,
+        tags: d.tags?.filter(t => t !== tagId)
+      }))
+    )
+    toast.success('Tag berhasil dihapus')
+  }
+
+  const handleAssignTags = (domainIds: string[], tagIds: string[]) => {
+    setDomains(current =>
+      (current || []).map(d => {
+        if (!domainIds.includes(d.id)) return d
+        
+        const existingTags = d.tags || []
+        const newTags = [...new Set([...existingTags, ...tagIds])]
+        return { ...d, tags: newTags }
+      })
+    )
+    toast.success(`Tag berhasil ditambahkan ke ${domainIds.length} domain`)
+  }
+
   useEffect(() => {
     if (!autoRefreshEnabled) return
 
@@ -434,7 +488,7 @@ function App() {
 
   useEffect(() => {
     setSelectedDomains(new Set())
-  }, [filter, debouncedSearchQuery, sortBy, viewMode, selectedGroupId, activeTab, manageGroupFilter])
+  }, [filter, debouncedSearchQuery, sortBy, viewMode, selectedGroupId, activeTab, manageGroupFilter, manageTagFilter])
 
   const currentViewDomains = useMemo(() => {
     if (viewMode === 'group-detail' && selectedGroupId) {
@@ -504,9 +558,13 @@ function App() {
         (manageGroupFilter === 'ungrouped' && !domain.groupId) ||
         domain.groupId === manageGroupFilter
       
-      return matchesSearch && matchesGroup
+      const matchesTag = manageTagFilter === 'all' ||
+        (manageTagFilter === 'untagged' && (!domain.tags || domain.tags.length === 0)) ||
+        (domain.tags && domain.tags.includes(manageTagFilter))
+      
+      return matchesSearch && matchesGroup && matchesTag
     }),
-    [domains, debouncedManageSearchQuery, manageGroupFilter]
+    [domains, debouncedManageSearchQuery, manageGroupFilter, manageTagFilter]
   )
 
   const selectedGroup = selectedGroupId ? groups?.find(g => g.id === selectedGroupId) : null
@@ -606,20 +664,24 @@ function App() {
         <Separator className="mb-4" />
 
         <Tabs value={activeTab} onValueChange={(val) => {
-          setActiveTab(val as 'domains' | 'groups' | 'manage')
+          setActiveTab(val as 'domains' | 'groups' | 'manage' | 'tags')
           if (val === 'domains' && viewMode === 'group-detail') {
             setViewMode('all')
             setSelectedGroupId(null)
           }
         }} className="space-y-4">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="domains" className="gap-1.5">
               <ListBullets size={14} />
               Monitoring
             </TabsTrigger>
             <TabsTrigger value="groups" className="gap-1.5">
               <FolderOpen size={14} />
-              Kelola Grup
+              Grup
+            </TabsTrigger>
+            <TabsTrigger value="tags" className="gap-1.5">
+              <Tag size={14} />
+              Tag
             </TabsTrigger>
             <TabsTrigger value="manage" className="gap-1.5">
               <Toolbox size={14} />
@@ -960,6 +1022,7 @@ function App() {
                   <OptimizedDomainList
                     domains={sortedDomains}
                     statuses={statuses}
+                    tags={tags}
                     showCheckbox={false}
                     simpleMode={false}
                   />
@@ -999,6 +1062,32 @@ function App() {
                                 style={{ backgroundColor: group.color }}
                               />
                               {group.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex-1 lg:flex-none lg:w-48">
+                    <Select value={manageTagFilter} onValueChange={setManageTagFilter}>
+                      <SelectTrigger className="h-9 py-0 text-xs w-full">
+                        <div className="flex items-center gap-1.5">
+                          <Tag size={14} />
+                          <SelectValue placeholder="Filter Tag" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all" className="text-xs">Semua Tag</SelectItem>
+                        <SelectItem value="untagged" className="text-xs">Tanpa Tag</SelectItem>
+                        {tags && tags.length > 0 && tags.map(tag => (
+                          <SelectItem key={tag.id} value={tag.id} className="text-xs">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: tag.color }}
+                              />
+                              {tag.name}
                             </div>
                           </SelectItem>
                         ))}
@@ -1128,6 +1217,16 @@ function App() {
                           Tampilkan Semua Grup
                         </Button>
                       )}
+                      {manageTagFilter !== 'all' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setManageTagFilter('all')}
+                          className="text-xs"
+                        >
+                          Tampilkan Semua Tag
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1154,6 +1253,7 @@ function App() {
                         domains={filteredManageDomains}
                         statuses={statuses}
                         groups={groups}
+                        tags={tags}
                         onDelete={handleDeleteDomain}
                         onEdit={handleEditDomain}
                         existingUrls={(domains || []).filter(d => !filteredManageDomains.some(fd => fd.id === d.id)).map(d => d.url)}
@@ -1262,6 +1362,75 @@ function App() {
               </ScrollArea>
             )}
           </TabsContent>
+
+          <TabsContent value="tags" className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs px-1">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Tag size={14} weight="duotone" className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Total Tag</span>
+                    <span className="font-semibold text-foreground">{tags?.length || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Globe size={14} weight="duotone" className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Total Domain</span>
+                    <span className="font-semibold text-foreground">{globalTotalCount}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Kelola tag untuk mengorganisir domain
+                </p>
+                <div className="flex gap-2">
+                  <AssignTagsDialog
+                    domains={domains || []}
+                    tags={tags || []}
+                    onAssign={handleAssignTags}
+                  />
+                  <TagFormDialog onSave={handleCreateTag} />
+                </div>
+              </div>
+            </div>
+
+            {!tags || tags.length === 0 ? (
+              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+                <div className="text-center space-y-3">
+                  <div className="w-16 h-16 rounded-2xl bg-muted mx-auto flex items-center justify-center">
+                    <Tag size={32} weight="duotone" className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold mb-1 text-foreground">Belum Ada Tag</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Buat tag untuk mengorganisir domain
+                    </p>
+                    <TagFormDialog onSave={handleCreateTag} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <ScrollArea className="h-[calc(100vh-300px)]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-4">
+                  {tags.map(tag => {
+                    const domainCount = (domains || []).filter(d => 
+                      d.tags && d.tags.includes(tag.id)
+                    ).length
+                    return (
+                      <TagCard
+                        key={tag.id}
+                        tag={tag}
+                        domainCount={domainCount}
+                        onEdit={(t) => setEditingTag(t)}
+                        onDelete={handleDeleteTag}
+                      />
+                    )
+                  })}
+                </div>
+              </ScrollArea>
+            )}
+          </TabsContent>
         </Tabs>
 
         <AssignDomainsDialog
@@ -1279,6 +1448,17 @@ function App() {
             open={true}
             onOpenChange={(open) => {
               if (!open) setEditingGroup(null)
+            }}
+          />
+        )}
+
+        {editingTag && (
+          <TagFormDialog
+            tag={editingTag}
+            onSave={handleEditTag}
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) setEditingTag(null)
             }}
           />
         )}
