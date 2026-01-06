@@ -116,12 +116,16 @@ function App() {
       addedAt: Date.now(),
     }
 
-    setDomains(current => [...(current || []), newDomain])
+    setDomains(currentDomains => {
+      const updatedDomains = [...(currentDomains || []), newDomain]
+      console.log('[Add Domain] Current:', currentDomains?.length, 'Adding 1, Total:', updatedDomains.length)
+      return updatedDomains
+    })
     toast.success('Domain berhasil ditambahkan')
   }
 
   const handleDeleteDomain = (id: string) => {
-    setDomains(current => (current || []).filter(d => d.id !== id))
+    setDomains(currentDomains => (currentDomains || []).filter(d => d.id !== id))
     setStatuses(current => {
       const newStatuses = { ...current }
       delete newStatuses[id]
@@ -136,8 +140,8 @@ function App() {
   }
 
   const handleEditDomain = (id: string, newUrl: string) => {
-    setDomains(current =>
-      (current || []).map(d =>
+    setDomains(currentDomains =>
+      (currentDomains || []).map(d =>
         d.id === id ? { ...d, url: newUrl } : d
       )
     )
@@ -153,7 +157,7 @@ function App() {
     const count = selectedDomains.size
     if (count === 0) return
 
-    setDomains(current => (current || []).filter(d => !selectedDomains.has(d.id)))
+    setDomains(currentDomains => (currentDomains || []).filter(d => !selectedDomains.has(d.id)))
     setStatuses(current => {
       const newStatuses = { ...current }
       selectedDomains.forEach(id => delete newStatuses[id])
@@ -352,7 +356,11 @@ function App() {
       ? importedDomains.map(d => ({ ...d, groupId }))
       : importedDomains
 
-    setDomains(current => [...(current || []), ...domainsWithGroup])
+    setDomains(currentDomains => {
+      const updatedDomains = [...(currentDomains || []), ...domainsWithGroup]
+      console.log('[Import] Current domains:', currentDomains?.length, 'Adding:', domainsWithGroup.length, 'Total:', updatedDomains.length)
+      return updatedDomains
+    })
     
     if (groupId) {
       const group = groups?.find(g => g.id === groupId)
@@ -368,15 +376,15 @@ function App() {
       id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: Date.now(),
     }
-    setGroups(current => [...(current || []), newGroup])
+    setGroups(currentGroups => [...(currentGroups || []), newGroup])
     toast.success('Grup berhasil dibuat')
   }
 
   const handleEditGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
     if (!editingGroup) return
     
-    setGroups(current =>
-      (current || []).map(g =>
+    setGroups(currentGroups =>
+      (currentGroups || []).map(g =>
         g.id === editingGroup.id
           ? { ...g, ...groupData }
           : g
@@ -387,9 +395,9 @@ function App() {
   }
 
   const handleDeleteGroup = (groupId: string) => {
-    setGroups(current => (current || []).filter(g => g.id !== groupId))
-    setDomains(current =>
-      (current || []).map(d =>
+    setGroups(currentGroups => (currentGroups || []).filter(g => g.id !== groupId))
+    setDomains(currentDomains =>
+      (currentDomains || []).map(d =>
         d.groupId === groupId ? { ...d, groupId: undefined } : d
       )
     )
@@ -397,8 +405,8 @@ function App() {
   }
 
   const handleAssignDomains = (domainIds: string[], groupId: string | null) => {
-    setDomains(current =>
-      (current || []).map(d =>
+    setDomains(currentDomains =>
+      (currentDomains || []).map(d =>
         domainIds.includes(d.id)
           ? { ...d, groupId: groupId || undefined }
           : d
@@ -419,15 +427,15 @@ function App() {
       id: `tag-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: Date.now(),
     }
-    setTags(current => [...(current || []), newTag])
+    setTags(currentTags => [...(currentTags || []), newTag])
     toast.success('Tag berhasil dibuat')
   }
 
   const handleEditTag = (tagData: Omit<DomainTag, 'id' | 'createdAt'>) => {
     if (!editingTag) return
     
-    setTags(current =>
-      (current || []).map(t =>
+    setTags(currentTags =>
+      (currentTags || []).map(t =>
         t.id === editingTag.id
           ? { ...t, ...tagData }
           : t
@@ -438,9 +446,9 @@ function App() {
   }
 
   const handleDeleteTag = (tagId: string) => {
-    setTags(current => (current || []).filter(t => t.id !== tagId))
-    setDomains(current =>
-      (current || []).map(d => ({
+    setTags(currentTags => (currentTags || []).filter(t => t.id !== tagId))
+    setDomains(currentDomains =>
+      (currentDomains || []).map(d => ({
         ...d,
         tags: d.tags?.filter(t => t !== tagId)
       }))
@@ -449,8 +457,8 @@ function App() {
   }
 
   const handleAssignTags = (domainIds: string[], tagIds: string[]) => {
-    setDomains(current =>
-      (current || []).map(d => {
+    setDomains(currentDomains =>
+      (currentDomains || []).map(d => {
         if (!domainIds.includes(d.id)) return d
         
         const existingTags = d.tags || []
