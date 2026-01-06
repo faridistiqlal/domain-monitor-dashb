@@ -605,6 +605,8 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
+                <InfoDialog />
+                
                 <ImportDialog
                   existingDomains={domains || []}
                   groups={groups || []}
@@ -1031,7 +1033,6 @@ function App() {
                     domains={sortedDomains}
                     statuses={statuses}
                     tags={tags}
-                    onDelete={handleDeleteDomain}
                     showCheckbox={false}
                     simpleMode={false}
                   />
