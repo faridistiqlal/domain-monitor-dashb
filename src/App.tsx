@@ -866,13 +866,13 @@ function App() {
             ) : !hasChecked && !autoRefreshEnabled ? (
               <div className="flex-1 flex items-center justify-center py-12">
                 <div className="text-center space-y-6 max-w-md mx-auto">
-                  <div className="w-24 h-24 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
                     <ArrowClockwise size={48} weight="duotone" className="text-primary" />
                   </div>
                   <div className="space-y-3">
-                    <h3 className="text-xl font-semibold">Mode Manual Check</h3>
+                    <h3 className="text-xl font-semibold text-foreground">Mode Manual Check</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Klik tombol <strong>Check</strong> untuk memeriksa status semua domain.<br />
+                      Klik tombol <strong className="text-foreground">Check</strong> untuk memeriksa status semua domain.<br />
                       Setelah selesai, Anda dapat langsung export hasilnya.
                     </p>
                   </div>
