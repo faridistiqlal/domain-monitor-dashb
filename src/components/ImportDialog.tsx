@@ -77,6 +77,7 @@ export function ImportDialog({ existingDomains, groups, onImport }: ImportDialog
           className="h-8"
         >
           <UploadSimple size={14} />
+          <span className="ml-1.5">Import</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

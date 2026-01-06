@@ -544,6 +544,7 @@ function App() {
                   title={!autoRefreshEnabled && !hasChecked ? "Check domain terlebih dahulu" : "Export semua domain"}
                 >
                   <DownloadSimple size={14} />
+                  <span className="ml-1.5">Export</span>
                 </Button>
 
                 <div className="h-6 w-px bg-border" />
