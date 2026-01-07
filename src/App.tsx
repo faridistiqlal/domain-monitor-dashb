@@ -174,22 +174,11 @@ function App() {
           } catch (e) {
             console.error('Failed to parse saved statuses:', e)
           }
-        } else if (domainsWithBatch.length > 0) {
-          // No localStorage data, try to load from Firebase daily stats
-          console.log('Loading last known statuses from Firebase...')
-          try {
-            const firebaseStatuses = await loadLastKnownStatuses(
-              domainsWithBatch.map(d => d.id)
-            )
-            if (Object.keys(firebaseStatuses).length > 0) {
-              setStatuses(firebaseStatuses)
-              localStorage.setItem('domain-last-statuses', JSON.stringify(firebaseStatuses))
-              console.log(`Loaded ${Object.keys(firebaseStatuses).length} statuses from Firebase`)
-            }
-          } catch (e) {
-            console.error('Failed to load statuses from Firebase:', e)
-          }
         }
+        // NOTE: Removed Firebase fallback load to prevent quota exhaustion
+        // Previously: loaded from Firebase if localStorage empty (312 domain reads!)
+        // Now: localStorage populated only by auto-check, manual check is local-only
+        // User must enable auto-refresh to get Firebase data persistence
         
         // Password already synced to localStorage by loadPassword()
       } catch (error) {
