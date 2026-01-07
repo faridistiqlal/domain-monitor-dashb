@@ -148,12 +148,13 @@ function App() {
         setTags(loadedTags)
         
         // MIGRATION: Clear old localStorage data from manual checks
-        // This runs once to clean up data from before the manual-check-local-only update
+        // v2.4.1: Force clear localStorage after Firebase fallback removal
+        // This ensures clean state for all users after the latest update
         const statusVersion = localStorage.getItem('domain-statuses-version')
-        if (statusVersion !== '2.4.0') {
-          console.log('Clearing old localStorage statuses (manual check cleanup)')
+        if (statusVersion !== '2.4.1') {
+          console.log('Clearing localStorage statuses (v2.4.1 migration)')
           localStorage.removeItem('domain-last-statuses')
-          localStorage.setItem('domain-statuses-version', '2.4.0')
+          localStorage.setItem('domain-statuses-version', '2.4.1')
         }
         
         // Load last statuses from localStorage for statistics display
