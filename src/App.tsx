@@ -43,9 +43,6 @@ import {
   syncDomainsToFirestore,
   syncGroupsToFirestore,
   syncTagsToFirestore,
-  subscribeToDomainsUpdates,
-  subscribeToGroupsUpdates,
-  subscribeToTagsUpdates,
   loadPassword,
   syncPasswordToFirestore
 } from '@/lib/firestore-sync'
@@ -100,6 +97,38 @@ function App() {
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
   const [manageTagFilter, setManageTagFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
+  
+  // Firebase operation tracking (for development monitoring)
+  const [firebaseOps, setFirebaseOps] = useState(() => {
+    const saved = localStorage.getItem('firebase-ops-today')
+    const today = new Date().toISOString().split('T')[0]
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (parsed.date === today) {
+        return { reads: parsed.reads || 0, writes: parsed.writes || 0 }
+      }
+    }
+    return { reads: 0, writes: 0 }
+  })
+  
+  // Track Firebase operations
+  const trackFirebaseRead = (count: number = 1) => {
+    setFirebaseOps(prev => {
+      const newOps = { reads: prev.reads + count, writes: prev.writes }
+      const today = new Date().toISOString().split('T')[0]
+      localStorage.setItem('firebase-ops-today', JSON.stringify({ ...newOps, date: today }))
+      return newOps
+    })
+  }
+  
+  const trackFirebaseWrite = (count: number = 1) => {
+    setFirebaseOps(prev => {
+      const newOps = { reads: prev.reads, writes: prev.writes + count }
+      const today = new Date().toISOString().split('T')[0]
+      localStorage.setItem('firebase-ops-today', JSON.stringify({ ...newOps, date: today }))
+      return newOps
+    })
+  }
 
   // Notification States
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() => {
@@ -186,6 +215,9 @@ function App() {
               loadGroups(),
               loadTags()
             ])
+            
+            // Track Firebase reads
+            trackFirebaseRead(3) // 3 collection reads
             
             // Assign batch to domains that don't have one (old domains)
             const domainsWithBatch = loadedDomains.map((domain, index) => {
@@ -491,6 +523,8 @@ function App() {
       if (isAutoCheck && (statusChanged || shouldWriteHourly)) {
         try {
           await updateDailyStats(result.id, result)
+          trackFirebaseRead(1) // Read daily stats
+          trackFirebaseWrite(1) // Write updated stats
           
           // Update lastStatsWrite timestamp
           setDomains(prevDomains => 
@@ -521,6 +555,7 @@ function App() {
             // Create new incident
             const incidentId = await createIncident(domain, result, oldStatus)
             if (incidentId) {
+              trackFirebaseWrite(2) // Create incident + update stats
               setActiveIncidents(prev => ({ ...prev, [domain.id]: incidentId }))
             }
           } else if (newStatus === 'online' && (oldStatus === 'offline' || oldStatus === 'dns-only')) {
@@ -528,6 +563,8 @@ function App() {
             const incidentId = activeIncidents[domain.id]
             if (incidentId) {
               await resolveIncident(domain.id, incidentId)
+              trackFirebaseRead(1) // Read incident
+              trackFirebaseWrite(1) // Resolve incident
               setActiveIncidents(prev => {
                 const newIncidents = { ...prev }
                 delete newIncidents[domain.id]
@@ -1051,6 +1088,29 @@ function App() {
       clearInterval(interval)
     }
   }, [domains, isPaused, autoRefreshEnabled])
+
+  // Auto-cleanup old stats (runs once per day)
+  useEffect(() => {
+    const checkAndCleanup = async () => {
+      const lastCleanup = localStorage.getItem('last-cleanup-date')
+      const today = new Date().toISOString().split('T')[0]
+      
+      if (lastCleanup !== today) {
+        try {
+          const { cleanupOldStats } = await import('@/lib/check-history')
+          await cleanupOldStats()
+          localStorage.setItem('last-cleanup-date', today)
+          console.log('✅ Old stats cleaned up successfully')
+        } catch (error) {
+          console.error('❌ Error cleaning up old stats:', error)
+        }
+      }
+    }
+    
+    // Run cleanup check 1 minute after app load
+    const cleanupTimer = setTimeout(checkAndCleanup, 60000)
+    return () => clearTimeout(cleanupTimer)
+  }, [])
 
   useEffect(() => {
     if (!autoRefreshEnabled || isPaused) return
@@ -2108,7 +2168,14 @@ function App() {
                 <span className="text-xs text-muted-foreground">•</span>
                 <InfoDialog triggerText="Bantuan" asLink={true} />
               </div>
-              <ChangelogDialog />
+              <div className="flex items-center gap-2">
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="text-xs text-muted-foreground bg-yellow-500/10 px-2 py-1 rounded">
+                    Firebase: {firebaseOps.reads}R / {firebaseOps.writes}W today
+                  </div>
+                )}
+                <ChangelogDialog />
+              </div>
             </div>
           </div>
         </footer>

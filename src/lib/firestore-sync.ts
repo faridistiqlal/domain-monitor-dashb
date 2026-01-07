@@ -51,18 +51,15 @@ export const getDomainsFromFirestore = async (): Promise<Domain[]> => {
   }
 }
 
-export const subscribeToDomainsUpdates = (
-  callback: (domains: Domain[]) => void
-): Unsubscribe => {
-  const userId = getUserId()
-  const userDocRef = doc(db, COLLECTIONS.DOMAINS, userId)
-  
-  return onSnapshot(userDocRef, (doc) => {
-    if (doc.exists()) {
-      callback(doc.data().domains || [])
-    }
-  })
-}
+// Real-time listeners removed - app uses polling strategy for better Firebase quota management
+// If you need real-time updates in the future, uncomment and use these functions:
+// export const subscribeToDomainsUpdates = (callback: (domains: Domain[]) => void): Unsubscribe => {
+//   const userId = getUserId()
+//   const userDocRef = doc(db, COLLECTIONS.DOMAINS, userId)
+//   return onSnapshot(userDocRef, (doc) => {
+//     if (doc.exists()) callback(doc.data().domains || [])
+//   })
+// }
 
 // === GROUPS ===
 
@@ -98,18 +95,13 @@ export const getGroupsFromFirestore = async (): Promise<DomainGroup[]> => {
   }
 }
 
-export const subscribeToGroupsUpdates = (
-  callback: (groups: DomainGroup[]) => void
-): Unsubscribe => {
-  const userId = getUserId()
-  const userDocRef = doc(db, COLLECTIONS.GROUPS, userId)
-  
-  return onSnapshot(userDocRef, (doc) => {
-    if (doc.exists()) {
-      callback(doc.data().groups || [])
-    }
-  })
-}
+// export const subscribeToGroupsUpdates = (callback: (groups: DomainGroup[]) => void): Unsubscribe => {
+//   const userId = getUserId()
+//   const userDocRef = doc(db, COLLECTIONS.GROUPS, userId)
+//   return onSnapshot(userDocRef, (doc) => {
+//     if (doc.exists()) callback(doc.data().groups || [])
+//   })
+// }
 
 // === TAGS ===
 
@@ -145,18 +137,13 @@ export const getTagsFromFirestore = async (): Promise<DomainTag[]> => {
   }
 }
 
-export const subscribeToTagsUpdates = (
-  callback: (tags: DomainTag[]) => void
-): Unsubscribe => {
-  const userId = getUserId()
-  const userDocRef = doc(db, COLLECTIONS.TAGS, userId)
-  
-  return onSnapshot(userDocRef, (doc) => {
-    if (doc.exists()) {
-      callback(doc.data().tags || [])
-    }
-  })
-}
+// export const subscribeToTagsUpdates = (callback: (tags: DomainTag[]) => void): Unsubscribe => {
+//   const userId = getUserId()
+//   const userDocRef = doc(db, COLLECTIONS.TAGS, userId)
+//   return onSnapshot(userDocRef, (doc) => {
+//     if (doc.exists()) callback(doc.data().tags || [])
+//   })
+// }
 
 // === HYBRID SYNC (localStorage fallback) ===
 

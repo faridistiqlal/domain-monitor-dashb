@@ -45,10 +45,54 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 3.0.0</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.0.1</h3>
                   <p className="text-xs text-muted-foreground">Current Release • 7 Januari 2026</p>
                 </div>
                 <Badge className="bg-primary text-primary-foreground">Latest</Badge>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-green-500/20 flex items-center justify-center">
+                      <Rocket size={14} weight="duotone" className="text-green-600 dark:text-green-500" />
+                    </div>
+                    Firebase Optimization
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 dark:text-green-500 mt-1">•</span>
+                      <span><strong className="text-foreground">Statistics Loading:</strong> Optimized dengan collection queries (12,000 → 400 reads)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 dark:text-green-500 mt-1">•</span>
+                      <span><strong className="text-foreground">Write Batching:</strong> Bulk status updates untuk mengurangi network overhead</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 dark:text-green-500 mt-1">•</span>
+                      <span><strong className="text-foreground">Auto-Cleanup:</strong> Stats >30 hari otomatis terhapus daily</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 dark:text-green-500 mt-1">•</span>
+                      <span><strong className="text-foreground">Operation Tracking:</strong> Monitor Firebase usage real-time (dev mode)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 dark:text-green-500 mt-1">•</span>
+                      <span><strong className="text-foreground">Efficiency:</strong> ~3,500 ops/day untuk 400 domain (under 20k free tier limit)</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.0.0</h3>
+                  <p className="text-xs text-muted-foreground">7 Januari 2026</p>
+                </div>
               </div>
 
               <div className="space-y-4">

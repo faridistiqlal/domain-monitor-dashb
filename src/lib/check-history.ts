@@ -248,30 +248,27 @@ export async function getDomainIncidents(
 
 /**
  * Get daily stats for a domain for date range
+ * Optimized: Uses collection query instead of individual getDoc calls
  */
 export async function getDomainStats(
   domainId: string,
   days: number = 30
 ): Promise<DomainDailyStats[]> {
   try {
-    const stats: DomainDailyStats[] = []
-    const today = new Date()
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - days)
+    const cutoffString = cutoffDate.toISOString().split('T')[0]
     
-    for (let i = 0; i < days; i++) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      const dateString = date.toISOString().split('T')[0]
-      const statsId = getDailyStatsId(domainId, dateString)
-      
-      const statsRef = doc(db, DAILY_STATS_COLLECTION, statsId)
-      const statsSnap = await getDoc(statsRef)
-      
-      if (statsSnap.exists()) {
-        stats.push(statsSnap.data() as DomainDailyStats)
-      }
-    }
+    // Use collection query with where clause (more efficient than multiple getDoc calls)
+    const q = query(
+      collection(db, DAILY_STATS_COLLECTION),
+      where('domainId', '==', domainId),
+      where('date', '>=', cutoffString),
+      orderBy('date', 'desc')
+    )
     
-    return stats
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => doc.data() as DomainDailyStats)
   } catch (error) {
     console.error('Error getting domain stats:', error)
     return []
@@ -357,4 +354,76 @@ export function shouldCheckNow(domain: Domain): boolean {
   
   // Check if within 1 minute window
   return Math.abs(now - nextCheckTime) < 60000
+}
+
+/**
+ * Update multiple domain stats in a batch (optimized write)
+ * @param updates Array of {domainId, status} to update
+ */
+export async function batchUpdateDailyStats(
+  updates: Array<{ domainId: string; status: DomainStatus }>
+): Promise<void> {
+  if (updates.length === 0) return
+  
+  try {
+    const batch = writeBatch(db)
+    const statsPromises = updates.map(async ({ domainId, status }) => {
+      const stats = await getOrCreateDailyStats(domainId)
+      const currentHour = getCurrentHour()
+      
+      // Update total checks
+      stats.totalChecks++
+      if (status.status === 'online') {
+        stats.successChecks++
+      }
+      
+      // Update uptime percentage
+      stats.uptimePercent = (stats.successChecks / stats.totalChecks) * 100
+      
+      // Update hourly aggregate
+      const hourlyData = stats.hourly[currentHour]
+      hourlyData.checks++
+      if (status.status === 'online') {
+        hourlyData.successChecks++
+      }
+      if (status.status !== 'checking') {
+        hourlyData.status = status.status
+      }
+      
+      // Update response time stats
+      if (status.responseTime) {
+        if (!hourlyData.avgResponseTime) {
+          hourlyData.avgResponseTime = status.responseTime
+        } else {
+          hourlyData.avgResponseTime = 
+            (hourlyData.avgResponseTime * (hourlyData.checks - 1) + status.responseTime) / hourlyData.checks
+        }
+        
+        if (!stats.minResponseTime || status.responseTime < stats.minResponseTime) {
+          stats.minResponseTime = status.responseTime
+        }
+        if (!stats.maxResponseTime || status.responseTime > stats.maxResponseTime) {
+          stats.maxResponseTime = status.responseTime
+        }
+        
+        if (!stats.avgResponseTime) {
+          stats.avgResponseTime = status.responseTime
+        } else {
+          stats.avgResponseTime = 
+            (stats.avgResponseTime * (stats.totalChecks - 1) + status.responseTime) / stats.totalChecks
+        }
+      }
+      
+      const statsRef = doc(db, DAILY_STATS_COLLECTION, stats.id)
+      batch.set(statsRef, stats, { merge: true })
+    })
+    
+    await Promise.all(statsPromises)
+    await batch.commit()
+    
+    console.log(`[check-history] Batch updated ${updates.length} domain stats`)
+  } catch (error) {
+    console.error('[check-history] Error in batch update:', error)
+    throw error
+  }
 }
