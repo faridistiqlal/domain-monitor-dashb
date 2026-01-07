@@ -29,6 +29,7 @@ import { TermsOfServiceDialog } from '@/components/TermsOfServiceDialog'
 import { LoginDialog } from '@/components/LoginDialog'
 import { SettingsDialog } from '@/components/SettingsDialog'
 import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog'
+import { NotificationHistoryDialog } from '@/components/NotificationHistoryDialog'
 import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings } from '@/lib/types'
 import { NotificationService, NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
@@ -910,15 +911,21 @@ function App() {
               <div className="flex items-center gap-2">
                 {/* Notification Settings Button */}
                 {isAuthenticated && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowNotificationDialog(true)}
-                    className="h-8"
-                    title="Notification Settings"
-                  >
-                    <Bell size={14} />
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowNotificationDialog(true)}
+                      className="h-8"
+                      title="Notification Settings"
+                    >
+                      <Bell size={14} />
+                    </Button>
+                    <NotificationHistoryDialog
+                      getHistory={() => notificationService.getHistory()}
+                      clearHistory={() => notificationService.clearHistory()}
+                    />
+                  </>
                 )}
 
                 {/* Settings Button */}

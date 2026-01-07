@@ -43,3 +43,17 @@ export interface NotificationSettings {
   slowThreshold: number
   cooldownMinutes: number
 }
+
+export interface NotificationHistory {
+  id: string
+  timestamp: number
+  domain: string
+  status: 'down' | 'recovery' | 'slow'
+  success: boolean
+  errorMessage?: string
+  groupName?: string
+  tags?: string[]
+  responseTime?: number
+  ipAddress?: string
+  protocol?: string
+}

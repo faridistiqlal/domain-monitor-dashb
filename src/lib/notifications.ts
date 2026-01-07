@@ -19,8 +19,23 @@ export interface NotificationDetails {
   protocol?: string;
 }
 
+export interface NotificationHistory {
+  id: string;
+  timestamp: number;
+  domain: string;
+  status: 'down' | 'recovery' | 'slow';
+  success: boolean;
+  errorMessage?: string;
+  groupName?: string;
+  tags?: string[];
+  responseTime?: number;
+  ipAddress?: string;
+  protocol?: string;
+}
+
 export class NotificationService {
   private lastNotificationTime: Map<string, number> = new Map();
+  private historyKey = 'notification-history';
 
   async sendSlackNotification(
     settings: NotificationSettings,
@@ -44,6 +59,8 @@ export class NotificationService {
     }
 
     const message = this.buildSlackMessage(details);
+    let success = false;
+    let errorMessage: string | undefined;
 
     try {
       const response = await fetch(settings.webhookUrl, {
@@ -58,11 +75,29 @@ export class NotificationService {
       // With no-cors mode, response will be opaque, so we assume success if no error thrown
       this.lastNotificationTime.set(domain, Date.now());
       console.log('Slack notification sent successfully');
-      return true;
+      success = true;
     } catch (error) {
       console.error('Error sending Slack notification:', error);
-      return false;
+      errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      success = false;
     }
+
+    // Save to history
+    this.saveToHistory({
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now(),
+      domain: details.domain,
+      status: details.status,
+      success,
+      errorMessage,
+      groupName: details.groupName,
+      tags: details.tags,
+      responseTime: details.responseTime,
+      ipAddress: details.ipAddress,
+      protocol: details.protocol,
+    });
+
+    return success;
   }
 
   private shouldNotify(domain: string, cooldownMinutes: number): boolean {
@@ -203,5 +238,40 @@ export class NotificationService {
     const remaining = cooldownMs - elapsed;
 
     return remaining > 0 ? Math.ceil(remaining / 60000) : 0;
+  }
+
+  // Save notification to history
+  private saveToHistory(entry: NotificationHistory): void {
+    try {
+      const history = this.getHistory();
+      history.unshift(entry); // Add to beginning
+      
+      // Keep only last 100 notifications
+      const limited = history.slice(0, 100);
+      
+      localStorage.setItem(this.historyKey, JSON.stringify(limited));
+    } catch (error) {
+      console.error('Error saving notification history:', error);
+    }
+  }
+
+  // Get notification history
+  getHistory(): NotificationHistory[] {
+    try {
+      const data = localStorage.getItem(this.historyKey);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('Error loading notification history:', error);
+      return [];
+    }
+  }
+
+  // Clear notification history
+  clearHistory(): void {
+    try {
+      localStorage.removeItem(this.historyKey);
+    } catch (error) {
+      console.error('Error clearing notification history:', error);
+    }
   }
 }
