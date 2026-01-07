@@ -70,14 +70,14 @@ export function SettingsMenuDialog({
                 setOpen(false)
                 setShowNotificationSettings(true)
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-primary/10 hover:border-primary/20 border border-transparent transition-all text-left group"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Bell size={20} weight="duotone" className="text-primary" />
+              <div className="w-11 h-11 rounded-lg bg-primary/15 group-hover:bg-primary/25 flex items-center justify-center transition-colors">
+                <Bell size={22} weight="fill" className="text-primary group-hover:scale-110 transition-transform" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Pengaturan Notifikasi</p>
-                <p className="text-xs text-muted-foreground">Konfigurasi Slack webhook & rules</p>
+                <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Pengaturan Notifikasi</p>
+                <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Konfigurasi Slack webhook & rules</p>
               </div>
             </button>
 
@@ -87,14 +87,14 @@ export function SettingsMenuDialog({
                 setOpen(false)
                 setShowHistory(true)
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-accent/10 hover:border-accent/20 border border-transparent transition-all text-left group"
             >
-              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                <ClockCounterClockwise size={20} weight="duotone" className="text-accent" />
+              <div className="w-11 h-11 rounded-lg bg-accent/15 group-hover:bg-accent/25 flex items-center justify-center transition-colors">
+                <ClockCounterClockwise size={22} weight="fill" className="text-accent group-hover:scale-110 transition-transform" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Riwayat Notifikasi</p>
-                <p className="text-xs text-muted-foreground">Lihat history notifikasi terkirim</p>
+                <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">Riwayat Notifikasi</p>
+                <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Lihat history notifikasi terkirim</p>
               </div>
             </button>
 
@@ -106,28 +106,28 @@ export function SettingsMenuDialog({
                 setOpen(false)
                 setShowChangePassword(true)
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-warning/10 hover:border-warning/20 border border-transparent transition-all text-left group"
             >
-              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                <LockKey size={20} weight="duotone" className="text-warning" />
+              <div className="w-11 h-11 rounded-lg bg-warning/15 group-hover:bg-warning/25 flex items-center justify-center transition-colors">
+                <LockKey size={22} weight="fill" className="text-warning group-hover:scale-110 transition-transform" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Ubah Password</p>
-                <p className="text-xs text-muted-foreground">Ganti password admin</p>
+                <p className="text-sm font-semibold text-foreground group-hover:text-warning transition-colors">Ubah Password</p>
+                <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Ganti password admin</p>
               </div>
             </button>
 
             {/* Logout */}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-destructive/10 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-destructive/10 hover:border-destructive/20 border border-transparent transition-all text-left group"
             >
-              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <SignOut size={20} weight="duotone" className="text-destructive" />
+              <div className="w-11 h-11 rounded-lg bg-destructive/15 group-hover:bg-destructive/25 flex items-center justify-center transition-colors">
+                <SignOut size={22} weight="fill" className="text-destructive group-hover:scale-110 transition-transform" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-destructive">Logout</p>
-                <p className="text-xs text-muted-foreground">Keluar dari sesi admin</p>
+                <p className="text-sm font-semibold text-destructive group-hover:text-destructive/90 transition-colors">Logout</p>
+                <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Keluar dari sesi admin</p>
               </div>
             </button>
           </div>
