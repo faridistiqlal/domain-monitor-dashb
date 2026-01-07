@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar, SignOut, LockKey } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar, SignOut, LockKey, Bell } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,7 +28,9 @@ import { PrivacyPolicyDialog } from '@/components/PrivacyPolicyDialog'
 import { TermsOfServiceDialog } from '@/components/TermsOfServiceDialog'
 import { LoginDialog } from '@/components/LoginDialog'
 import { SettingsDialog } from '@/components/SettingsDialog'
-import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
+import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog'
+import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings } from '@/lib/types'
+import { NotificationService } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
 import { 
@@ -88,6 +90,22 @@ function App() {
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
   const [manageTagFilter, setManageTagFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
+
+  // Notification States
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() => {
+    const saved = localStorage.getItem('notification-settings')
+    return saved ? JSON.parse(saved) : {
+      enabled: false,
+      webhookUrl: '',
+      notifyOnDown: true,
+      notifyOnRecovery: true,
+      notifyOnSlow: false,
+      slowThreshold: 5,
+      cooldownMinutes: 5
+    }
+  })
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false)
+  const [notificationService] = useState(() => new NotificationService())
 
   // Load data from Firebase on mount
   useEffect(() => {
@@ -208,6 +226,39 @@ function App() {
     toast.success('Password berhasil diubah dan disinkronkan ke cloud')
   }
 
+  const handleNotificationSettingsSave = (settings: NotificationSettings) => {
+    setNotificationSettings(settings)
+    localStorage.setItem('notification-settings', JSON.stringify(settings))
+    toast.success('Notification settings saved successfully')
+  }
+
+  const handleTestNotification = async () => {
+    if (!notificationSettings.webhookUrl) {
+      toast.error('Please enter a webhook URL first')
+      return
+    }
+
+    const testSettings: NotificationSettings = {
+      ...notificationSettings,
+      enabled: true,
+      notifyOnDown: true
+    }
+
+    const success = await notificationService.sendSlackNotification(
+      testSettings,
+      'example.com',
+      'down',
+      undefined,
+      'This is a test notification from Domain Monitor Dashboard'
+    )
+
+    if (success) {
+      toast.success('Test notification sent! Check your Slack channel.')
+    } else {
+      toast.error('Failed to send test notification. Please check your webhook URL.')
+    }
+  }
+
   // Check if user can edit (authenticated only)
   const canEdit = isAuthenticated
 
@@ -235,6 +286,46 @@ function App() {
     results.forEach(result => {
       newStatuses[result.id] = result
     })
+
+    // Check for status changes and send notifications
+    if (notificationSettings.enabled) {
+      for (const result of results) {
+        const oldStatus = statuses[result.id]
+        const domain = domains.find(d => d.id === result.id)
+        
+        if (domain && oldStatus && oldStatus.status !== 'checking') {
+          // Down notification
+          if (oldStatus.status === 'online' && (result.status === 'offline' || result.status === 'dns-only')) {
+            await notificationService.sendSlackNotification(
+              notificationSettings,
+              domain.url,
+              'down',
+              undefined,
+              result.error
+            )
+          }
+          // Recovery notification
+          else if ((oldStatus.status === 'offline' || oldStatus.status === 'dns-only') && result.status === 'online') {
+            await notificationService.sendSlackNotification(
+              notificationSettings,
+              domain.url,
+              'recovery',
+              result.responseTime
+            )
+          }
+          // Slow response notification
+          else if (result.status === 'online' && result.responseTime && result.responseTime >= notificationSettings.slowThreshold) {
+            await notificationService.sendSlackNotification(
+              notificationSettings,
+              domain.url,
+              'slow',
+              result.responseTime
+            )
+          }
+        }
+      }
+    }
+
     setStatuses(newStatuses)
     setHasChecked(true)
 
@@ -792,6 +883,19 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Notification Settings Button */}
+                {isAuthenticated && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowNotificationDialog(true)}
+                    className="h-8"
+                    title="Notification Settings"
+                  >
+                    <Bell size={14} />
+                  </Button>
+                )}
+
                 {/* Settings Button */}
                 {isAuthenticated && (
                   <Button
@@ -1723,6 +1827,15 @@ function App() {
           open={showSettingsDialog}
           onOpenChange={setShowSettingsDialog}
           onPasswordChange={handlePasswordChange}
+        />
+
+        {/* Notification Settings Dialog */}
+        <NotificationSettingsDialog
+          open={showNotificationDialog}
+          onOpenChange={setShowNotificationDialog}
+          settings={notificationSettings}
+          onSave={handleNotificationSettingsSave}
+          onTest={handleTestNotification}
         />
       </div>
 

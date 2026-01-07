@@ -32,3 +32,13 @@ export interface DomainStatus {
   dnsResolvable?: boolean
   protocol?: string
 }
+
+export interface NotificationSettings {
+  enabled: boolean
+  webhookUrl: string
+  notifyOnDown: boolean
+  notifyOnRecovery: boolean
+  notifyOnSlow: boolean
+  slowThreshold: number
+  cooldownMinutes: number
+}
