@@ -30,6 +30,8 @@ npm run preview
 
 ## ✨ Features
 
+- ✅ **Individual Domain Monitoring (NEW!)** - Per-domain continuous monitoring dengan Play/Pause (setiap 5 menit)
+- ✅ **Domain Statistics Dialog (NEW!)** - Charts per domain: uptime %, response time, incidents
 - ✅ Real-time monitoring (3-state: Online/DNS-Only/Offline)
 - ✅ Firebase cloud sync antar device
 - ✅ Password authentication + auto-logout (30 min)

@@ -24,6 +24,7 @@ const DomainCardMemo = memo(DomainCard, (prev, next) => {
     prev.domain.id === next.domain.id &&
     prev.domain.url === next.domain.url &&
     prev.domain.notificationsEnabled === next.domain.notificationsEnabled &&
+    prev.domain.enabled === next.domain.enabled &&
     prev.status.status === next.status.status &&
     prev.status.ipAddress === next.status.ipAddress &&
     prev.status.dnsResolvable === next.status.dnsResolvable &&

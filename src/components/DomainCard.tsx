@@ -58,7 +58,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
   }
 
   const domainTags = domain.tags?.map(tagId => tags?.find(t => t.id === tagId)).filter(Boolean) as DomainTag[] | undefined
-  const isEnabled = domain.enabled !== false // Default to true if undefined
+  const isEnabled = domain.enabled === true // Only enabled if explicitly set to true (default: false)
 
   const getStatusText = () => {
     if (status.status === 'online') return 'Online'

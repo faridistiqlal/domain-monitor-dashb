@@ -1,5 +1,35 @@
 # Changelog
 
+## Version 3.1.2 - Individual Domain Monitoring
+**Tanggal Rilis:** 7 Januari 2026
+
+### ⭐ Fitur Baru: Individual Domain Monitoring
+- **Play/Pause Button per Domain**: Control monitoring individual untuk setiap domain
+  - Play button: Start continuous monitoring setiap 5 menit
+  - Pause button: Stop monitoring dan clear interval
+  - Default state: Disabled (icon Play visible)
+  - Independen dari global Auto/Manual mode
+- **Smart Interval**: 288 checks per day per domain (optimal untuk grafik 24 jam)
+- **Auto Firebase Sync**: Data otomatis masuk Firebase `domain-stats-daily` collection
+- **Domain Statistics Dialog**: Klik icon chart untuk lihat:
+  - Uptime percentage chart (7-day & 30-day)
+  - Response time trends
+  - Total incidents dan avg response time
+
+### 🐛 Bug Fixes
+- Fixed Firebase undefined values error saat sync domains
+- Fixed individual monitoring interval closure staleness
+- Fixed background refresh overwrite enabled field
+- Fixed enabled field persistence saat page refresh
+- Fixed Firebase listener preserve local state
+
+### 🔧 Improvements
+- Individual monitoring interval: 2 menit → 5 menit (4x lebih efisien)
+- Improved console logging untuk debugging
+- Better state management untuk enabled field
+
+---
+
 ## Version 2.3.1 - Firebase Optimization & Charts
 **Tanggal Rilis:** 7 Januari 2026
 

@@ -48,7 +48,9 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
           <ol className="text-sm text-muted-foreground space-y-1.5 pl-5 list-decimal">
             <li><span className="font-semibold text-foreground">Tambah Domain:</span> Buka tab "Kelola Data", masukkan URL domain, klik "Tambah Domain"</li>
             <li><span className="font-semibold text-foreground">Pilih Mode:</span> Pilih "Auto" untuk monitoring real-time atau "Manual" untuk check sekali</li>
+            <li><span className="font-semibold text-foreground">Individual Monitoring:</span> Klik Play (▶️) per domain untuk monitoring continuous setiap 5 menit</li>
             <li><span className="font-semibold text-foreground">Monitor Status:</span> Lihat status Online (hijau), DNS Only (kuning), Offline (merah)</li>
+            <li><span className="font-semibold text-foreground">Statistics:</span> Klik icon chart di domain untuk lihat uptime & response time trends</li>
             <li><span className="font-semibold text-foreground">Export Data:</span> Klik tombol "Export" untuk download hasil monitoring ke CSV</li>
           </ol>
         </div>
@@ -60,6 +62,14 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-sm text-muted-foreground pt-2">
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Gunakan <span className="font-semibold text-foreground">Individual Monitoring</span> (tombol Play) untuk domain penting yang perlu monitoring 24/7</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Klik icon <span className="font-semibold text-foreground">chart</span> di domain card untuk lihat statistics detail (uptime %, response time trends)</p>
+                </div>
                 <div className="flex gap-2">
                   <span className="font-semibold text-accent">•</span>
                   <p>Gunakan <span className="font-semibold text-foreground">Grup</span> untuk mengorganisir domain berdasarkan kategori (misalnya: Dinas, SKPD, Kecamatan)</p>

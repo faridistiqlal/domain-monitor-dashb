@@ -24,8 +24,20 @@ export const syncDomainsToFirestore = async (domains: Domain[]) => {
   const userDocRef = doc(db, COLLECTIONS.DOMAINS, userId)
   
   try {
+    // Clean undefined values (Firebase doesn't accept undefined)
+    const cleanDomains = domains.map(domain => {
+      const cleaned: any = {}
+      Object.keys(domain).forEach(key => {
+        const value = (domain as any)[key]
+        if (value !== undefined) {
+          cleaned[key] = value
+        }
+      })
+      return cleaned as Domain
+    })
+    
     await setDoc(userDocRef, {
-      domains: domains,
+      domains: cleanDomains,
       updatedAt: Date.now()
     }, { merge: true })
     return true

@@ -45,8 +45,62 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 3.0.1</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.1.2</h3>
                   <p className="text-xs text-muted-foreground">Current Release • 7 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="default" className="text-xs">Individual Monitoring</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkle size={16} className="text-green-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Fitur Baru</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Individual Domain Monitoring:</strong> Play/Pause button per domain untuk continuous monitoring (independen dari global mode)</li>
+                    <li><strong>Smart Interval:</strong> Check setiap 5 menit = 288 checks/day per domain (optimal untuk grafik 24 jam)</li>
+                    <li><strong>Domain Statistics Dialog:</strong> Klik icon chart untuk lihat uptime %, response time trends, dan incidents per domain</li>
+                    <li><strong>Auto Firebase Sync:</strong> Data individual monitoring otomatis masuk Firebase collection untuk analytics</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-yellow-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Bug Fixes</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Fixed Firebase undefined values error saat sync domains</li>
+                    <li>Fixed individual monitoring interval closure staleness issue</li>
+                    <li>Fixed enabled field persistence saat page refresh</li>
+                    <li>Fixed background refresh overwrite enabled state</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench size={16} className="text-blue-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Improvements</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Optimized monitoring interval: 2 menit → 5 menit (4x lebih efisien Firebase quota)</li>
+                    <li>Improved state management untuk enabled field di Firebase listener</li>
+                    <li>Better console logging untuk debugging monitoring flow</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <Separator />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.0.1</h3>
+                  <p className="text-xs text-muted-foreground">7 Januari 2026</p>
                 </div>
                 <Badge className="bg-primary text-primary-foreground">Latest</Badge>
               </div>

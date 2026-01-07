@@ -86,6 +86,7 @@ function App() {
   const [isPaused, setIsPaused] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
+  const [individualMonitorIntervals, setIndividualMonitorIntervals] = useState<Record<string, NodeJS.Timeout>>({})
   const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics'>('domains')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
@@ -181,20 +182,37 @@ function App() {
               
               // Assign batch to domains that don't have one
               const domainsWithBatch = loadedDomains.map((domain, index) => {
+                // Preserve local state (enabled field) from current domains
+                const currentDomain = domains?.find(d => d.id === domain.id)
+                const preservedEnabled = currentDomain?.enabled ?? domain.enabled
+                
+                // Debug log for enabled field
+                if (domain.enabled === false || preservedEnabled === false) {
+                  console.log(`[Firebase Load] Domain ${domain.url}: Firebase enabled=${domain.enabled}, Preserved=${preservedEnabled}`)
+                }
+                
                 if (!domain.checkBatch) {
                   return {
                     ...domain,
                     checkBatch: assignCheckBatch(index, loadedDomains.length),
                     lastStatusChange: domain.lastStatusChange || Date.now(),
-                    consecutiveFailures: domain.consecutiveFailures || 0
+                    consecutiveFailures: domain.consecutiveFailures || 0,
+                    enabled: preservedEnabled
                   }
                 }
-                return domain
+                return {
+                  ...domain,
+                  enabled: preservedEnabled
+                }
               })
               
               setDomains(domainsWithBatch)
               setGroups(loadedGroups)
               setTags(loadedTags)
+              
+              // Debug: Log enabled domains
+              const enabledDomains = domainsWithBatch.filter(d => d.enabled === true)
+              console.log(`[Background Refresh] Loaded ${domainsWithBatch.length} domains, ${enabledDomains.length} enabled`)
               
               // Update cache
               localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
@@ -226,7 +244,8 @@ function App() {
                   ...domain,
                   checkBatch: assignCheckBatch(index, loadedDomains.length),
                   lastStatusChange: domain.lastStatusChange || Date.now(),
-                  consecutiveFailures: domain.consecutiveFailures || 0
+                  consecutiveFailures: domain.consecutiveFailures || 0,
+                  enabled: domain.enabled // Preserve enabled field from Firebase
                 }
               }
               return domain
@@ -383,8 +402,13 @@ function App() {
     return () => {
       events.forEach(event => window.removeEventListener(event, updateActivity))
       clearInterval(timeoutChecker)
+      
+      // Clear all individual monitoring intervals on unmount
+      Object.values(individualMonitorIntervals).forEach(intervalId => {
+        clearInterval(intervalId)
+      })
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, individualMonitorIntervals])
 
   // Authentication Handlers
   const handleLogin = (password: string) => {
@@ -729,68 +753,139 @@ function App() {
 
   const handleToggleDomainMonitoring = async (id: string) => {
     const domain = domains?.find(d => d.id === id)
-    if (!domain) return
+    if (!domain) {
+      console.error('Domain not found:', id)
+      return
+    }
 
-    const newEnabledState = domain.enabled !== false ? false : true
+    const newEnabledState = domain.enabled === true ? false : true
 
     if (newEnabledState) {
-      // PLAY: Check immediately + enable monitoring
-      toast.info(`Checking ${domain.url}...`)
+      // PLAY: Start continuous individual monitoring (every 2 minutes)
+      console.log(`[Individual Monitor] PLAY clicked for: ${domain.url}`)
+      toast.info(`Starting monitoring for ${domain.url}...`)
 
       try {
-        // 1. Update domain enabled state
-        setDomains(current =>
-          (current || []).map(d =>
-            d.id === id ? { ...d, enabled: true } : d
-          )
+        // 1. Update domain enabled state in local state AND Firebase
+        console.log(`[Individual Monitor] Step 1: Syncing enabled state to Firebase`)
+        const updatedDomains = (domains || []).map(d =>
+          d.id === id ? { ...d, enabled: true } : d
         )
+        setDomains(updatedDomains)
+        await syncDomainsToFirestore(updatedDomains)
+        console.log(`[Individual Monitor] Step 1 complete`)
 
-        // 2. Check domain immediately
+        // 2. Initial check immediately
+        console.log(`[Individual Monitor] Step 2: Starting initial check for ${domain.url}`)
         setStatuses(current => ({
           ...current,
           [id]: { ...current[id], id, status: 'checking' }
         }))
 
         const result = await checkDomainStatus(domain.url, id)
+        console.log(`[Individual Monitor] Step 2 complete - Result:`, result)
+        setStatuses(current => ({ ...current, [id]: result }))
 
-        // 3. Write to Firebase if auto-refresh enabled (using same logic as checkAllDomains)
-        if (autoRefreshEnabled) {
-          const updatedDomain = { ...domain, enabled: true }
+        // 3. Write to Firebase (individual monitoring always writes)
+        console.log(`[Individual Monitor] Step 3: Writing to Firebase`)
+        try {
+          await updateDailyStats(result.id, result)
+          console.log(`[Individual Monitor] Step 3 complete - Stats written to Firebase`)
+          trackFirebaseRead(1)
+          trackFirebaseWrite(1)
+          
+          setDomains(prevDomains => 
+            prevDomains.map(d => 
+              d.id === id ? { ...d, lastStatsWrite: Date.now() } : d
+            )
+          )
+        } catch (error) {
+          console.error(`[Individual Monitor] Failed to update stats:`, error)
+        }
+
+        // 4. Setup continuous monitoring interval (5 minutes)
+        console.log(`[Individual Monitor] Step 4: Setting up 5-minute interval`)
+        const intervalId = setInterval(async () => {
+          console.log(`[Individual Monitor] Interval triggered for ${domain.url}`)
+          
+          // Use functional update to get latest domains state (avoid closure staleness)
+          let currentDomain: typeof domain | undefined
+          setDomains(currentDomains => {
+            currentDomain = currentDomains?.find(d => d.id === id)
+            return currentDomains // Don't modify, just read
+          })
+          
+          console.log(`[Individual Monitor] Current domain enabled:`, currentDomain?.enabled)
+          
+          if (!currentDomain || currentDomain.enabled !== true) {
+            console.log(`[Individual Monitor] Domain disabled or not found, skipping check`)
+            return // Stop if domain was disabled
+          }
+
+          setStatuses(current => ({
+            ...current,
+            [id]: { ...current[id], id, status: 'checking' }
+          }))
+          
+          const checkResult = await checkDomainStatus(domain.url, id)
+          console.log(`[Individual Monitor] Interval check result:`, checkResult)
+          setStatuses(current => ({ ...current, [id]: checkResult }))
+
+          // Write to Firebase
           try {
-            await updateDailyStats(result.id, result)
+            await updateDailyStats(checkResult.id, checkResult)
+            console.log(`[Individual Monitor] Interval stats written to Firebase`)
             trackFirebaseRead(1)
             trackFirebaseWrite(1)
             
-            // Update lastStatsWrite timestamp
             setDomains(prevDomains => 
               prevDomains.map(d => 
-                d.id === updatedDomain.id 
-                  ? { ...d, lastStatsWrite: Date.now() }
-                  : d
+                d.id === id ? { ...d, lastStatsWrite: Date.now() } : d
               )
             )
           } catch (error) {
-            console.error(`Failed to update stats for ${domain.url}:`, error)
+            console.error(`[Individual Monitor] Interval failed to update stats:`, error)
           }
-        }
+        }, 300000) // 5 minutes
 
-        // 4. Update UI
-        setStatuses(current => ({ ...current, [id]: result }))
+        // Store interval ID to clear later
+        setIndividualMonitorIntervals(prev => ({
+          ...prev,
+          [id]: intervalId
+        }))
+        console.log(`[Individual Monitor] Setup complete - monitoring every 5 minutes`)
 
-        toast.success(`${domain.url} checked successfully`)
+        toast.success(`Monitoring started for ${domain.url} (checks every 5 minutes)`)
       } catch (error) {
+        console.error(`[Individual Monitor] Error during setup:`, error)
         toast.error(`Failed to check ${domain.url}`)
         console.error(error)
       }
     } else {
-      // PAUSE: Disable monitoring
-      setDomains(current =>
-        (current || []).map(d =>
-          d.id === id ? { ...d, enabled: false } : d
-        )
+      // PAUSE: Stop continuous individual monitoring
+      console.log(`[Individual Monitor] PAUSE clicked for: ${domain.url}`)
+      const updatedDomains = (domains || []).map(d =>
+        d.id === id ? { ...d, enabled: false } : d
       )
+      console.log(`[Individual Monitor] Setting enabled=false for domain ${domain.url}`)
+      setDomains(updatedDomains)
+      
+      // Sync to Firebase
+      console.log(`[Individual Monitor] Syncing PAUSE state to Firebase`)
+      await syncDomainsToFirestore(updatedDomains)
+      console.log(`[Individual Monitor] Firebase sync complete - enabled=false saved`)
 
-      toast.info(`${domain.url} paused from individual monitoring`)
+      // Clear interval if exists
+      if (individualMonitorIntervals[id]) {
+        clearInterval(individualMonitorIntervals[id])
+        setIndividualMonitorIntervals(prev => {
+          const updated = { ...prev }
+          delete updated[id]
+          return updated
+        })
+      }
+
+      toast.info(`Monitoring stopped for ${domain.url}`)
     }
   }
 
@@ -2228,7 +2323,7 @@ function App() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <p className="text-xs text-muted-foreground">
-                  © 2026 Domain Monitor v{APP_VERSION} • Kabupaten Kendal
+                  © 2026 Domain Monitor v{APP_VERSION} • Kabupaten Kendal • Individual Monitoring
                 </p>
                 <span className="text-xs text-muted-foreground">•</span>
                 <PrivacyPolicyDialog />
