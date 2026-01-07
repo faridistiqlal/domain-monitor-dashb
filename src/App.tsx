@@ -509,8 +509,11 @@ function App() {
 
     setStatuses(prev => {
       const updated = { ...prev, ...newStatuses }
-      // Save to localStorage for persistence across sessions
-      localStorage.setItem('domain-last-statuses', JSON.stringify(updated))
+      // Save to localStorage ONLY for auto-check (not manual check)
+      // Manual check is temporary view, should not persist after page refresh
+      if (isAutoCheck) {
+        localStorage.setItem('domain-last-statuses', JSON.stringify(updated))
+      }
       return updated
     })
     setHasChecked(true)
