@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy, Tag } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -141,6 +141,24 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
+              {/* Notification Indicator */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="shrink-0 flex items-center">
+                    {domain.notificationsEnabled ? (
+                      <Bell size={16} weight="fill" className="text-primary" />
+                    ) : (
+                      <BellSlash size={16} className="text-muted-foreground/40" />
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  {domain.notificationsEnabled 
+                    ? 'Notifikasi Aktif' 
+                    : 'Notifikasi Nonaktif'}
+                </TooltipContent>
+              </Tooltip>
+
               {onEdit && existingUrls && (
                 <EditDomainDialog
                   domain={domain}
