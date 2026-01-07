@@ -12,6 +12,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { APP_VERSION } from '@/lib/version'
 
 export function ChangelogDialog() {
   const [open, setOpen] = useState(false)
@@ -25,7 +26,7 @@ export function ChangelogDialog() {
           className="h-7 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <Clock size={12} className="mr-1" />
-          Changelog v2.2.0
+          Changelog v{APP_VERSION}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[85vh] p-0">
