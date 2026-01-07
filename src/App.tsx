@@ -303,8 +303,8 @@ function App() {
         const oldStatus = statuses[result.id]
         const domain = domains.find(d => d.id === result.id)
         
-        // Check if domain has notifications enabled (default true if not set)
-        if (domain && (domain.notificationsEnabled ?? true) && oldStatus && oldStatus.status !== 'checking') {
+        // Check if domain has notifications enabled (default false if not set)
+        if (domain && (domain.notificationsEnabled ?? false) && oldStatus && oldStatus.status !== 'checking') {
           const group = domain.groupId ? groups.find(g => g.id === domain.groupId) : undefined
           const domainTags = domain.tags?.map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean) as string[] | undefined
 

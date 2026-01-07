@@ -25,7 +25,7 @@ interface EditDomainDialogProps {
 export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDialogProps) {
   const [open, setOpen] = useState(false)
   const [url, setUrl] = useState(domain.url)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(domain.notificationsEnabled ?? true)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(domain.notificationsEnabled ?? false)
   const [error, setError] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,7 +38,7 @@ export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDia
       return
     }
 
-    if (trimmedUrl === domain.url && notificationsEnabled === (domain.notificationsEnabled ?? true)) {
+    if (trimmedUrl === domain.url && notificationsEnabled === (domain.notificationsEnabled ?? false)) {
       setOpen(false)
       return
     }
@@ -57,7 +57,7 @@ export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDia
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setUrl(domain.url)
-      setNotificationsEnabled(domain.notificationsEnabled ?? true)
+      setNotificationsEnabled(domain.notificationsEnabled ?? false)
       setError('')
     }
     setOpen(newOpen)
