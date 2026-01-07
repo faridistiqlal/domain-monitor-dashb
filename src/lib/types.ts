@@ -5,6 +5,7 @@ export interface Domain {
   groupId?: string
   tags?: string[]
   notificationsEnabled?: boolean
+  enabled?: boolean // Individual monitoring status (default: true)
   checkBatch?: number // 1-4 for staggered checking
   lastStatusChange?: number // timestamp when status last changed
   consecutiveFailures?: number // track failure count for smart retry

@@ -11,6 +11,7 @@ interface OptimizedDomainListProps {
   tags?: DomainTag[]
   onDelete?: (id: string) => void
   onEdit?: (id: string, newUrl: string) => void
+  onToggleMonitoring?: (id: string) => void
   existingUrls?: string[]
   selectedDomains?: Set<string>
   onSelect?: (id: string, selected: boolean) => void
@@ -43,6 +44,7 @@ export const OptimizedDomainList = memo(({
   tags,
   onDelete,
   onEdit,
+  onToggleMonitoring,
   existingUrls,
   selectedDomains,
   onSelect,
@@ -101,6 +103,7 @@ export const OptimizedDomainList = memo(({
             status={status}
             onDelete={onDelete || (() => {})}
             onEdit={onEdit}
+            onToggleMonitoring={onToggleMonitoring}
             existingUrls={existingUrls}
             group={group}
             tags={tags}

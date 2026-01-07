@@ -1,11 +1,13 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning, Play, Pause, ChartLine } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from './StatusIndicator'
 import { EditDomainDialog } from './EditDomainDialog'
+import { DomainStatisticsDialog } from './DomainStatisticsDialog'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import {
   Tooltip,
@@ -19,6 +21,7 @@ interface DomainCardProps {
   status: DomainStatus
   onDelete: (id: string) => void
   onEdit?: (id: string, newUrl: string) => void
+  onToggleMonitoring?: (id: string) => void
   existingUrls?: string[]
   group?: DomainGroup
   tags?: DomainTag[]
@@ -28,7 +31,9 @@ interface DomainCardProps {
   simpleMode?: boolean
 }
 
-export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
+export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitoring, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
+  const [showStats, setShowStats] = useState(false)
+  
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
     try {
       let textToCopy = domain.url
@@ -46,7 +51,14 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
     }
   }
 
+  const handleToggleMonitoring = () => {
+    if (onToggleMonitoring) {
+      onToggleMonitoring(domain.id)
+    }
+  }
+
   const domainTags = domain.tags?.map(tagId => tags?.find(t => t.id === tagId)).filter(Boolean) as DomainTag[] | undefined
+  const isEnabled = domain.enabled !== false // Default to true if undefined
 
   const getStatusText = () => {
     if (status.status === 'online') return 'Online'
@@ -136,6 +148,11 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
                 <h3 className="font-mono text-sm font-medium text-foreground truncate">
                   {domain.url}
                 </h3>
+                {!isEnabled && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                    Paused
+                  </Badge>
+                )}
                 {group && (
                   <div 
                     className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
@@ -182,6 +199,42 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
                   {domain.notificationsEnabled 
                     ? 'Notifikasi Aktif' 
                     : 'Notifikasi Nonaktif'}
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Play/Pause Button */}
+              {onToggleMonitoring && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleToggleMonitoring}
+                      className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    >
+                      {isEnabled ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    {isEnabled ? 'Pause individual monitoring' : 'Play & check now'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Statistics Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowStats(true)}
+                    className="h-7 w-7 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                  >
+                    <ChartLine size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  View statistics
                 </TooltipContent>
               </Tooltip>
 
@@ -428,6 +481,14 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
 
         </div>
       </Card>
+      
+      {/* Statistics Dialog */}
+      <DomainStatisticsDialog
+        domainId={domain.id}
+        domainUrl={domain.url}
+        open={showStats}
+        onOpenChange={setShowStats}
+      />
     </motion.div>
   )
 }

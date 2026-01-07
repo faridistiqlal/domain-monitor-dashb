@@ -727,6 +727,73 @@ function App() {
     toast.success('Domain berhasil diperbarui')
   }
 
+  const handleToggleDomainMonitoring = async (id: string) => {
+    const domain = domains?.find(d => d.id === id)
+    if (!domain) return
+
+    const newEnabledState = domain.enabled !== false ? false : true
+
+    if (newEnabledState) {
+      // PLAY: Check immediately + enable monitoring
+      toast.info(`Checking ${domain.url}...`)
+
+      try {
+        // 1. Update domain enabled state
+        setDomains(current =>
+          (current || []).map(d =>
+            d.id === id ? { ...d, enabled: true } : d
+          )
+        )
+
+        // 2. Check domain immediately
+        setStatuses(current => ({
+          ...current,
+          [id]: { ...current[id], id, status: 'checking' }
+        }))
+
+        const result = await checkDomainStatus(domain.url, id)
+
+        // 3. Write to Firebase if auto-refresh enabled (using same logic as checkAllDomains)
+        if (autoRefreshEnabled) {
+          const updatedDomain = { ...domain, enabled: true }
+          try {
+            await updateDailyStats(result.id, result)
+            trackFirebaseRead(1)
+            trackFirebaseWrite(1)
+            
+            // Update lastStatsWrite timestamp
+            setDomains(prevDomains => 
+              prevDomains.map(d => 
+                d.id === updatedDomain.id 
+                  ? { ...d, lastStatsWrite: Date.now() }
+                  : d
+              )
+            )
+          } catch (error) {
+            console.error(`Failed to update stats for ${domain.url}:`, error)
+          }
+        }
+
+        // 4. Update UI
+        setStatuses(current => ({ ...current, [id]: result }))
+
+        toast.success(`${domain.url} checked successfully`)
+      } catch (error) {
+        toast.error(`Failed to check ${domain.url}`)
+        console.error(error)
+      }
+    } else {
+      // PAUSE: Disable monitoring
+      setDomains(current =>
+        (current || []).map(d =>
+          d.id === id ? { ...d, enabled: false } : d
+        )
+      )
+
+      toast.info(`${domain.url} paused from individual monitoring`)
+    }
+  }
+
   const handleBulkDelete = () => {
     if (!canEdit) {
       toast.error('Anda tidak memiliki akses untuk menghapus domain')
@@ -1681,6 +1748,7 @@ function App() {
                     domains={sortedDomains}
                     statuses={statuses}
                     tags={tags}
+                    onToggleMonitoring={handleToggleDomainMonitoring}
                     showCheckbox={false}
                     simpleMode={false}
                   />
@@ -1914,6 +1982,7 @@ function App() {
                         tags={tags}
                         onDelete={canEdit ? handleDeleteDomain : undefined}
                         onEdit={canEdit ? handleEditDomain : undefined}
+                        onToggleMonitoring={handleToggleDomainMonitoring}
                         existingUrls={(domains || []).filter(d => !filteredManageDomains.some(fd => fd.id === d.id)).map(d => d.url)}
                         selectedDomains={selectedDomains}
                         onSelect={canEdit ? handleSelectDomain : undefined}
