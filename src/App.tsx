@@ -48,6 +48,13 @@ import {
   loadPassword,
   syncPasswordToFirestore
 } from '@/lib/firestore-sync'
+import { 
+  updateDailyStats, 
+  createIncident, 
+  resolveIncident,
+  assignCheckBatch,
+  shouldCheckNow
+} from '@/lib/check-history'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useFilteredDomains } from '@/hooks/use-filtered-domains'
@@ -106,6 +113,10 @@ function App() {
     }
   })
   const [notificationService] = useState(() => new NotificationService())
+  
+  // Track previous statuses for incident detection
+  const [previousStatuses, setPreviousStatuses] = useState<Record<string, 'online' | 'offline' | 'dns-only'>>({})
+  const [activeIncidents, setActiveIncidents] = useState<Record<string, string>>({}) // domainId -> incidentId
 
   // Load data from Firebase on mount
   useEffect(() => {
@@ -117,7 +128,21 @@ function App() {
           loadTags(),
           loadPassword()
         ])
-        setDomains(loadedDomains)
+        
+        // Assign batch to domains that don't have one (old domains)
+        const domainsWithBatch = loadedDomains.map((domain, index) => {
+          if (!domain.checkBatch) {
+            return {
+              ...domain,
+              checkBatch: assignCheckBatch(index, loadedDomains.length),
+              lastStatusChange: domain.lastStatusChange || Date.now(),
+              consecutiveFailures: domain.consecutiveFailures || 0
+            }
+          }
+          return domain
+        })
+        
+        setDomains(domainsWithBatch)
         setGroups(loadedGroups)
         setTags(loadedTags)
         // Password already synced to localStorage by loadPassword()
@@ -278,24 +303,38 @@ function App() {
   // Check if user can edit (authenticated only)
   const canEdit = isAuthenticated
 
-  const checkAllDomains = async (showToast = false) => {
+  const checkAllDomains = async (showToast = false, batchCheckOnly = false) => {
     if (!domains || domains.length === 0) return
 
+    // Filter domains to check based on batch schedule (if staggered checking enabled)
+    let domainsToCheck = domains
+    
+    if (batchCheckOnly && autoRefreshEnabled) {
+      domainsToCheck = domains.filter(domain => shouldCheckNow(domain))
+      
+      if (domainsToCheck.length === 0) {
+        console.log('No domains scheduled for checking at this time')
+        return
+      }
+      
+      console.log(`Checking ${domainsToCheck.length} domains in current batch`)
+    }
+
     if (showToast) {
-      toast.info(`Memeriksa ${domains.length} domain...`, { duration: 2000 })
+      toast.info(`Memeriksa ${domainsToCheck.length} domain...`, { duration: 2000 })
     }
 
     const checkingStatuses: Record<string, DomainStatus> = {}
-    domains.forEach(domain => {
+    domainsToCheck.forEach(domain => {
       checkingStatuses[domain.id] = {
         id: domain.id,
         status: 'checking',
       }
     })
-    setStatuses(checkingStatuses)
+    setStatuses(prev => ({ ...prev, ...checkingStatuses }))
 
     const results = await Promise.all(
-      domains.map(domain => checkDomainStatus(domain.url, domain.id))
+      domainsToCheck.map(domain => checkDomainStatus(domain.url, domain.id))
     )
 
     const newStatuses: Record<string, DomainStatus> = {}
@@ -303,19 +342,70 @@ function App() {
       newStatuses[result.id] = result
     })
 
-    // Check for status changes and send notifications
-    if (notificationSettings.enabled) {
-      for (const result of results) {
-        const oldStatus = statuses[result.id]
-        const domain = domains.find(d => d.id === result.id)
+    // Process results: update stats, detect incidents, send notifications
+    for (const result of results) {
+      const domain = domains.find(d => d.id === result.id)
+      if (!domain) continue
+      
+      const oldStatus = previousStatuses[result.id] || 'online'
+      const newStatus = result.status === 'checking' ? 'offline' : result.status
+      
+      // Store check result to Firebase for history/charts
+      try {
+        console.log(`📊 Updating daily stats for ${domain.url}:`, { status: newStatus, responseTime: result.responseTime })
+        await updateDailyStats(result.id, result)
+        console.log(`✅ Daily stats updated for ${domain.url}`)
+      } catch (error) {
+        console.error(`❌ Failed to update daily stats for ${domain.url}:`, error)
+        console.error('Error details:', {
+          domainId: result.id,
+          status: result.status,
+          error: error
+        })
+      }
+      
+      // Detect status changes
+      const statusChanged = oldStatus !== newStatus && oldStatus !== undefined
+      
+      if (statusChanged) {
+        console.log(`🔄 Status changed for ${domain.url}: ${oldStatus} → ${newStatus}`)
         
-        // Check if domain has notifications enabled (default false if not set)
-        if (domain && (domain.notificationsEnabled ?? false) && oldStatus && oldStatus.status !== 'checking') {
+        // Update domain lastStatusChange timestamp
+        const updatedDomain = { ...domain, lastStatusChange: Date.now() }
+        setDomains(prevDomains => 
+          prevDomains.map(d => d.id === domain.id ? updatedDomain : d)
+        )
+        
+        // Handle incidents
+        if (newStatus === 'offline' || newStatus === 'dns-only') {
+          // Create new incident
+          console.log(`📝 Creating incident for ${domain.url}`)
+          const incidentId = await createIncident(domain, result, oldStatus)
+          if (incidentId) {
+            console.log(`✅ Incident created: ${incidentId}`)
+            setActiveIncidents(prev => ({ ...prev, [domain.id]: incidentId }))
+          }
+        } else if (newStatus === 'online' && (oldStatus === 'offline' || oldStatus === 'dns-only')) {
+          // Resolve incident
+          const incidentId = activeIncidents[domain.id]
+          if (incidentId) {
+            console.log(`✅ Resolving incident ${incidentId} for ${domain.url}`)
+            await resolveIncident(domain.id, incidentId)
+            setActiveIncidents(prev => {
+              const newIncidents = { ...prev }
+              delete newIncidents[domain.id]
+              return newIncidents
+            })
+          }
+        }
+        
+        // Send notifications if enabled
+        if (notificationSettings.enabled && (domain.notificationsEnabled ?? false)) {
           const group = domain.groupId ? groups.find(g => g.id === domain.groupId) : undefined
           const domainTags = domain.tags?.map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean) as string[] | undefined
 
           // Down notification
-          if (oldStatus.status === 'online' && (result.status === 'offline' || result.status === 'dns-only')) {
+          if (oldStatus === 'online' && (newStatus === 'offline' || newStatus === 'dns-only')) {
             const details: NotificationDetails = {
               domain: domain.url,
               status: 'down',
@@ -328,7 +418,7 @@ function App() {
             await notificationService.sendSlackNotification(notificationSettings, details)
           }
           // Recovery notification
-          else if ((oldStatus.status === 'offline' || oldStatus.status === 'dns-only') && result.status === 'online') {
+          else if ((oldStatus === 'offline' || oldStatus === 'dns-only') && newStatus === 'online') {
             const details: NotificationDetails = {
               domain: domain.url,
               status: 'recovery',
@@ -340,24 +430,35 @@ function App() {
             }
             await notificationService.sendSlackNotification(notificationSettings, details)
           }
-          // Slow response notification
-          else if (result.status === 'online' && result.responseTime && result.responseTime >= notificationSettings.slowThreshold) {
-            const details: NotificationDetails = {
-              domain: domain.url,
-              status: 'slow',
-              responseTime: result.responseTime,
-              groupName: group?.name,
-              tags: domainTags,
-              ipAddress: result.ipAddress,
-              protocol: result.protocol
-            }
-            await notificationService.sendSlackNotification(notificationSettings, details)
-          }
         }
+        
+        // Update previous status
+        setPreviousStatuses(prev => ({ ...prev, [result.id]: newStatus }))
+      }
+      
+      // Slow response notification (even without status change)
+      if (notificationSettings.enabled && 
+          (domain.notificationsEnabled ?? false) &&
+          result.status === 'online' && 
+          result.responseTime && 
+          result.responseTime >= (notificationSettings.slowThreshold * 1000)) {
+        const group = domain.groupId ? groups.find(g => g.id === domain.groupId) : undefined
+        const domainTags = domain.tags?.map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean) as string[] | undefined
+        
+        const details: NotificationDetails = {
+          domain: domain.url,
+          status: 'slow',
+          responseTime: result.responseTime,
+          groupName: group?.name,
+          tags: domainTags,
+          ipAddress: result.ipAddress,
+          protocol: result.protocol
+        }
+        await notificationService.sendSlackNotification(notificationSettings, details)
       }
     }
 
-    setStatuses(newStatuses)
+    setStatuses(prev => ({ ...prev, ...newStatuses }))
     setHasChecked(true)
 
     if (showToast) {
@@ -384,14 +485,21 @@ function App() {
       return
     }
 
+    // Assign batch using round-robin strategy
+    const currentCount = domains?.length || 0
+    const batch = assignCheckBatch(currentCount, currentCount + 1)
+
     const newDomain: Domain = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       url,
       addedAt: Date.now(),
+      checkBatch: batch,
+      lastStatusChange: Date.now(),
+      consecutiveFailures: 0
     }
 
     setDomains(current => [...(current || []), newDomain])
-    toast.success('Domain berhasil ditambahkan')
+    toast.success(`Domain berhasil ditambahkan (Batch ${batch})`)
   }
 
   const handleDeleteDomain = (id: string) => {
@@ -773,15 +881,15 @@ function App() {
   useEffect(() => {
     if (!autoRefreshEnabled) return
 
-    checkAllDomains()
+    checkAllDomains(false, true) // Initial batch check
     setCountdown(60)
 
     if (isPaused) return
 
     const interval = setInterval(() => {
-      checkAllDomains()
+      checkAllDomains(false, true) // Use batch checking
       setCountdown(60)
-    }, 60000)
+    }, 60000) // Check every minute for batch schedules
 
     return () => clearInterval(interval)
   }, [domains, isPaused, autoRefreshEnabled])

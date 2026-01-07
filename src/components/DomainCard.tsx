@@ -268,6 +268,20 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
                 </Tooltip>
               )}
               
+              {/* Batch Indicator */}
+              {domain.checkBatch && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="shrink-0 flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">
+                      <span>B{domain.checkBatch}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">
+                    <p>Batch {domain.checkBatch} - Auto check setiap 20 menit</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
               {group && (
                 <Tooltip>
                   <TooltipTrigger asChild>

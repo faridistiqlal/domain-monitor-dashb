@@ -1,6 +1,68 @@
 # Changelog
 
-## Version 2.2.0 - Current
+## Version 2.3.0 - Current
+**Tanggal Rilis:** 7 Januari 2026
+
+### ✨ Fitur Baru
+- **Staggered Auto-Check System**: Sistem cek otomatis dengan 4 batch untuk skalabilitas 300-400 domain
+- **Smart Check History Storage**: Penyimpanan history dengan hourly aggregation untuk efisiensi Firebase quota
+- **Incident Tracking**: Pelacakan otomatis insiden down/recovery dengan timestamp dan durasi
+- **Batch Assignment**: Distribusi domain ke 4 batch secara round-robin untuk load balancing
+- **Check Schedule Optimization**: Setiap batch cek setiap 20 menit (3x per jam) = ~72 checks/hari per domain
+
+### 🎨 Peningkatan UI/UX
+- **Batch Indicator Badge**: Badge "B1", "B2", "B3", "B4" pada DomainCard untuk identifikasi batch
+- **Batch Tooltip**: Informasi schedule check per batch di tooltip
+- **Auto-Check Toast**: Toast notification hanya menampilkan jumlah domain yang dicek per batch
+
+### 🚀 Peningkatan Performa & Skalabilitas
+- **Firebase Write Optimization**: ~600 writes/day untuk 400 domain (vs 115K naive approach)
+- **Hourly Aggregation**: 24 hourly records per domain per day instead of raw check results
+- **Incident-Based Storage**: Hanya simpan status changes, bukan setiap check
+- **30-Day Retention**: Auto-cleanup data lebih dari 30 hari
+- **Batch Window System**: Cek hanya domain dalam window saat ini, bukan semua domain
+
+### 🗄️ Data Structure
+- **domain-stats-daily**: Collection untuk daily statistics dengan hourly aggregates
+- **domain-incidents**: Collection untuk tracking down/recovery incidents
+- **DomainDailyStats Interface**: Stats dengan totalChecks, successChecks, uptimePercent, avgResponseTime, hourly[]
+- **DomainIncident Interface**: Incident dengan startTime, endTime, duration, status, resolved flag
+- **HourlyAggregate**: Struktur data per jam dengan checks, successChecks, avgResponseTime, status
+
+### 🔧 Technical Implementation
+- **check-history.ts**: Firebase integration module dengan 10+ functions
+- **updateDailyStats()**: Update hourly aggregates after each check
+- **createIncident()**: Create incident saat domain down/dns-only
+- **resolveIncident()**: Mark incident resolved saat domain recovery
+- **getDomainIncidents()**: Query incidents untuk date range (7/30 days)
+- **getDomainStats()**: Get aggregated stats untuk charts
+- **assignCheckBatch()**: Round-robin batch assignment algorithm
+- **shouldCheckNow()**: Determine if domain should be checked based on batch schedule
+- **getNextCheckTime()**: Calculate next check time for batch
+
+### 📊 Data Capacity
+- **Storage**: ~24MB untuk 400 domains × 30 days (dengan hourly aggregation)
+- **Reads**: ~14,400/day (400 domains × 36 reads) - well under 50K limit
+- **Writes**: ~600/day (400 domains × 1.5 writes) - well under 20K limit
+- **Scale**: Dapat handle sampai 1000+ domains dengan adjustment
+
+### 🔒 Preparation for Charts (Phase 2)
+- Data structure siap untuk:
+  - Uptime bar chart (7/30 days view)
+  - Status timeline (24h incident view)
+  - Response time line chart (trend analysis)
+  - Downtime heatmap calendar
+- Data collection dimulai otomatis setelah deployment
+- Charts akan diimplementasikan setelah 24-48 jam data tersedia
+
+### 🐛 Bug Fixes
+- Fixed: Type error pada hourly.status dengan 'checking' status
+- Fixed: Auto-refresh mencheck semua domain sekaligus (now batch-aware)
+- Fixed: New domain tidak memiliki checkBatch assignment
+
+---
+
+## Version 2.2.0
 **Tanggal Rilis:** 7 Januari 2026
 
 ### ✨ Fitur Baru
