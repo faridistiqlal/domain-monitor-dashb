@@ -135,24 +135,6 @@ export function StatisticsView({
   const hasStatusData = Object.keys(statuses).length > 0 && 
     Object.values(statuses).some(s => s.lastChecked !== undefined)
 
-  if (!hasChecked && !autoRefreshEnabled && !hasStatusData) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-300px)]">
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-muted mx-auto flex items-center justify-center">
-            <Gauge size={32} weight="duotone" className="text-muted-foreground" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold mb-1 text-foreground">Data Belum Tersedia</h3>
-            <p className="text-xs text-muted-foreground">
-              Silakan check domain terlebih dahulu untuk melihat statistik
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <ScrollArea className="h-[calc(100vh-240px)]">
       <div className="space-y-4 pr-4">
