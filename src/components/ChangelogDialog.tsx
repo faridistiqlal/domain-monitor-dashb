@@ -70,7 +70,7 @@ export function ChangelogDialog() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-green-600 dark:text-green-500 mt-1">•</span>
-                      <span><strong className="text-foreground">Auto-Cleanup:</strong> Stats >30 hari otomatis terhapus daily</span>
+                      <span><strong className="text-foreground">Auto-Cleanup:</strong> Stats {'>'}30 hari otomatis terhapus daily</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-green-600 dark:text-green-500 mt-1">•</span>
