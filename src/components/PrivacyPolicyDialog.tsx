@@ -54,15 +54,17 @@ export function PrivacyPolicyDialog() {
                 <li>Menyediakan laporan dan statistik monitoring</li>
                 <li>Mengorganisir domain dalam grup dan tag</li>
                 <li>Mengekspor data monitoring ke format CSV</li>
+                <li>Mengirim notifikasi ke Slack melalui webhook (jika diaktifkan)</li>
               </ul>
             </section>
 
             <section className="space-y-2">
               <h3 className="font-semibold text-base text-foreground">3. Penyimpanan Data</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Semua data disimpan secara lokal di perangkat Anda. Data tidak diunggah ke server pusat atau 
-                dibagikan dengan pihak ketiga. Penghapusan data browser atau cache akan menghapus semua data 
-                monitoring yang tersimpan.
+                Semua data disimpan secara lokal di perangkat Anda menggunakan localStorage dan Firebase Firestore. 
+                Khusus untuk fitur notifikasi, webhook URL disimpan di localStorage dan data monitoring (status domain, 
+                grup, tag, IP, protocol) dikirim ke Slack hanya jika Anda mengaktifkan notifikasi per domain. 
+                Penghapusan data browser atau cache akan menghapus semua data monitoring yang tersimpan.
               </p>
             </section>
 
@@ -112,7 +114,27 @@ export function PrivacyPolicyDialog() {
             </section>
 
             <section className="space-y-2">
-              <h3 className="font-semibold text-base text-foreground">9. Kontak</h3>
+              <h3 className="font-semibold text-base text-foreground">9. Notifikasi Webhook</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Fitur notifikasi Slack webhook (tersedia mulai v2.2.0) mengirim data monitoring ke Slack channel 
+                melalui webhook URL yang Anda konfigurasi. Data yang dikirim meliputi:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
+                <li>Nama domain dan URL lengkap</li>
+                <li>Status domain (up/down/slow)</li>
+                <li>Nama grup dan tag</li>
+                <li>IP address dan protocol (http/https)</li>
+                <li>Error details (jika domain down)</li>
+              </ul>
+              <p className="text-muted-foreground leading-relaxed mt-2">
+                Notifikasi hanya dikirim jika Anda mengaktifkan fitur ini melalui toggle per domain. Webhook URL 
+                disimpan di localStorage browser Anda. Data yang dikirim ke Slack tunduk pada kebijakan privasi Slack. 
+                Anda bertanggung jawab menjaga keamanan webhook URL dan memastikan izin akses ke Slack workspace/channel.
+              </p>
+            </section>
+
+            <section className="space-y-2">
+              <h3 className="font-semibold text-base text-foreground">10. Kontak</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Jika Anda memiliki pertanyaan tentang kebijakan privasi ini, silakan hubungi administrator 
                 sistem Domain Monitor Kabupaten Kendal.

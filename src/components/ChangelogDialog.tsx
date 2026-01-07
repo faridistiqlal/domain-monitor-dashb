@@ -25,7 +25,7 @@ export function ChangelogDialog() {
           className="h-7 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <Clock size={12} className="mr-1" />
-          Changelog v2.1.0
+          Changelog v2.2.0
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[85vh] p-0">
@@ -44,10 +44,149 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 2.1.0</h3>
-                  <p className="text-xs text-muted-foreground">Current Release • 6 Januari 2026</p>
+                  <h3 className="text-lg font-semibold text-foreground">Version 2.2.0</h3>
+                  <p className="text-xs text-muted-foreground">Current Release • 7 Januari 2026</p>
                 </div>
                 <Badge className="bg-primary text-primary-foreground">Latest</Badge>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-accent/20 flex items-center justify-center">
+                      <Sparkle size={14} weight="duotone" className="text-accent" />
+                    </div>
+                    Fitur Baru
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Slack Webhook Notifications:</strong> Integrasi notifikasi ke Slack channel saat domain down/recovery/slow</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Per-Domain Notification Control:</strong> Enable/disable notifikasi per domain secara individual</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Enhanced Notification Details:</strong> Notifikasi mencakup group, tags, IP address, protocol, error details</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Notification Settings Dialog:</strong> Konfigurasi webhook URL, aturan notifikasi, dan cooldown period</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Notification Indicator:</strong> Icon Bell/BellSlash di management list untuk status notifikasi</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Test Notification:</strong> Tombol test untuk memastikan webhook bekerja sebelum digunakan</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Cooldown System:</strong> Anti-spam dengan cooldown 5 menit antar notifikasi per domain</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Flexible Domain Validation:</strong> Mendukung root domain (kendalkab.go.id) dan subdomain</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center">
+                      <Palette size={14} weight="duotone" className="text-primary" />
+                    </div>
+                    Peningkatan UI/UX
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Bell Icon Header:</strong> Tombol notifikasi di header untuk akses cepat settings</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Visual Notification Status:</strong> Icon Bell (active) dan BellSlash (inactive) dengan tooltip</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Notification Toggle in Edit:</strong> Switch enable/disable notifikasi di EditDomainDialog</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span><strong className="text-foreground">Comprehensive Help:</strong> Panduan lengkap setup Slack webhook di InfoDialog</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-success/20 flex items-center justify-center">
+                      <Rocket size={14} weight="duotone" className="text-success" />
+                    </div>
+                    Peningkatan Performa
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-success mt-1">•</span>
+                      <span><strong className="text-foreground">No-CORS Webhook Calls:</strong> Webhook requests berjalan dari browser tanpa CORS issues</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-success mt-1">•</span>
+                      <span><strong className="text-foreground">NotificationService Class:</strong> Arsitektur service dengan Map-based cooldown tracking</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-success mt-1">•</span>
+                      <span><strong className="text-foreground">Smart Status Detection:</strong> Notifikasi hanya saat status change, bukan setiap check</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-destructive/20 flex items-center justify-center">
+                      <Bug size={14} weight="duotone" className="text-destructive" />
+                    </div>
+                    Bug Fixes
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span>Fixed: CORS error saat webhook request dengan no-cors mode</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span>Fixed: Cooldown blocking test notifications dengan clearCooldown</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span>Fixed: Domain validation menolak root domain (kendalkab.go.id)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span>Fixed: EditDomainDialog syntax error (DialogDescription typo)</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 2.1.0</h3>
+                  <p className="text-xs text-muted-foreground">6 Januari 2026</p>
+                </div>
               </div>
 
               <div className="space-y-4">

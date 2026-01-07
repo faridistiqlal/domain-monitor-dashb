@@ -63,6 +63,7 @@ export function TermsOfServiceDialog() {
                 <li>Mengorganisir domain dalam grup dan tag</li>
                 <li>Mengekspor data monitoring untuk keperluan pelaporan</li>
                 <li>Menggunakan fitur auto-refresh untuk monitoring berkelanjutan</li>
+                <li>Menggunakan fitur notifikasi webhook untuk alert monitoring (dengan izin)</li>
               </ul>
             </section>
 
@@ -87,9 +88,10 @@ export function TermsOfServiceDialog() {
               </p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
                 <li>Memastikan domain yang dimonitor adalah domain yang sah dan berwenang</li>
-                <li>Menjaga keamanan akses ke aplikasi</li>
+                <li>Menjaga keamanan akses ke aplikasi dan webhook URL</li>
                 <li>Menggunakan data hasil monitoring dengan bijak dan sesuai aturan</li>
                 <li>Melaporkan bug atau masalah keamanan yang ditemukan</li>
+                <li>Memastikan izin akses Slack workspace/channel untuk notifikasi</li>
               </ul>
             </section>
 
