@@ -30,6 +30,7 @@ import { LoginDialog } from '@/components/LoginDialog'
 import { SettingsDialog } from '@/components/SettingsDialog'
 import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog'
 import { NotificationHistoryDialog } from '@/components/NotificationHistoryDialog'
+import { SettingsMenuDialog } from '@/components/SettingsMenuDialog'
 import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings } from '@/lib/types'
 import { NotificationService, NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
@@ -62,7 +63,6 @@ function App() {
     return auth === 'true'
   })
   const [showLoginDialog, setShowLoginDialog] = useState(!isAuthenticated)
-  const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now())
 
   // Domain & App States
@@ -105,7 +105,6 @@ function App() {
       cooldownMinutes: 5
     }
   })
-  const [showNotificationDialog, setShowNotificationDialog] = useState(false)
   const [notificationService] = useState(() => new NotificationService())
 
   // Load data from Firebase on mount
@@ -221,10 +220,16 @@ function App() {
     toast.info('Anda telah logout')
   }
 
-  const handlePasswordChange = (newPassword: string) => {
+  const handlePasswordChange = async (oldPassword: string, newPassword: string): Promise<boolean> => {
+    const storedPassword = localStorage.getItem('app-password') || 'admin123'
+    
+    if (oldPassword !== storedPassword) {
+      return false
+    }
+    
     localStorage.setItem('app-password', newPassword)
-    syncPasswordToFirestore(newPassword).catch(console.error)
-    toast.success('Password berhasil diubah dan disinkronkan ke cloud')
+    await syncPasswordToFirestore(newPassword).catch(console.error)
+    return true
   }
 
   const handleNotificationSettingsSave = (settings: NotificationSettings) => {
@@ -909,49 +914,17 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Notification Settings Button */}
+                {/* Settings Menu Button */}
                 {isAuthenticated && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowNotificationDialog(true)}
-                      className="h-8"
-                      title="Notification Settings"
-                    >
-                      <Bell size={14} />
-                    </Button>
-                    <NotificationHistoryDialog
-                      getHistory={() => notificationService.getHistory()}
-                      clearHistory={() => notificationService.clearHistory()}
-                    />
-                  </>
-                )}
-
-                {/* Settings Button */}
-                {isAuthenticated && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowSettingsDialog(true)}
-                    className="h-8"
-                    title="Ubah Password"
-                  >
-                    <LockKey size={14} />
-                  </Button>
-                )}
-
-                {/* Logout Button */}
-                {isAuthenticated && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLogout}
-                    className="h-8"
-                    title="Logout"
-                  >
-                    <SignOut size={14} />
-                  </Button>
+                  <SettingsMenuDialog
+                    notificationSettings={notificationSettings}
+                    onNotificationSettingsSave={handleNotificationSettingsSave}
+                    onTestNotification={handleTestNotification}
+                    getHistory={() => notificationService.getHistory()}
+                    clearHistory={() => notificationService.clearHistory()}
+                    onChangePassword={handlePasswordChange}
+                    onLogout={handleLogout}
+                  />
                 )}
 
                 <div className="h-6 w-px bg-border" />
@@ -1852,22 +1825,6 @@ function App() {
         <LoginDialog 
           open={showLoginDialog} 
           onLogin={handleLogin}
-        />
-
-        {/* Settings Dialog */}
-        <SettingsDialog
-          open={showSettingsDialog}
-          onOpenChange={setShowSettingsDialog}
-          onPasswordChange={handlePasswordChange}
-        />
-
-        {/* Notification Settings Dialog */}
-        <NotificationSettingsDialog
-          open={showNotificationDialog}
-          onOpenChange={setShowNotificationDialog}
-          settings={notificationSettings}
-          onSave={handleNotificationSettingsSave}
-          onTest={handleTestNotification}
         />
       </div>
 

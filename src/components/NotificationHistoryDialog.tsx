@@ -31,14 +31,12 @@ interface NotificationHistoryDialogProps {
 }
 
 export function NotificationHistoryDialog({ getHistory, clearHistory }: NotificationHistoryDialogProps) {
-  const [open, setOpen] = useState(false)
   const [history, setHistory] = useState<NotificationHistory[]>([])
 
   useEffect(() => {
-    if (open) {
-      setHistory(getHistory())
-    }
-  }, [open, getHistory])
+    // Load history on mount
+    setHistory(getHistory())
+  }, [getHistory])
 
   const handleClearHistory = () => {
     clearHistory()
@@ -85,25 +83,18 @@ export function NotificationHistoryDialog({ getHistory, clearHistory }: Notifica
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
-          <ClockCounterClockwise size={16} weight="duotone" />
-          History
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[85vh]">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="flex items-center gap-2">
-                <ClockCounterClockwise size={20} weight="duotone" />
-                Notification History
-              </DialogTitle>
-              <DialogDescription>
-                Riwayat notifikasi yang telah dikirim ke Slack
-              </DialogDescription>
-            </div>
+    <>
+      <DialogHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <DialogTitle className="flex items-center gap-2">
+              <ClockCounterClockwise size={20} weight="duotone" />
+              Notification History
+            </DialogTitle>
+            <DialogDescription>
+              Riwayat notifikasi yang telah dikirim ke Slack
+            </DialogDescription>
+          </div>
             {history.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -228,7 +219,6 @@ export function NotificationHistoryDialog({ getHistory, clearHistory }: Notifica
           <span>Total: {history.length} notifikasi</span>
           <span>Maksimal 100 riwayat tersimpan</span>
         </div>
-      </DialogContent>
-    </Dialog>
+      </>
   )
 }

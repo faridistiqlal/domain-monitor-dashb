@@ -9,10 +9,10 @@ import { toast } from 'sonner'
 interface SettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onPasswordChange: (newPassword: string) => void
+  onChangePassword: (oldPassword: string, newPassword: string) => Promise<boolean>
 }
 
-export function SettingsDialog({ open, onOpenChange, onPasswordChange }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, onChangePassword }: SettingsDialogProps) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -21,7 +21,7 @@ export function SettingsDialog({ open, onOpenChange, onPasswordChange }: Setting
   const [showConfirm, setShowConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -41,23 +41,19 @@ export function SettingsDialog({ open, onOpenChange, onPasswordChange }: Setting
 
     setIsLoading(true)
     
-    setTimeout(() => {
-      const storedPassword = localStorage.getItem('app-password') || 'admin123'
-      
-      if (currentPassword !== storedPassword) {
-        toast.error('Password saat ini salah')
-        setIsLoading(false)
-        return
-      }
-
-      onPasswordChange(newPassword)
+    const success = await onChangePassword(currentPassword, newPassword)
+    
+    if (success) {
       toast.success('Password berhasil diubah')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      setIsLoading(false)
       onOpenChange(false)
-    }, 300)
+    } else {
+      toast.error('Password saat ini salah')
+    }
+    
+    setIsLoading(false)
   }
 
   return (
