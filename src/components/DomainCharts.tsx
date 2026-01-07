@@ -5,6 +5,18 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { getDomainStats, getDomainIncidents } from '@/lib/check-history'
 import { Domain, DomainDailyStats, DomainIncident } from '@/lib/types'
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from 'recharts'
 
 interface DomainChartsProps {
   selectedDomain: Domain
@@ -172,58 +184,54 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
             <CardHeader>
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <TrendUp size={20} />
-                Daily Uptime
+                Daily Uptime Chart
               </CardTitle>
-              <CardDescription>Persentase uptime per hari</CardDescription>
+              <CardDescription>Uptime percentage per hari (Firebase data)</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {stats.map((stat) => {
-                  const uptime = stat.totalChecks > 0
-                    ? ((stat.successChecks / stat.totalChecks) * 100).toFixed(1)
-                    : '0'
-                  const date = new Date(stat.date)
-                  const formattedDate = date.toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
-                  })
-
-                  return (
-                    <div key={stat.id} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground font-mono text-xs">
-                          {formattedDate}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground">
-                            {stat.successChecks}/{stat.totalChecks}
-                          </span>
-                          <Badge
-                            variant={parseFloat(uptime) >= 95 ? 'default' : 'destructive'}
-                            className="w-14 justify-center"
-                          >
-                            {uptime}%
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full transition-all duration-300"
-                          style={{
-                            width: `${uptime}%`,
-                            backgroundColor:
-                              parseFloat(uptime) >= 95
-                                ? 'oklch(0.70 0.22 145)'
-                                : parseFloat(uptime) >= 80
-                                ? 'rgb(245, 158, 11)'
-                                : 'oklch(0.60 0.25 25)',
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={stats.map((stat) => ({
+                    date: new Date(stat.date).toLocaleDateString('id-ID', {
+                      day: 'numeric',
+                      month: 'short',
+                    }),
+                    uptime: stat.totalChecks > 0
+                      ? parseFloat(((stat.successChecks / stat.totalChecks) * 100).toFixed(1))
+                      : 0,
+                    checks: stat.totalChecks,
+                    success: stat.successChecks,
+                  }))}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    domain={[0, 100]}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                    }}
+                    formatter={(value: number, name: string) => {
+                      if (name === 'uptime') return [`${value.toFixed(1)}%`, 'Uptime']
+                      return [value, name]
+                    }}
+                  />
+                  <Bar
+                    dataKey="uptime"
+                    fill="oklch(0.70 0.22 145)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
 
@@ -235,56 +243,71 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
                   <Clock size={20} />
                   Response Time Trend
                 </CardTitle>
-                <CardDescription>Average response time per hari</CardDescription>
+                <CardDescription>Average response time per hari (Firebase data)</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {stats
-                    .filter((s) => s.avgResponseTime)
-                    .map((stat) => {
-                      const avgRT = Math.round(stat.avgResponseTime || 0)
-                      const barWidth = (avgRT / maxResponseTime) * 100
-                      const date = new Date(stat.date)
-                      const formattedDate = date.toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                      })
-
-                      return (
-                        <div key={stat.id} className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground font-mono text-xs">
-                              {formattedDate}
-                            </span>
-                            <div className="flex items-center gap-3">
-                              {stat.minResponseTime && stat.maxResponseTime && (
-                                <span className="text-xs text-muted-foreground">
-                                  {stat.minResponseTime}-{stat.maxResponseTime}ms
-                                </span>
-                              )}
-                              <Badge variant="outline" className="w-20 justify-center font-mono">
-                                {avgRT}ms
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full transition-all duration-300"
-                              style={{
-                                width: `${Math.min(barWidth, 100)}%`,
-                                backgroundColor:
-                                  avgRT < 500
-                                    ? 'oklch(0.70 0.22 145)'
-                                    : avgRT < 2000
-                                    ? 'rgb(245, 158, 11)'
-                                    : 'oklch(0.60 0.25 25)',
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart
+                    data={stats
+                      .filter((s) => s.avgResponseTime)
+                      .map((stat) => ({
+                        date: new Date(stat.date).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                        }),
+                        avg: Math.round(stat.avgResponseTime || 0),
+                        min: stat.minResponseTime || 0,
+                        max: stat.maxResponseTime || 0,
+                      }))}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      label={{ value: 'ms', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                      }}
+                      formatter={(value: number) => [`${value}ms`, '']}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Line
+                      type="monotone"
+                      dataKey="avg"
+                      stroke="oklch(0.70 0.22 145)"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      name="Average"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="min"
+                      stroke="oklch(0.75 0.15 200)"
+                      strokeWidth={1}
+                      strokeDasharray="3 3"
+                      dot={false}
+                      name="Min"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="max"
+                      stroke="rgb(245, 158, 11)"
+                      strokeWidth={1}
+                      strokeDasharray="3 3"
+                      dot={false}
+                      name="Max"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
