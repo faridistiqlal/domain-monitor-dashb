@@ -155,25 +155,35 @@ function App() {
     loadData()
   }, [])
 
-  // Sync to Firebase whenever data changes (with localStorage fallback)
+  // Sync to Firebase with debouncing (reduce writes)
   useEffect(() => {
     if (!isLoadingData && domains.length >= 0) {
       localStorage.setItem('monitoring-domains', JSON.stringify(domains))
-      syncDomainsToFirestore(domains).catch(console.error)
+      // Debounce Firebase sync to reduce writes
+      const timeoutId = setTimeout(() => {
+        syncDomainsToFirestore(domains).catch(console.error)
+      }, 2000) // Wait 2s before syncing
+      return () => clearTimeout(timeoutId)
     }
   }, [domains, isLoadingData])
 
   useEffect(() => {
     if (!isLoadingData && groups.length >= 0) {
       localStorage.setItem('domain-groups', JSON.stringify(groups))
-      syncGroupsToFirestore(groups).catch(console.error)
+      const timeoutId = setTimeout(() => {
+        syncGroupsToFirestore(groups).catch(console.error)
+      }, 2000)
+      return () => clearTimeout(timeoutId)
     }
   }, [groups, isLoadingData])
 
   useEffect(() => {
     if (!isLoadingData && tags.length >= 0) {
       localStorage.setItem('domain-tags', JSON.stringify(tags))
-      syncTagsToFirestore(tags).catch(console.error)
+      const timeoutId = setTimeout(() => {
+        syncTagsToFirestore(tags).catch(console.error)
+      }, 2000)
+      return () => clearTimeout(timeoutId)
     }
   }, [tags, isLoadingData])
 

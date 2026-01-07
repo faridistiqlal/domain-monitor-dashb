@@ -27,7 +27,7 @@ export const syncDomainsToFirestore = async (domains: Domain[]) => {
     await setDoc(userDocRef, {
       domains: domains,
       updatedAt: Date.now()
-    })
+    }, { merge: true })
     return true
   } catch (error) {
     console.error('Error syncing domains:', error)
@@ -74,7 +74,7 @@ export const syncGroupsToFirestore = async (groups: DomainGroup[]) => {
     await setDoc(userDocRef, {
       groups: groups,
       updatedAt: Date.now()
-    })
+    }, { merge: true })
     return true
   } catch (error) {
     console.error('Error syncing groups:', error)
@@ -121,7 +121,7 @@ export const syncTagsToFirestore = async (tags: DomainTag[]) => {
     await setDoc(userDocRef, {
       tags: tags,
       updatedAt: Date.now()
-    })
+    }, { merge: true })
     return true
   } catch (error) {
     console.error('Error syncing tags:', error)

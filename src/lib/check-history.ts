@@ -140,9 +140,9 @@ export async function updateDailyStats(
       }
     }
     
-    // Save to Firestore
+    // Save to Firestore (merge to avoid full rewrite)
     const statsRef = doc(db, DAILY_STATS_COLLECTION, stats.id)
-    await setDoc(statsRef, stats)
+    await setDoc(statsRef, stats, { merge: true })
     
   } catch (error) {
     console.error(`[check-history] Error updating stats for ${domainId}:`, error)
@@ -177,7 +177,7 @@ export async function createIncident(
     }
     
     const incidentRef = doc(db, INCIDENTS_COLLECTION, incidentId)
-    await setDoc(incidentRef, incident)
+    await setDoc(incidentRef, incident, { merge: true })
     
     // Add incident ID to daily stats
     const stats = await getOrCreateDailyStats(domain.id)
