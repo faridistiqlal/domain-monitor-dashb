@@ -145,6 +145,42 @@ function App() {
         setDomains(domainsWithBatch)
         setGroups(loadedGroups)
         setTags(loadedTags)
+        
+        // Load last statuses from localStorage for statistics display
+        const savedStatuses = localStorage.getItem('domain-last-statuses')
+        if (savedStatuses) {
+          try {
+            const parsed = JSON.parse(savedStatuses)
+            setStatuses(parsed)
+            // Also set previous statuses for change detection
+            const prevStatuses: Record<string, 'online' | 'offline' | 'dns-only'> = {}
+            Object.entries(parsed).forEach(([id, status]) => {
+              const s = status as DomainStatus
+              if (s.status !== 'checking') {
+                prevStatuses[id] = s.status as 'online' | 'offline' | 'dns-only'
+              }
+            })
+            setPreviousStatuses(prevStatuses)
+          } catch (e) {
+            console.error('Failed to parse saved statuses:', e)
+          }
+        } else if (domainsWithBatch.length > 0) {
+          // No localStorage data, try to load from Firebase daily stats
+          console.log('Loading last known statuses from Firebase...')
+          try {
+            const firebaseStatuses = await loadLastKnownStatuses(
+              domainsWithBatch.map(d => d.id)
+            )
+            if (Object.keys(firebaseStatuses).length > 0) {
+              setStatuses(firebaseStatuses)
+              localStorage.setItem('domain-last-statuses', JSON.stringify(firebaseStatuses))
+              console.log(`Loaded ${Object.keys(firebaseStatuses).length} statuses from Firebase`)
+            }
+          } catch (e) {
+            console.error('Failed to load statuses from Firebase:', e)
+          }
+        }
+        
         // Password already synced to localStorage by loadPassword()
       } catch (error) {
         console.error('Error loading data:', error)
@@ -357,15 +393,31 @@ function App() {
       const oldStatus = previousStatuses[result.id] || 'online'
       const newStatus = result.status === 'checking' ? 'offline' : result.status
       
-      // Store check result to Firebase for history/charts
-      try {
-        await updateDailyStats(result.id, result)
-      } catch (error) {
-        console.error(`Failed to update stats for ${domain.url}:`, error)
+      // Hourly Write Policy: Write to Firebase if status changed OR 1 hour passed
+      const statusChanged = oldStatus !== newStatus && oldStatus !== undefined
+      const lastStatsWrite = domain.lastStatsWrite || 0
+      const hoursSinceLastWrite = (Date.now() - lastStatsWrite) / (1000 * 60 * 60)
+      const shouldWriteHourly = hoursSinceLastWrite >= 1
+      
+      // Write to Firebase: Status change OR hourly for continuous uptime tracking
+      if (statusChanged || shouldWriteHourly) {
+        try {
+          await updateDailyStats(result.id, result)
+          
+          // Update lastStatsWrite timestamp
+          setDomains(prevDomains => 
+            prevDomains.map(d => 
+              d.id === domain.id 
+                ? { ...d, lastStatsWrite: Date.now() }
+                : d
+            )
+          )
+        } catch (error) {
+          console.error(`Failed to update stats for ${domain.url}:`, error)
+        }
       }
       
-      // Detect status changes
-      const statusChanged = oldStatus !== newStatus && oldStatus !== undefined
+      // Detect status changes (already calculated above for write policy)
       
       if (statusChanged) {
         // Update domain lastStatusChange timestamp
@@ -453,7 +505,12 @@ function App() {
       }
     }
 
-    setStatuses(prev => ({ ...prev, ...newStatuses }))
+    setStatuses(prev => {
+      const updated = { ...prev, ...newStatuses }
+      // Save to localStorage for persistence across sessions
+      localStorage.setItem('domain-last-statuses', JSON.stringify(updated))
+      return updated
+    })
     setHasChecked(true)
 
     if (showToast) {

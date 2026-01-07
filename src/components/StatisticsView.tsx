@@ -1,10 +1,12 @@
-import { useMemo } from 'react'
-import { Globe, CheckCircle, XCircle, Clock, Gauge, FolderOpen, Tag, TrendUp } from '@phosphor-icons/react'
+import { useMemo, useState } from 'react'
+import { Globe, CheckCircle, XCircle, Clock, Gauge, FolderOpen, Tag, TrendUp, ChartLine } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
+import { DomainCharts } from './DomainCharts'
 
 interface StatisticsViewProps {
   domains: Domain[]
@@ -23,6 +25,8 @@ export function StatisticsView({
   hasChecked,
   autoRefreshEnabled,
 }: StatisticsViewProps) {
+  const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null)
+
   const stats = useMemo(() => {
     const total = domains.length
     const online = domains.filter(d => statuses[d.id]?.status === 'online').length
@@ -125,7 +129,11 @@ export function StatisticsView({
     ].filter(item => item.value > 0)
   }, [stats])
 
-  if (!hasChecked && !autoRefreshEnabled) {
+  // Check if there's any status data available (from previous checks)
+  const hasStatusData = Object.keys(statuses).length > 0 && 
+    Object.values(statuses).some(s => s.lastChecked !== undefined)
+
+  if (!hasChecked && !autoRefreshEnabled && !hasStatusData) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-300px)]">
         <div className="text-center space-y-3">
@@ -141,6 +149,20 @@ export function StatisticsView({
         </div>
       </div>
     )
+  // Show charts if domain selected
+  if (selectedDomain) {
+    return (
+      <ScrollArea className="h-[calc(100vh-240px)]">
+        <div className="pr-4">
+          <DomainCharts
+            selectedDomain={selectedDomain}
+            onClose={() => setSelectedDomain(null)}
+          />
+        </div>
+      </ScrollArea>
+    )
+  }
+
   }
 
   return (
@@ -383,6 +405,59 @@ export function StatisticsView({
                             className="h-full bg-success transition-all duration-500"
                             style={{ width: `${onlinePercentage}%` }}
                           />
+        {/* Domain Charts Section */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <ChartLine size={20} />
+              Statistik Detail Per Domain
+            </CardTitle>
+            <CardDescription>
+              Pilih domain untuk melihat uptime history, response time, dan incident timeline
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[200px]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-3">
+                {domains.slice(0, 50).map((domain) => {
+                  const status = statuses[domain.id]
+                  const statusColor =
+                    status?.status === 'online'
+                      ? 'oklch(0.70 0.22 145)'
+                      : status?.status === 'dns-only'
+                      ? 'rgb(245, 158, 11)'
+                      : 'oklch(0.60 0.25 25)'
+
+                  return (
+                    <Button
+                      key={domain.id}
+                      variant="outline"
+                      className="justify-start h-auto p-3 hover:bg-accent"
+                      onClick={() => setSelectedDomain(domain)}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: statusColor }}
+                        />
+                        <span className="text-xs font-mono truncate flex-1 text-left">
+                          {domain.url}
+                        </span>
+                        <ChartLine size={14} className="text-muted-foreground flex-shrink-0" />
+                      </div>
+                    </Button>
+                  )
+                })}
+              </div>
+            </ScrollArea>
+            {domains.length > 50 && (
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                Menampilkan 50 dari {domains.length} domain
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
                         </div>
                       </div>
                     ))}

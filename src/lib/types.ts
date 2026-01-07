@@ -8,6 +8,7 @@ export interface Domain {
   checkBatch?: number // 1-4 for staggered checking
   lastStatusChange?: number // timestamp when status last changed
   consecutiveFailures?: number // track failure count for smart retry
+  lastStatsWrite?: number // timestamp of last Firebase stats write (for hourly policy)
 }
 
 export interface DomainTag {
