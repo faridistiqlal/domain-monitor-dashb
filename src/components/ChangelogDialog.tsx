@@ -45,10 +45,75 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 2.2.0</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.0.0</h3>
                   <p className="text-xs text-muted-foreground">Current Release • 7 Januari 2026</p>
                 </div>
                 <Badge className="bg-primary text-primary-foreground">Latest</Badge>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-accent/20 flex items-center justify-center">
+                      <Sparkle size={14} weight="duotone" className="text-accent" />
+                    </div>
+                    Fitur Baru
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">GitHub Repository Integration:</strong> Code backup otomatis di GitHub dengan full version control</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Auto-Deploy System:</strong> Vercel otomatis deploy setiap kali git push ke repository</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Version Control:</strong> Full Git history dengan kemampuan rollback dan branch management</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-accent mt-1">•</span>
+                      <span><strong className="text-foreground">Collaboration Ready:</strong> Team dapat clone, fork, dan kontribusi melalui Pull Request</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="w-6 h-6 rounded-md bg-yellow-500/20 flex items-center justify-center">
+                      <Wrench size={14} weight="duotone" className="text-yellow-600 dark:text-yellow-500" />
+                    </div>
+                    Peningkatan
+                  </div>
+                  <ul className="space-y-1.5 ml-8 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-yellow-600 dark:text-yellow-500 mt-1">•</span>
+                      <span><strong className="text-foreground">CI/CD Pipeline:</strong> Deployment otomatis dengan build verification dan status checks</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-yellow-600 dark:text-yellow-500 mt-1">•</span>
+                      <span><strong className="text-foreground">Data Safety:</strong> Code tersimpan aman di GitHub, tidak lagi bergantung pada Codespace saja</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-yellow-600 dark:text-yellow-500 mt-1">•</span>
+                      <span><strong className="text-foreground">Development Workflow:</strong> Edit → Commit → Push → Auto-deploy (1-2 menit)</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 2.2.0</h3>
+                  <p className="text-xs text-muted-foreground">7 Januari 2026</p>
+                </div>
               </div>
 
               <div className="space-y-4">
