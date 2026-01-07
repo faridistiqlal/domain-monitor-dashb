@@ -350,7 +350,7 @@ function App() {
   // Check if user can edit (authenticated only)
   const canEdit = isAuthenticated
 
-  const checkAllDomains = async (showToast = false, batchCheckOnly = false) => {
+  const checkAllDomains = async (showToast = false, batchCheckOnly = false, isAutoCheck = false) => {
     if (!domains || domains.length === 0) return
 
     // Filter domains to check based on batch schedule (if staggered checking enabled)
@@ -400,8 +400,9 @@ function App() {
       const hoursSinceLastWrite = (Date.now() - lastStatsWrite) / (1000 * 60 * 60)
       const shouldWriteHourly = hoursSinceLastWrite >= 1
       
-      // Write to Firebase: Status change OR hourly for continuous uptime tracking
-      if (statusChanged || shouldWriteHourly) {
+      // Write to Firebase: ONLY for auto-check (not manual check)
+      // Manual check is local-only for real-time view without Firebase writes
+      if (isAutoCheck && (statusChanged || shouldWriteHourly)) {
         try {
           await updateDailyStats(result.id, result)
           
@@ -639,7 +640,7 @@ function App() {
     if (autoRefreshEnabled) {
       setIsPaused(false)
     }
-    await checkAllDomains(true)
+    await checkAllDomains(true, false, false) // Manual check: local only, no Firebase
     setIsRefreshing(false)
   }
 
@@ -664,7 +665,7 @@ function App() {
         setIsPaused(false)
         setCountdown(60)
         if (!hasChecked) {
-          checkAllDomains(true)
+          checkAllDomains(true, false, true) // Auto check: write to Firebase
         }
       } else {
         toast.info('Mode manual check diaktifkan')
@@ -934,13 +935,13 @@ function App() {
   useEffect(() => {
     if (!autoRefreshEnabled) return
 
-    checkAllDomains(false, true) // Initial batch check
+    checkAllDomains(false, true, true) // Initial batch check with Firebase
     setCountdown(60)
 
     if (isPaused) return
 
     const interval = setInterval(() => {
-      checkAllDomains(false, true) // Use batch checking
+      checkAllDomains(false, true, true) // Auto batch check with Firebase
       setCountdown(60)
     }, 60000) // Check every minute for batch schedules
 
