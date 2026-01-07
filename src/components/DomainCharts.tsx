@@ -27,11 +27,13 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
   const [stats, setStats] = useState<DomainDailyStats[]>([])
   const [incidents, setIncidents] = useState<DomainIncident[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [days, setDays] = useState<7 | 30>(7)
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
+      setError(null)
       try {
         const [statsData, incidentsData] = await Promise.all([
           getDomainStats(selectedDomain.id, days),
@@ -39,8 +41,14 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
         ])
         setStats(statsData.reverse()) // Oldest first for chart
         setIncidents(incidentsData)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading domain charts:', error)
+        // Check if it's a quota error
+        if (error?.code === 'resource-exhausted' || error?.message?.includes('Quota exceeded')) {
+          setError('Firebase quota habis untuk hari ini. Data analytics akan tersedia kembali besok (UTC 00:00). Gunakan tab "Statistik Real-time" untuk monitoring manual.')
+        } else {
+          setError('Gagal memuat data. Silakan coba lagi nanti.')
+        }
       } finally {
         setIsLoading(false)
       }
@@ -67,6 +75,45 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
     )
   }
 
+  // Show error state if quota exceeded or other error
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Statistik Domain</h3>
+            <p className="text-sm text-muted-foreground font-mono">{selectedDomain.url}</p>
+          </div>
+          <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">
+            Tutup
+          </button>
+        </div>
+        <Card className="border-yellow-500/50 bg-yellow-500/5">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center gap-3 text-center py-8">
+              <div className="text-4xl">⚠️</div>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-yellow-600 dark:text-yellow-500">Firebase Quota Exceeded</h4>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  {error}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setError(null)
+                  setIsLoading(true)
+                }}
+                className="mt-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   // Calculate summary stats
   const totalChecks = stats.reduce((sum, s) => sum + s.totalChecks, 0)
   const totalSuccess = stats.reduce((sum, s) => sum + s.successChecks, 0)
@@ -80,18 +127,18 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
   const maxResponseTime = Math.max(...stats.map(s => s.avgResponseTime || 0), 1)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Statistik Domain</h3>
-          <p className="text-sm text-muted-foreground font-mono">{selectedDomain.url}</p>
+          <h3 className="text-base font-semibold">Statistik Domain</h3>
+          <p className="text-xs text-muted-foreground font-mono">{selectedDomain.url}</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex gap-1 border rounded-lg p-1">
+          <div className="flex gap-1 border rounded p-0.5">
             <button
               onClick={() => setDays(7)}
-              className={`px-3 py-1 text-xs rounded transition-colors ${
+              className={`px-2 py-1 text-xs rounded transition-colors ${
                 days === 7
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -101,7 +148,7 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
             </button>
             <button
               onClick={() => setDays(30)}
-              className={`px-3 py-1 text-xs rounded transition-colors ${
+              className={`px-2 py-1 text-xs rounded transition-colors ${
                 days === 30
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -110,7 +157,7 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
               30 Hari
             </button>
           </div>
-          <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">
             Tutup
           </button>
         </div>
@@ -129,67 +176,68 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs text-muted-foreground">Uptime</CardTitle>
+              <CardHeader className="pb-0 pt-2 px-3">
+                <CardTitle className="text-[10px] text-muted-foreground uppercase">Uptime</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-success">{avgUptime}%</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {totalSuccess} / {totalChecks} checks
+              <CardContent className="pb-2 px-3">
+                <div className="text-lg font-bold text-success">{avgUptime}%</div>
+                <p className="text-[10px] text-muted-foreground">
+                  {totalSuccess}/{totalChecks}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs text-muted-foreground">Avg Response</CardTitle>
+              <CardHeader className="pb-0 pt-2 px-3">
+                <CardTitle className="text-[10px] text-muted-foreground uppercase">Avg Response</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">
+              <CardContent className="pb-2 px-3">
+                <div className="text-lg font-bold text-foreground">
                   {avgResponseTime > 0 ? `${avgResponseTime}ms` : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Last {days} days</p>
+                <p className="text-[10px] text-muted-foreground">{days}d avg</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs text-muted-foreground">Total Checks</CardTitle>
+              <CardHeader className="pb-0 pt-2 px-3">
+                <CardTitle className="text-[10px] text-muted-foreground uppercase">Total Checks</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">{totalChecks}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  ~{Math.round(totalChecks / stats.length)} per day
+              <CardContent className="pb-2 px-3">
+                <div className="text-lg font-bold text-foreground">{totalChecks}</div>
+                <p className="text-[10px] text-muted-foreground">
+                  ~{Math.round(totalChecks / stats.length)}/day
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs text-muted-foreground">Incidents</CardTitle>
+              <CardHeader className="pb-0 pt-2 px-3">
+                <CardTitle className="text-[10px] text-muted-foreground uppercase">Incidents</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-destructive">{incidents.length}</div>
-                <p className="text-xs text-muted-foreground mt-1">
+              <CardContent className="pb-2 px-3">
+                <div className="text-lg font-bold text-destructive">{incidents.length}</div>
+                <p className="text-[10px] text-muted-foreground">
                   {incidents.filter(i => i.resolved).length} resolved
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Uptime Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <TrendUp size={20} />
-                Daily Uptime Chart
-              </CardTitle>
-              <CardDescription>Uptime percentage per hari (Firebase data)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+          {/* Charts Grid - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Uptime Chart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-1">
+                  <TrendUp size={16} />
+                  Daily Uptime
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
                 <BarChart
                   data={stats.map((stat) => ({
                     date: new Date(stat.date).toLocaleDateString('id-ID', {
@@ -235,18 +283,17 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
             </CardContent>
           </Card>
 
-          {/* Response Time Chart */}
-          {stats.some((s) => s.avgResponseTime) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Clock size={20} />
-                  Response Time Trend
-                </CardTitle>
-                <CardDescription>Average response time per hari (Firebase data)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+            {/* Response Time Chart */}
+            {stats.some((s) => s.avgResponseTime) && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-1">
+                    <Clock size={16} />
+                    Response Time
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
                   <LineChart
                     data={stats
                       .filter((s) => s.avgResponseTime)
@@ -310,20 +357,20 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-          )}
+            )}
+          </div>
 
           {/* Incidents Timeline */}
           {incidents.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <ChartLine size={20} />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-1">
+                  <ChartLine size={16} />
                   Incident History
                 </CardTitle>
-                <CardDescription>Riwayat downtime dan recovery</CardDescription>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[300px] pr-3">
+                <ScrollArea className="h-[160px] pr-3">
                   <div className="space-y-3">
                     {incidents.map((incident) => {
                       const startTime = new Date(incident.startTime)

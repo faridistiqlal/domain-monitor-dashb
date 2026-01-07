@@ -120,39 +120,125 @@ function App() {
   const [previousStatuses, setPreviousStatuses] = useState<Record<string, 'online' | 'offline' | 'dns-only'>>({})
   const [activeIncidents, setActiveIncidents] = useState<Record<string, string>>({}) // domainId -> incidentId
 
-  // Load data from Firebase on mount
+  // Load data from localStorage first, then refresh from Firebase after delay
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [loadedDomains, loadedGroups, loadedTags, loadedPassword] = await Promise.all([
-          loadDomains(),
-          loadGroups(),
-          loadTags(),
-          loadPassword()
-        ])
+        // Try to load from localStorage first (instant, no Firebase reads)
+        const cachedDomains = localStorage.getItem('domains-cache')
+        const cachedGroups = localStorage.getItem('groups-cache')
+        const cachedTags = localStorage.getItem('tags-cache')
         
-        // Assign batch to domains that don't have one (old domains)
-        const domainsWithBatch = loadedDomains.map((domain, index) => {
-          if (!domain.checkBatch) {
-            return {
-              ...domain,
-              checkBatch: assignCheckBatch(index, loadedDomains.length),
-              lastStatusChange: domain.lastStatusChange || Date.now(),
-              consecutiveFailures: domain.consecutiveFailures || 0
+        if (cachedDomains && cachedGroups && cachedTags) {
+          // Use cached data for instant app load
+          const parsedDomains = JSON.parse(cachedDomains)
+          const parsedGroups = JSON.parse(cachedGroups)
+          const parsedTags = JSON.parse(cachedTags)
+          
+          setDomains(parsedDomains)
+          setGroups(parsedGroups)
+          setTags(parsedTags)
+          
+          console.log('Loaded from cache:', parsedDomains.length, 'domains')
+          
+          // Refresh from Firebase after 30 seconds (same as auto-check delay)
+          setTimeout(async () => {
+            try {
+              const [loadedDomains, loadedGroups, loadedTags] = await Promise.all([
+                loadDomains(),
+                loadGroups(),
+                loadTags()
+              ])
+              
+              // Assign batch to domains that don't have one
+              const domainsWithBatch = loadedDomains.map((domain, index) => {
+                if (!domain.checkBatch) {
+                  return {
+                    ...domain,
+                    checkBatch: assignCheckBatch(index, loadedDomains.length),
+                    lastStatusChange: domain.lastStatusChange || Date.now(),
+                    consecutiveFailures: domain.consecutiveFailures || 0
+                  }
+                }
+                return domain
+              })
+              
+              setDomains(domainsWithBatch)
+              setGroups(loadedGroups)
+              setTags(loadedTags)
+              
+              // Update cache
+              localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
+              localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
+              localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
+              
+              console.log('Refreshed from Firebase:', domainsWithBatch.length, 'domains')
+            } catch (error: any) {
+              console.warn('Background refresh skipped - Firebase quota exceeded or error:', error)
+              // Silently fail background refresh, keep using cache
+            }
+          }, 30000)
+        } else {
+          // No cache, load from Firebase immediately (first time only)
+          try {
+            const [loadedDomains, loadedGroups, loadedTags] = await Promise.all([
+              loadDomains(),
+              loadGroups(),
+              loadTags()
+            ])
+            
+            // Assign batch to domains that don't have one (old domains)
+            const domainsWithBatch = loadedDomains.map((domain, index) => {
+              if (!domain.checkBatch) {
+                return {
+                  ...domain,
+                  checkBatch: assignCheckBatch(index, loadedDomains.length),
+                  lastStatusChange: domain.lastStatusChange || Date.now(),
+                  consecutiveFailures: domain.consecutiveFailures || 0
+                }
+              }
+              return domain
+            })
+        
+            setDomains(domainsWithBatch)
+            setGroups(loadedGroups)
+            setTags(loadedTags)
+            
+            // Save to cache for future loads
+            localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
+            localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
+            localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
+          } catch (error: any) {
+            console.error('Firebase quota exceeded or error loading data:', error)
+            // If quota exceeded, show user message and use empty data temporarily
+            if (error?.code === 'resource-exhausted') {
+              alert('Firebase quota exceeded. App akan menggunakan data cache. Refresh halaman nanti untuk load data terbaru.')
+              // Set empty arrays as fallback
+              setDomains([])
+              setGroups([])
+              setTags([])
+            } else {
+              throw error // Re-throw non-quota errors
             }
           }
-          return domain
-        })
+        }
         
-        setDomains(domainsWithBatch)
-        setGroups(loadedGroups)
-        setTags(loadedTags)
+        // Load password (no caching for security)
+        try {
+          const loadedPassword = await loadPassword()
+          // Password loaded successfully
+        } catch (error: any) {
+          console.warn('Could not load password from Firebase:', error)
+          // If quota exceeded, user can still use app with cached data
+          // They just won't be able to edit until quota resets
+        }
         
-        // MIGRATION: Clear old localStorage data from manual checks
-        // Version increments with each deployment to force localStorage clear
-        // This ensures clean state for all users after every update
+        // MIGRATION: Clear old localStorage data only on version change
         const statusVersion = localStorage.getItem('domain-statuses-version')
-        if (statusVersion !== APP_VERSION) {
+        if (!statusVersion) {
+          // First time - set version without clearing
+          localStorage.setItem('domain-statuses-version', APP_VERSION)
+        } else if (statusVersion !== APP_VERSION) {
           console.log(`Clearing localStorage statuses (v${APP_VERSION} migration)`)
           localStorage.removeItem('domain-last-statuses')
           localStorage.setItem('domain-statuses-version', APP_VERSION)
@@ -428,28 +514,32 @@ function App() {
           prevDomains.map(d => d.id === domain.id ? updatedDomain : d)
         )
         
-        // Handle incidents
-        if (newStatus === 'offline' || newStatus === 'dns-only') {
-          // Create new incident
-          const incidentId = await createIncident(domain, result, oldStatus)
-          if (incidentId) {
-            setActiveIncidents(prev => ({ ...prev, [domain.id]: incidentId }))
-          }
-        } else if (newStatus === 'online' && (oldStatus === 'offline' || oldStatus === 'dns-only')) {
-          // Resolve incident
-          const incidentId = activeIncidents[domain.id]
-          if (incidentId) {
-            await resolveIncident(domain.id, incidentId)
-            setActiveIncidents(prev => {
-              const newIncidents = { ...prev }
-              delete newIncidents[domain.id]
-              return newIncidents
-            })
+        // Handle incidents - ONLY for auto-check (not manual check)
+        // Manual check should not create/resolve Firebase incidents
+        if (isAutoCheck) {
+          if (newStatus === 'offline' || newStatus === 'dns-only') {
+            // Create new incident
+            const incidentId = await createIncident(domain, result, oldStatus)
+            if (incidentId) {
+              setActiveIncidents(prev => ({ ...prev, [domain.id]: incidentId }))
+            }
+          } else if (newStatus === 'online' && (oldStatus === 'offline' || oldStatus === 'dns-only')) {
+            // Resolve incident
+            const incidentId = activeIncidents[domain.id]
+            if (incidentId) {
+              await resolveIncident(domain.id, incidentId)
+              setActiveIncidents(prev => {
+                const newIncidents = { ...prev }
+                delete newIncidents[domain.id]
+                return newIncidents
+              })
+            }
           }
         }
         
-        // Send notifications if enabled
-        if (notificationSettings.enabled && (domain.notificationsEnabled ?? false)) {
+        // Send notifications - ONLY for auto-check (not manual check)
+        // Manual check should not trigger notifications
+        if (isAutoCheck && notificationSettings.enabled && (domain.notificationsEnabled ?? false)) {
           const group = domain.groupId ? groups.find(g => g.id === domain.groupId) : undefined
           const domainTags = domain.tags?.map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean) as string[] | undefined
 
@@ -485,8 +575,10 @@ function App() {
         setPreviousStatuses(prev => ({ ...prev, [result.id]: newStatus }))
       }
       
-      // Slow response notification (even without status change)
-      if (notificationSettings.enabled && 
+      // Slow response notification - ONLY for auto-check (not manual check)
+      // Manual check should not trigger slow response notifications
+      if (isAutoCheck && 
+          notificationSettings.enabled && 
           (domain.notificationsEnabled ?? false) &&
           result.status === 'online' && 
           result.responseTime && 
@@ -938,17 +1030,26 @@ function App() {
   useEffect(() => {
     if (!autoRefreshEnabled) return
 
-    checkAllDomains(false, true, true) // Initial batch check with Firebase
-    setCountdown(60)
+    // Delay initial check by 30 seconds to avoid Firebase quota on app load
+    const initialDelay = setTimeout(() => {
+      checkAllDomains(false, true, true) // Initial batch check with Firebase
+      setCountdown(60)
+    }, 30000)
 
-    if (isPaused) return
+    if (isPaused) {
+      clearTimeout(initialDelay)
+      return
+    }
 
     const interval = setInterval(() => {
       checkAllDomains(false, true, true) // Auto batch check with Firebase
       setCountdown(60)
     }, 60000) // Check every minute for batch schedules
 
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(initialDelay)
+      clearInterval(interval)
+    }
   }, [domains, isPaused, autoRefreshEnabled])
 
   useEffect(() => {

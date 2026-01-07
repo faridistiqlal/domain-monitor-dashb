@@ -167,24 +167,40 @@ export function StatisticsView({
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Domain</CardTitle>
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Globe size={16} weight="duotone" className="text-primary" />
-                </div>
+        {!hasChecked && !autoRefreshEnabled && !hasStatusData ? (
+          <div className="flex items-center justify-center h-[400px]">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 rounded-2xl bg-muted mx-auto flex items-center justify-center">
+                <Gauge size={32} weight="duotone" className="text-muted-foreground" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{stats.total}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <FolderOpen size={12} />
-                <span>{stats.groupedDomains} dalam grup</span>
+              <div>
+                <h3 className="text-sm font-semibold mb-1 text-foreground">Data Belum Tersedia</h3>
+                <p className="text-xs text-muted-foreground">
+                  Silakan check domain terlebih dahulu untuk melihat statistik real-time
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Card className="border-border">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Total Domain</CardTitle>
+                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                      <Globe size={16} weight="duotone" className="text-primary" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-foreground">{stats.total}</div>
+                  <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                    <FolderOpen size={12} />
+                    <span>{stats.groupedDomains} dalam grup</span>
+                  </div>
+                </CardContent>
+              </Card>
 
           <Card className="border-border">
             <CardHeader className="pb-2">
@@ -478,6 +494,8 @@ export function StatisticsView({
             </CardContent>
           </Card>
         </div>
+          </>
+        )}
           </TabsContent>
 
           {/* Tab Content: Firebase Analytics */}
@@ -491,6 +509,22 @@ export function StatisticsView({
               </div>
             ) : (
               <>
+                {/* Firebase Quota Warning */}
+                <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/5 p-4">
+                  <div className="flex gap-3">
+                    <div className="text-xl">⚠️</div>
+                    <div className="space-y-1 flex-1">
+                      <h4 className="text-sm font-semibold text-yellow-600 dark:text-yellow-500">
+                        Firebase Analytics (Historical Data)
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Data dari Firebase memiliki quota limit 20,000 reads/day. Jika quota habis, tab ini tidak akan bisa load data sampai besok (UTC 00:00).
+                        Gunakan tab <span className="font-semibold">&quot;Statistik Real-time&quot;</span> untuk monitoring langsung tanpa Firebase.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {stats.lastChecked && (
                   <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
                     <span>
@@ -504,18 +538,18 @@ export function StatisticsView({
 
                 {/* Domain Charts Section */}
                 <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <ChartLine size={20} />
-                  Statistik Detail Per Domain
-                </CardTitle>
-                <CardDescription>
-                  Pilih domain untuk melihat uptime history, response time, dan incident timeline
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[400px]">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-3">
+                  <CardHeader>
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <ChartLine size={20} />
+                      Statistik Detail Per Domain
+                    </CardTitle>
+                    <CardDescription>
+                      Pilih domain untuk melihat uptime history, response time, dan incident timeline
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[400px]">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-3">
                     {domains.slice(0, 50).map((domain) => {
                       const status = statuses[domain.id]
                       const statusColor =
@@ -555,8 +589,8 @@ export function StatisticsView({
                     Menampilkan 50 dari {domains.length} domain
                   </p>
                 )}
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>
