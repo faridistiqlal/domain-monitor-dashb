@@ -405,6 +405,20 @@ export function StatisticsView({
                             className="h-full bg-success transition-all duration-500"
                             style={{ width: `${onlinePercentage}%` }}
                           />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Belum ada grup domain
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Domain Charts Section */}
         <Card className="border-border">
           <CardHeader>
@@ -457,20 +471,6 @@ export function StatisticsView({
             )}
           </CardContent>
         </Card>
-
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Belum ada grup domain
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <Card className="border-border">
