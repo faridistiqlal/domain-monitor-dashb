@@ -186,10 +186,11 @@ export function validateDomain(url: string): { valid: boolean; error?: string } 
     return { valid: false, error: 'Domain tidak boleh kosong' }
   }
 
-  const cleanUrl = trimmedUrl.replace(/^https?:\/\//, '')
+  const cleanUrl = trimmedUrl.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase()
   
-  if (!cleanUrl.includes('kendalkab.go.id')) {
-    return { valid: false, error: 'Hanya domain .kendalkab.go.id yang diperbolehkan' }
+  // Accept kendalkab.go.id or any subdomain (*.kendalkab.go.id)
+  if (!cleanUrl.endsWith('kendalkab.go.id') && cleanUrl !== 'kendalkab.go.id') {
+    return { valid: false, error: 'Hanya domain kendalkab.go.id atau subdomain-nya yang diperbolehkan' }
   }
 
   return { valid: true }
