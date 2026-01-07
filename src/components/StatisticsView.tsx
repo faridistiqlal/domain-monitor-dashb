@@ -151,20 +151,6 @@ export function StatisticsView({
         </div>
       </div>
     )
-  // Show charts if domain selected
-  if (selectedDomain) {
-    return (
-      <ScrollArea className="h-[calc(100vh-240px)]">
-        <div className="pr-4">
-          <DomainCharts
-            selectedDomain={selectedDomain}
-            onClose={() => setSelectedDomain(null)}
-          />
-        </div>
-      </ScrollArea>
-    )
-  }
-
   }
 
   return (
@@ -514,19 +500,28 @@ export function StatisticsView({
 
           {/* Tab Content: Firebase Analytics */}
           <TabsContent value="firebase" className="space-y-4 mt-4">
-            {stats.lastChecked && (
-              <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-                <span>
-                  Data dari Firebase domain-stats-daily collection
-                </span>
-                <Badge variant="outline" className="text-xs">
-                  Historical Data
-                </Badge>
+            {selectedDomain ? (
+              <div>
+                <DomainCharts
+                  selectedDomain={selectedDomain}
+                  onClose={() => setSelectedDomain(null)}
+                />
               </div>
-            )}
+            ) : (
+              <>
+                {stats.lastChecked && (
+                  <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                    <span>
+                      Data dari Firebase domain-stats-daily collection
+                    </span>
+                    <Badge variant="outline" className="text-xs">
+                      Historical Data
+                    </Badge>
+                  </div>
+                )}
 
-            {/* Domain Charts Section */}
-            <Card className="border-border">
+                {/* Domain Charts Section */}
+                <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <ChartLine size={20} />
@@ -580,6 +575,8 @@ export function StatisticsView({
                 )}
               </CardContent>
             </Card>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </div>
