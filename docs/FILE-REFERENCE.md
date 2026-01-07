@@ -37,7 +37,7 @@ Complete reference of all important files in the Domain Monitor Dashboard projec
 ### Main Application
 | File | Purpose | Lines | Key Features |
 |------|---------|-------|--------------|
-| **src/App.tsx** | Main app component | 1,262 | Tabs, monitoring logic, state management |
+| **src/App.tsx** | Main app component | 1,751 | Tabs, monitoring logic, state management, auth |
 | **src/main.tsx** | React entry point | ~20 | App mounting, error boundary |
 | **src/ErrorFallback.tsx** | Error boundary component | ~50 | Graceful error handling |
 
@@ -52,19 +52,29 @@ Complete reference of all important files in the Domain Monitor Dashboard projec
 
 ## 🧩 Components (src/components/)
 
-### Custom Components
+### Custom Components (21 total)
 | File | Purpose | Lines | Key Features |
 |------|---------|-------|--------------|
 | **AddDomainForm.tsx** | Form to add new domains | ~80 | Validation, duplicate check |
 | **AssignDomainsDialog.tsx** | Dialog to assign domains to groups | ~150 | Multi-select, group filter |
+| **AssignTagsDialog.tsx** | Dialog to assign tags to domains | ~150 | Multi-select, tag filter |
+| **ChangelogDialog.tsx** | Display app changelog | ~80 | Version history, updates |
 | **DomainCard.tsx** | Individual domain display card | ~120 | Status, IP, copy, delete |
+| **EditDomainDialog.tsx** | Dialog to edit domain URL | ~100 | URL validation, update |
 | **EmptyState.tsx** | Empty state when no domains | ~50 | Onboarding message |
 | **ExportSuccessDialog.tsx** | Export confirmation dialog | ~60 | Success feedback |
 | **GroupCard.tsx** | Group display card | ~100 | Stats, edit, delete, export |
 | **GroupFormDialog.tsx** | Create/edit group form | ~120 | Color picker, validation |
 | **ImportDialog.tsx** | CSV import dialog | ~200 | File upload, parsing, preview |
 | **InfoDialog.tsx** | Help & information dialog | ~150 | Collapsible guide sections |
+| **LoginDialog.tsx** | Password authentication dialog | ~90 | Password input, show/hide toggle |
+| **PrivacyPolicyDialog.tsx** | Privacy policy display | ~100 | Legal content, scrollable |
+| **SettingsDialog.tsx** | Change password dialog | ~170 | Current/new/confirm password |
+| **StatisticsView.tsx** | Statistics & analytics view | ~200 | Charts, metrics, insights |
 | **StatusIndicator.tsx** | Status dot indicator | ~80 | Three-state colors, tooltip |
+| **TagCard.tsx** | Tag display card | ~90 | Color coding, edit, delete |
+| **TagFormDialog.tsx** | Create/edit tag form | ~120 | Name, color picker |
+| **TermsOfServiceDialog.tsx** | Terms of service display | ~100 | Legal content, scrollable |
 | **VirtualizedDomainList.tsx** | Optimized domain list | ~150 | Virtual scrolling, performance |
 
 ### UI Components (src/components/ui/)
