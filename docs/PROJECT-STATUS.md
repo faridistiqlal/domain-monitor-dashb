@@ -1,15 +1,16 @@
 # 📊 PROJECT STATUS - Domain Monitor Kendal
 
 **Last Updated:** 7 Januari 2026  
-**Version:** 2.1.0  
+**Version:** 2.2.0  
 **Status:** ✅ Production Ready & Live  
-**Live URL:** https://kendal-uptime.vercel.app
+**Live URL:** https://kendal-uptime.vercel.app  
+**Deployment:** Vercel (Auto-deploy from Git)
 
 ---
 
 ## 🎯 Quick Overview
 
-Aplikasi monitoring real-time untuk melacak status availability dari multiple subdomain kendalkab.go.id dengan Firebase cloud sync, password authentication, dan auto-logout 30 menit.
+Aplikasi monitoring real-time untuk melacak status availability dari multiple subdomain kendalkab.go.id dengan Firebase cloud sync, password authentication, auto-logout 30 menit, dan **Slack webhook notifications** untuk alert real-time.
 
 ---
 
@@ -17,12 +18,13 @@ Aplikasi monitoring real-time untuk melacak status availability dari multiple su
 
 | Metric | Value |
 |--------|-------|
-| **App.tsx** | 1,751 lines |
-| **Custom Components** | 21 components |
-| **Total Code** | ~7,000+ lines |
+| **App.tsx** | 1,868 lines |
+| **Custom Components** | 22 components |
+| **Total Code** | ~7,500+ lines |
 | **Dependencies** | 80+ npm packages |
 | **Documentation** | 98% accurate |
 | **Test Status** | Tested with 300+ domains |
+| **Deployment** | Vercel Production (https://kendal-uptime.vercel.app) |
 
 ---
 
@@ -33,6 +35,15 @@ Aplikasi monitoring real-time untuk melacak status availability dari multiple su
 - ✅ **Dual Mode** - Auto-refresh (60s) + Manual on-demand
 - ✅ **Virtual Scrolling** - Handle 300+ domains smoothly
 - ✅ **Debounced Search** - 300ms delay, instant results
+
+### Notifications (NEW in v2.2.0)
+- ✅ **Slack Webhook Integration** - Real-time alerts ke Slack channel
+- ✅ **Per-Domain Control** - Toggle enable/disable notifikasi per domain
+- ✅ **Enhanced Details** - Include group, tags, IP, protocol, error
+- ✅ **Notification Rules** - Down, Recovery, Slow response alerts
+- ✅ **Cooldown System** - Anti-spam 5 menit per domain
+- ✅ **Visual Indicator** - Bell icon di management list
+- ✅ **Test Feature** - Test webhook sebelum live
 
 ### Data Management
 - ✅ **Firebase Cloud Sync** - Auto-sync antar device real-time
@@ -67,37 +78,39 @@ Components: shadcn/ui v4 (45+ components)
 Icons: Phosphor Icons 2.1.10
 Animation: Framer Motion 12.23.25
 Backend: Firebase Firestore
+Notifications: Slack Incoming Webhooks
 Auth: localStorage (simple password)
-Deployment: Vercel Production
+Deployment: Vercel Production (https://kendal-uptime.vercel.app)
 Fonts: Space Grotesk + JetBrains Mono
 ```
 
 ---
 
-## 📦 Components List (21 Total)
+## 📦 Components List (22 Total)
 
-### Dialogs & Forms (12)
+### Dialogs & Forms (13)
 1. AddDomainForm - Add new domain
 2. AssignDomainsDialog - Assign domains to group
 3. AssignTagsDialog - Assign tags to domain
 4. ChangelogDialog - App changelog
-5. EditDomainDialog - Edit domain URL
+5. EditDomainDialog - Edit domain URL + notification toggle
 6. GroupFormDialog - Create/edit group
 7. ImportDialog - CSV import
-8. InfoDialog - Help & guides
+8. InfoDialog - Help & guides (includes Slack setup)
 9. LoginDialog - Password auth
-10. PrivacyPolicyDialog - Legal
-11. SettingsDialog - Change password
-12. TermsOfServiceDialog - Legal
+10. NotificationSettingsDialog - Slack webhook config (NEW)
+11. PrivacyPolicyDialog - Legal
+12. SettingsDialog - Change password
+13. TermsOfServiceDialog - Legal
 
 ### Display Components (9)
-13. DomainCard - Domain card with status
-14. EmptyState - Empty list state
-15. ExportSuccessDialog - Export feedback
-16. GroupCard - Group card
-17. StatisticsView - Analytics view
-18. StatusIndicator - Status dot (3-state)
-19. TagCard - Tag card
+14. DomainCard - Domain card with status + notification indicator
+15. EmptyState - Empty list state
+16. ExportSuccessDialog - Export feedback
+17. GroupCard - Group card
+18. StatisticsView - Analytics view
+19. StatusIndicator - Status dot (3-state)
+20. TagCard - Tag card
 20. TagFormDialog - Create/edit tag
 21. VirtualizedDomainList - Optimized list
 

@@ -1869,7 +1869,7 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <p className="text-xs text-muted-foreground">
-                © 2026 Domain Monitor v2.1.0 • Kabupaten Kendal
+                © 2026 Domain Monitor v2.2.0 • Kabupaten Kendal
               </p>
               <span className="text-xs text-muted-foreground">•</span>
               <PrivacyPolicyDialog />

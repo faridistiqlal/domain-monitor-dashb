@@ -80,9 +80,81 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
                   <span className="font-semibold text-accent">•</span>
                   <p>Import CSV: Format sederhana dengan kolom "url" atau "domain", satu URL per baris</p>
                 </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Setup <span className="font-semibold text-foreground">Notifikasi Slack</span>: Klik icon Bell di header, paste Webhook URL, aktifkan notification rules</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p>Per-domain notification: Edit domain, toggle "Enable Notifications" untuk kontrol notifikasi per domain</p>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="notifications">
+            <AccordionTrigger className="text-sm font-semibold">
+              🔔 Notifikasi Slack
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <p className="text-sm text-muted-foreground">
+                  Aplikasi dapat mengirim notifikasi real-time ke Slack saat domain down atau recovery.
+                </p>
+                
+                <div className="bg-card border rounded-lg p-3 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">Setup Slack Webhook:</p>
+                  <ol className="text-sm text-muted-foreground space-y-1.5 pl-5 list-decimal">
+                    <li>Buka <a href="https://api.slack.com/apps" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">api.slack.com/apps</a></li>
+                    <li>Create New App → From scratch → Nama app dan pilih workspace</li>
+                    <li>Pilih "Incoming Webhooks" → Toggle ON</li>
+                    <li>Click "Add New Webhook to Workspace" → Pilih channel</li>
+                    <li>Copy Webhook URL (format: https://hooks.slack.com/services/...)</li>
+                    <li>Klik icon <span className="font-semibold text-foreground">Bell (🔔)</span> di header aplikasi</li>
+                    <li>Paste Webhook URL → Set notification rules → Save</li>
+                    <li>Test dengan klik "Send Test" untuk verifikasi</li>
+                  </ol>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">Notification Rules:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
+                    <li><span className="font-semibold text-foreground">Notify on Down:</span> Alert saat domain Online → Offline/DNS-Only</li>
+                    <li><span className="font-semibold text-foreground">Notify on Recovery:</span> Alert saat domain Offline → Online</li>
+                    <li><span className="font-semibold text-foreground">Notify on Slow:</span> Alert saat response time ≥ threshold (default 5s)</li>
+                    <li><span className="font-semibold text-foreground">Cooldown:</span> Minimum waktu antar notifikasi untuk domain sama (default 5 menit)</li>
+                  </ul>
+                </div>
+
+                <div className="bg-card border rounded-lg p-3 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">Per-Domain Control:</p>
+                  <p className="text-sm text-muted-foreground">
+                    Default semua domain notifikasi OFF. Untuk aktifkan:
+                  </p>
+                  <ol className="text-sm text-muted-foreground space-y-1 pl-5 list-decimal">
+                    <li>Tab "Kelola Data" → Klik icon <span className="font-semibold text-foreground">Pencil (✏️)</span> di domain</li>
+                    <li>Toggle "Enable Notifications" → ON (warna biru)</li>
+                    <li>Save → Domain akan kirim notifikasi saat status berubah</li>
+                  </ol>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Icon <span className="font-semibold text-primary">Bell (🔔)</span> = Notifikasi Aktif, 
+                    Icon <span className="font-semibold text-muted-foreground">BellSlash (🔕)</span> = Notifikasi Nonaktif
+                  </p>
+                </div>
+
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-amber-600 mb-1">⚠️ Important Notes:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 list-disc">
+                    <li>Webhook URL harus valid dari Slack Incoming Webhooks</li>
+                    <li>Notifikasi hanya kirim saat ada <span className="font-semibold">perubahan status</span> (bukan setiap check)</li>
+                    <li>Cooldown mencegah spam notifikasi berulang untuk domain yang sama</li>
+                    <li>Notifikasi include detail: group, tags, IP address, protocol, error message</li>
+                  </ul>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
           <AccordionItem value="status">
             <AccordionTrigger className="text-sm font-semibold">
               Status Monitoring

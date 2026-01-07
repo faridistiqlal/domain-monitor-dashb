@@ -1,18 +1,21 @@
 # 📖 USER GUIDES - Domain Monitor
 
 **App:** Domain Monitor Dashboard - Kabupaten Kendal  
-**URL:** https://kendal-uptime.vercel.app  
-**Version:** 2.1.0
+**URL:** https://kendal-uptime.vercel.app (Live on Vercel)  
+**Version:** 2.2.0  
+**Deployment:** Vercel Production (Auto-deploy from Git)
 
 ---
 
 ## 🚀 Quick Start
 
 ### First Time Setup:
-1. **Login** - Masukkan password (default: `admin123`)
-2. **Add Domain** - Klik "Tambah Domain", masukkan URL (contoh: `https://diskominfo.kendalkab.go.id`)
-3. **Check Status** - Klik "Check" atau aktifkan Auto-refresh
-4. **Organize** - Buat grup untuk kategorisasi domain
+1. **Access App** - Buka https://kendal-uptime.vercel.app
+2. **Login** - Masukkan password (default: `admin123`)
+3. **Setup Notifications (Optional)** - Klik Bell icon → Setup Slack webhook
+4. **Add Domain** - Klik "Tambah Domain", masukkan URL (contoh: `diskominfo.kendalkab.go.id`)
+5. **Check Status** - Klik "Check" atau aktifkan Auto-refresh
+6. **Enable Notifications** - Edit domain → Toggle "Enable Notifications"
 
 ### Daily Usage:
 - **Auto-refresh:** Toggle ON untuk monitoring real-time (60 detik)
@@ -20,6 +23,58 @@
 - **Filter:** Gunakan filter status (Online/DNS Only/Offline)
 - **Search:** Ketik nama domain untuk cari cepat
 - **Export:** Download CSV untuk reporting
+- **Slack Alerts:** Otomatis dapat notifikasi saat domain down/recovery
+
+---
+
+## 🔔 Slack Notifications Setup (NEW)
+
+### Initial Setup:
+1. **Create Slack Webhook:**
+   - Buka https://api.slack.com/apps
+   - Click "Create New App" → "From scratch"
+   - Nama: "Domain Monitor Alerts", pilih workspace
+   - Pilih "Incoming Webhooks" → Toggle ON
+   - Click "Add New Webhook to Workspace"
+   - Pilih channel (misalnya: #monitoring atau #alerts)
+   - Copy Webhook URL (format: `https://hooks.slack.com/services/...`)
+
+2. **Configure in App:**
+   - Klik icon **Bell (🔔)** di header
+   - Paste Webhook URL di field "Slack Webhook URL"
+   - Set notification rules:
+     - ✅ Notify on Down (domain goes offline)
+     - ✅ Notify on Recovery (domain back online)
+     - ⬜ Notify on Slow (optional, >5s response)
+   - Set cooldown: 5 minutes (default)
+   - Click **"Send Test"** untuk test webhook
+   - Click **"Save Settings"**
+
+3. **Enable Per-Domain:**
+   - Tab "Kelola Data" → Click icon **Pencil (✏️)** di domain
+   - Toggle **"Enable Notifications"** → ON (warna biru)
+   - Click "Simpan"
+   - Icon **Bell 🔔** (biru) = notifikasi aktif
+   - Icon **BellSlash 🔕** (abu) = notifikasi nonaktif
+
+### Notification Details:
+Setiap notifikasi Slack include:
+- Domain URL (clickable link)
+- Status (DOWN/RECOVERY/SLOW)
+- Group name (jika assigned)
+- Tags (semua tag domain)
+- IP Address
+- Protocol (HTTP/HTTPS)
+- Response Time (untuk recovery/slow)
+- Error Details (untuk down alert)
+- Timestamp (WIB timezone)
+- Dashboard link
+
+### Tips:
+- Default semua domain notification OFF - harus manual enable
+- Cooldown mencegah spam untuk domain yang sama
+- Notifikasi hanya kirim saat **perubahan status**, bukan setiap check
+- Test webhook dulu sebelum enable semua domain
 
 ---
 
@@ -28,15 +83,15 @@
 ### 1. Domain Management
 
 #### Add Domain
-1. Klik tombol **"Tambah Domain"** di tab Monitoring
-2. Masukkan URL lengkap (dengan https://)
-3. Sistem validasi: hanya `.kendalkab.go.id` diterima
+1. Klik tombol **"Tambah Domain"** di tab Monitoring atau Kelola Data
+2. Masukkan URL (support format: `kendalkab.go.id`, `sub.kendalkab.go.id`, `https://domain.kendalkab.go.id`)
+3. Sistem validasi: hanya `kendalkab.go.id` atau subdomain-nya diterima
 4. Klik "Tambah" - domain langsung masuk list
 
 #### Edit Domain
 1. Buka tab **"Kelola Data"**
 2. Klik icon **Edit (pensil)** pada domain
-3. Ubah URL
+3. Ubah URL atau toggle "Enable Notifications"
 4. Klik "Simpan"
 
 #### Delete Domain

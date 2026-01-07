@@ -1,6 +1,50 @@
 # Changelog
 
-## Version 2.1.0 - Current
+## Version 2.2.0 - Current
+**Tanggal Rilis:** 7 Januari 2026
+
+### ✨ Fitur Baru
+- **Slack Webhook Notifications**: Integrasi notifikasi real-time ke Slack untuk alert domain down/recovery
+- **Per-Domain Notification Control**: Toggle enable/disable notifikasi untuk setiap domain secara individual
+- **Enhanced Notification Details**: Notifikasi include info lengkap (group, tags, IP address, protocol, error details)
+- **Notification Settings Dialog**: UI untuk konfigurasi webhook URL, notification rules, dan cooldown period
+- **Notification Indicator**: Icon Bell di management list untuk menunjukkan status notifikasi per domain
+- **Test Notification**: Fitur test webhook untuk verifikasi konfigurasi sebelum aktif monitoring
+- **Cooldown System**: Anti-spam dengan cooldown 5 menit antar notifikasi untuk domain yang sama
+- **Flexible Domain Validation**: Accept root domain (kendalkab.go.id) dan semua subdomain (*.kendalkab.go.id)
+
+### 🎨 Peningkatan UI/UX
+- **Bell Icon Button**: Icon Bell di header untuk akses cepat notification settings
+- **Notification Status Visual**: Bell (blue filled) untuk enabled, BellSlash (gray) untuk disabled
+- **Tooltip Notification Status**: Hover icon untuk lihat status tanpa perlu edit domain
+- **Edit Domain Dialog Enhancement**: Tambah toggle "Enable Notifications" di dialog edit domain
+
+### 🚀 Peningkatan Performa
+- **No-CORS Mode**: Bypass CORS issue saat kirim webhook dari browser
+- **Notification Service Class**: Dedicated service untuk handle webhook logic dan cooldown management
+- **Smart Status Detection**: Deteksi perubahan status (Online→Offline, Offline→Online) untuk trigger notifikasi
+
+### 🔒 Deployment & Infrastructure
+- **Vercel Production**: Live di https://kendal-uptime.vercel.app dengan auto-deploy dari Git
+- **Slack Integration**: Support Incoming Webhook dari Slack API untuk team notifications
+- **Default Notification OFF**: Per-domain notifications default disabled untuk kontrol spam
+
+### 🔧 Technical Implementation
+- **NotificationService**: Class dengan methods sendSlackNotification, shouldNotify, clearCooldown, getRemainingCooldown
+- **NotificationDetails Interface**: Structured data untuk webhook payload dengan group, tags, IP, protocol
+- **Slack Block Kit**: Rich message format dengan header, fields, context, dan colored attachments
+- **TypeScript**: Full typed notification system dengan NotificationSettings interface
+- **localStorage Persistence**: Notification settings tersimpan lokal per browser
+
+### 🐛 Bug Fixes
+- Fixed: Domain validation reject root domain "kendalkab.go.id"
+- Fixed: CORS error saat kirim Slack webhook dari browser
+- Fixed: Test notification blocked oleh cooldown system
+- Fixed: EditDomainDialog syntax error (DialogDescription typo)
+
+---
+
+## Version 2.1.0
 **Tanggal Rilis:** 6 Januari 2026
 
 ### ✨ Fitur Baru
