@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { TrendUp, ChartLine, Clock } from '@phosphor-icons/react'
+import { TrendUp, ChartLine, Clock, ArrowLeft, ArrowClockwise } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { getDomainStats, getDomainIncidents } from '@/lib/check-history'
-import { Domain, DomainDailyStats, DomainIncident } from '@/lib/types'
+import { Domain, DomainDailyStats, DomainIncident, DomainStatus } from '@/lib/types'
 import {
   LineChart,
   Line,
@@ -21,38 +22,45 @@ import {
 interface DomainChartsProps {
   selectedDomain: Domain
   onClose: () => void
+  currentStatus?: DomainStatus
 }
 
-export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
+export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainChartsProps) {
   const [stats, setStats] = useState<DomainDailyStats[]>([])
   const [incidents, setIncidents] = useState<DomainIncident[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [days, setDays] = useState<7 | 30>(7)
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const [statsData, incidentsData] = await Promise.all([
-          getDomainStats(selectedDomain.id, days),
-          getDomainIncidents(selectedDomain.id, days)
-        ])
-        setStats(statsData.reverse()) // Oldest first for chart
-        setIncidents(incidentsData)
-      } catch (error: any) {
-        console.error('Error loading domain charts:', error)
-        // Check if it's a quota error
-        if (error?.code === 'resource-exhausted' || error?.message?.includes('Quota exceeded')) {
-          setError('Firebase quota habis untuk hari ini. Data analytics akan tersedia kembali besok (UTC 00:00). Gunakan tab "Statistik Real-time" untuk monitoring manual.')
-        } else {
-          setError('Gagal memuat data. Silakan coba lagi nanti.')
-        }
-      } finally {
-        setIsLoading(false)
+  const loadData = async () => {
+    const refreshing = !isLoading
+    if (refreshing) setIsRefreshing(true)
+    else setIsLoading(true)
+    
+    setError(null)
+    try {
+      const [statsData, incidentsData] = await Promise.all([
+        getDomainStats(selectedDomain.id, days),
+        getDomainIncidents(selectedDomain.id, days)
+      ])
+      setStats(statsData.reverse()) // Oldest first for chart
+      setIncidents(incidentsData)
+    } catch (error: any) {
+      console.error('Error loading domain charts:', error)
+      // Check if it's a quota error
+      if (error?.code === 'resource-exhausted' || error?.message?.includes('Quota exceeded')) {
+        setError('Firebase quota habis untuk hari ini. Data analytics akan tersedia kembali besok (UTC 00:00). Gunakan tab "Statistik Real-time" untuk monitoring manual.')
+      } else {
+        setError('Gagal memuat data. Silakan coba lagi nanti.')
       }
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
     }
+  }
+
+  useEffect(() => {
     loadData()
   }, [selectedDomain.id, days])
 
@@ -122,6 +130,23 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
     ? Math.round(stats.reduce((sum, s) => sum + (s.avgResponseTime || 0), 0) / stats.filter(s => s.avgResponseTime).length)
     : 0
 
+  // Get 24h stats
+  const last24h = stats.slice(-1)[0] // Today's stats
+  const uptime24h = last24h && last24h.totalChecks > 0
+    ? ((last24h.successChecks / last24h.totalChecks) * 100).toFixed(1)
+    : '0'
+
+  // Create uptime bars data (last 90 checks from hourly data)
+  const uptimeBars = stats.slice(-4).flatMap(stat => 
+    stat.hourly
+      .filter(h => h.checks > 0)
+      .map(h => ({
+        status: h.successChecks === h.checks ? 'online' : h.successChecks > 0 ? 'partial' : 'offline',
+        checks: h.checks,
+        successChecks: h.successChecks
+      }))
+  ).slice(-90) // Last 90 hourly checks
+
   // Find max values for chart scaling
   const maxChecks = Math.max(...stats.map(s => s.totalChecks), 1)
   const maxResponseTime = Math.max(...stats.map(s => s.avgResponseTime || 0), 1)
@@ -130,11 +155,32 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-semibold">Statistik Domain</h3>
-          <p className="text-xs text-muted-foreground font-mono">{selectedDomain.url}</p>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onClose} 
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors"
+            title="Kembali"
+          >
+            <ArrowLeft size={20} className="text-muted-foreground" />
+          </button>
+          <div>
+            <h3 className="text-base font-semibold">Statistik Domain</h3>
+            <p className="text-xs text-muted-foreground font-mono">{selectedDomain.url}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            onClick={() => loadData()}
+            disabled={isRefreshing}
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2"
+          >
+            <ArrowClockwise 
+              size={16} 
+              className={isRefreshing ? 'animate-spin' : ''} 
+            />
+          </Button>
           <div className="flex gap-1 border rounded p-0.5">
             <button
               onClick={() => setDays(7)}
@@ -157,9 +203,6 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
               30 Hari
             </button>
           </div>
-          <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">
-            Tutup
-          </button>
         </div>
       </div>
 
@@ -175,53 +218,87 @@ export function DomainCharts({ selectedDomain, onClose }: DomainChartsProps) {
         </Card>
       ) : (
         <>
-          {/* Summary Cards */}
-          <div className="grid grid-cols-4 gap-2">
+          {/* Uptime Bars - Like Uptime Kuma */}
+          {uptimeBars.length > 0 && (
             <Card>
-              <CardHeader className="pb-0 pt-2 px-3">
-                <CardTitle className="text-[10px] text-muted-foreground uppercase">Uptime</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-2 px-3">
-                <div className="text-lg font-bold text-success">{avgUptime}%</div>
-                <p className="text-[10px] text-muted-foreground">
-                  {totalSuccess}/{totalChecks}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-0 pt-2 px-3">
-                <CardTitle className="text-[10px] text-muted-foreground uppercase">Avg Response</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-2 px-3">
-                <div className="text-lg font-bold text-foreground">
-                  {avgResponseTime > 0 ? `${avgResponseTime}ms` : '-'}
+              <CardContent className="p-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                      Check every {last24h ? `${Math.round(24 * 60 / (last24h.totalChecks / last24h.hourly.filter(h => h.checks > 0).length))}` : '60'} minutes
+                    </div>
+                    <Badge 
+                      variant={currentStatus?.status === 'online' ? 'default' : 'destructive'}
+                      className="text-xs"
+                    >
+                      {currentStatus?.status === 'online' ? 'Up' : currentStatus?.status === 'offline' ? 'Down' : 'Unknown'}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-0.5 flex-wrap">
+                    {uptimeBars.map((bar, i) => (
+                      <div
+                        key={i}
+                        className={`w-1.5 h-8 rounded-sm transition-all ${
+                          bar.status === 'online'
+                            ? 'bg-success hover:opacity-80'
+                            : bar.status === 'partial'
+                            ? 'bg-warning hover:opacity-80'
+                            : 'bg-destructive hover:opacity-80'
+                        }`}
+                        title={`${bar.successChecks}/${bar.checks} checks successful`}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground">{days}d avg</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <Card>
+              <CardContent className="p-3">
+                <div className="text-xs text-muted-foreground mb-1">Response</div>
+                <div className="text-2xl font-bold text-foreground leading-tight">
+                  {currentStatus?.responseTime ? `${currentStatus.responseTime}ms` : '-'}
+                </div>
+                <div className="text-xs text-muted-foreground">(Current)</div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-0 pt-2 px-3">
-                <CardTitle className="text-[10px] text-muted-foreground uppercase">Total Checks</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-2 px-3">
-                <div className="text-lg font-bold text-foreground">{totalChecks}</div>
-                <p className="text-[10px] text-muted-foreground">
-                  ~{Math.round(totalChecks / stats.length)}/day
-                </p>
+              <CardContent className="p-3">
+                <div className="text-xs text-muted-foreground mb-1">Avg. Response</div>
+                <div className="text-2xl font-bold text-foreground leading-tight">
+                  {last24h?.avgResponseTime ? `${Math.round(last24h.avgResponseTime)}ms` : '-'}
+                </div>
+                <div className="text-xs text-muted-foreground">(24-hour)</div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-0 pt-2 px-3">
-                <CardTitle className="text-[10px] text-muted-foreground uppercase">Incidents</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-2 px-3">
-                <div className="text-lg font-bold text-destructive">{incidents.length}</div>
-                <p className="text-[10px] text-muted-foreground">
+              <CardContent className="p-3">
+                <div className="text-xs text-muted-foreground mb-1">Uptime</div>
+                <div className="text-2xl font-bold text-success leading-tight">{uptime24h}%</div>
+                <div className="text-xs text-muted-foreground">(24-hour)</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-3">
+                <div className="text-xs text-muted-foreground mb-1">Uptime</div>
+                <div className="text-2xl font-bold text-success leading-tight">{avgUptime}%</div>
+                <div className="text-xs text-muted-foreground">({days}-day)</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-3">
+                <div className="text-xs text-muted-foreground mb-1">Incidents</div>
+                <div className="text-2xl font-bold text-destructive leading-tight">{incidents.length}</div>
+                <div className="text-xs text-muted-foreground">
                   {incidents.filter(i => i.resolved).length} resolved
-                </p>
+                </div>
               </CardContent>
             </Card>
           </div>

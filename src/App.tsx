@@ -1159,8 +1159,8 @@ function App() {
 
   return (
     <TooltipProvider>
-      <div className="h-screen bg-background overflow-hidden flex flex-col">
-        <div className="container mx-auto px-4 py-4 max-w-5xl flex-1 flex flex-col overflow-hidden">
+      <div className="h-screen bg-card overflow-hidden flex flex-col">
+        <div className="container mx-auto px-4 py-4 max-w-5xl flex-1 flex flex-col overflow-hidden min-h-0">
           <header className="mb-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2.5">
@@ -1263,8 +1263,8 @@ function App() {
             setViewMode('all')
             setSelectedGroupId(null)
           }
-        }} className="space-y-4 flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5">
+        }} className="flex-1 flex flex-col overflow-hidden bg-card">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5 mb-4">
             <TabsTrigger value="domains" className="gap-1.5">
               <ListBullets size={14} />
               Monitoring
@@ -2092,27 +2092,27 @@ function App() {
           open={showLoginDialog} 
           onLogin={handleLogin}
         />
-      </div>
-
-      <footer className="bg-card mt-auto">
-        <div className="container mx-auto px-4 py-3 max-w-5xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <p className="text-xs text-muted-foreground">
-                © 2026 Domain Monitor v{APP_VERSION} • Kabupaten Kendal
-              </p>
-              <span className="text-xs text-muted-foreground">•</span>
-              <PrivacyPolicyDialog />
-              <span className="text-xs text-muted-foreground">•</span>
-              <TermsOfServiceDialog />
-              <span className="text-xs text-muted-foreground">•</span>
-              <InfoDialog triggerText="Bantuan" asLink={true} />
-            </div>
-            <ChangelogDialog />
-          </div>
         </div>
-      </footer>
-    </div>
+
+        <footer className="bg-card border-t border-border">
+          <div className="container mx-auto px-4 py-3 max-w-5xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <p className="text-xs text-muted-foreground">
+                  © 2026 Domain Monitor v{APP_VERSION} • Kabupaten Kendal
+                </p>
+                <span className="text-xs text-muted-foreground">•</span>
+                <PrivacyPolicyDialog />
+                <span className="text-xs text-muted-foreground">•</span>
+                <TermsOfServiceDialog />
+                <span className="text-xs text-muted-foreground">•</span>
+                <InfoDialog triggerText="Bantuan" asLink={true} />
+              </div>
+              <ChangelogDialog />
+            </div>
+          </div>
+        </footer>
+      </div>
     </TooltipProvider>
   )
 }

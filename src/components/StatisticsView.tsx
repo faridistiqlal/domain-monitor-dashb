@@ -504,6 +504,7 @@ export function StatisticsView({
               <div>
                 <DomainCharts
                   selectedDomain={selectedDomain}
+                  currentStatus={statuses[selectedDomain.id]}
                   onClose={() => setSelectedDomain(null)}
                 />
               </div>
