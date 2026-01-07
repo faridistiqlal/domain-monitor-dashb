@@ -4,6 +4,7 @@ export interface Domain {
   addedAt: number
   groupId?: string
   tags?: string[]
+  notificationsEnabled?: boolean
 }
 
 export interface DomainTag {

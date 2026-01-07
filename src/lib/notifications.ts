@@ -8,19 +8,29 @@ export interface NotificationSettings {
   cooldownMinutes: number; // minimum time between notifications for same domain
 }
 
+export interface NotificationDetails {
+  domain: string;
+  status: 'down' | 'recovery' | 'slow';
+  responseTime?: number;
+  error?: string;
+  groupName?: string;
+  tags?: string[];
+  ipAddress?: string;
+  protocol?: string;
+}
+
 export class NotificationService {
   private lastNotificationTime: Map<string, number> = new Map();
 
   async sendSlackNotification(
     settings: NotificationSettings,
-    domain: string,
-    status: 'down' | 'recovery' | 'slow',
-    responseTime?: number,
-    error?: string
+    details: NotificationDetails
   ): Promise<boolean> {
     if (!settings.enabled || !settings.webhookUrl) {
       return false;
     }
+
+    const { domain, status } = details;
 
     // Check if should notify based on settings
     if (status === 'down' && !settings.notifyOnDown) return false;
@@ -33,7 +43,7 @@ export class NotificationService {
       return false;
     }
 
-    const message = this.buildSlackMessage(domain, status, responseTime, error);
+    const message = this.buildSlackMessage(details);
 
     try {
       const response = await fetch(settings.webhookUrl, {
@@ -64,27 +74,21 @@ export class NotificationService {
     return elapsed >= cooldownMs;
   }
 
-  private buildSlackMessage(
-    domain: string,
-    status: 'down' | 'recovery' | 'slow',
-    responseTime?: number,
-    error?: string
-  ) {
+  private buildSlackMessage(details: NotificationDetails) {
+    const { domain, status, responseTime, error, groupName, tags, ipAddress, protocol } = details;
+    
     let color = '#36a64f'; // green
     let emoji = '✅';
     let title = 'Domain Recovery';
-    let text = `${domain} is back online!`;
 
     if (status === 'down') {
       color = '#ff0000'; // red
       emoji = '🔴';
       title = 'Domain Down Alert';
-      text = `${domain} is currently offline!`;
     } else if (status === 'slow') {
       color = '#ffaa00'; // orange
       emoji = '⚠️';
       title = 'Slow Response Alert';
-      text = `${domain} is responding slowly (${responseTime}s)`;
     }
 
     const blocks: any[] = [
@@ -111,6 +115,15 @@ export class NotificationService {
       },
     ];
 
+    // Add group info
+    if (groupName) {
+      blocks[1].fields.push({
+        type: 'mrkdwn',
+        text: `*Group:*\n${groupName}`,
+      });
+    }
+
+    // Add response time
     if (responseTime) {
       blocks[1].fields.push({
         type: 'mrkdwn',
@@ -118,16 +131,43 @@ export class NotificationService {
       });
     }
 
+    // Add protocol and IP
+    if (protocol || ipAddress) {
+      const protocolText = protocol ? protocol.toUpperCase() : 'N/A';
+      const ipText = ipAddress || 'N/A';
+      blocks[1].fields.push({
+        type: 'mrkdwn',
+        text: `*Protocol:*\n${protocolText}`,
+      });
+      blocks[1].fields.push({
+        type: 'mrkdwn',
+        text: `*IP Address:*\n${ipText}`,
+      });
+    }
+
+    // Add tags if available
+    if (tags && tags.length > 0) {
+      blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Tags:* ${tags.map(tag => `\`${tag}\``).join(', ')}`,
+        },
+      });
+    }
+
+    // Add error details
     if (error) {
       blocks.push({
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*Error:*\n\`\`\`${error}\`\`\``,
+          text: `*Error Details:*\n\`\`\`${error}\`\`\``,
         },
       });
     }
 
+    // Add footer with timestamp and link
     blocks.push({
       type: 'context',
       elements: [

@@ -30,7 +30,7 @@ import { LoginDialog } from '@/components/LoginDialog'
 import { SettingsDialog } from '@/components/SettingsDialog'
 import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog'
 import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings } from '@/lib/types'
-import { NotificationService } from '@/lib/notifications'
+import { NotificationService, NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
 import { 
@@ -247,12 +247,19 @@ function App() {
       notifyOnDown: true
     }
 
+    const testDetails: NotificationDetails = {
+      domain: 'example.com',
+      status: 'down',
+      error: 'This is a test notification from Domain Monitor Dashboard',
+      groupName: 'Test Group',
+      tags: ['test', 'demo'],
+      ipAddress: '93.184.216.34',
+      protocol: 'https'
+    }
+
     const success = await notificationService.sendSlackNotification(
       testSettings,
-      'example.com',
-      'down',
-      undefined,
-      'This is a test notification from Domain Monitor Dashboard'
+      testDetails
     )
 
     if (success) {
@@ -296,34 +303,49 @@ function App() {
         const oldStatus = statuses[result.id]
         const domain = domains.find(d => d.id === result.id)
         
-        if (domain && oldStatus && oldStatus.status !== 'checking') {
+        // Check if domain has notifications enabled (default true if not set)
+        if (domain && (domain.notificationsEnabled ?? true) && oldStatus && oldStatus.status !== 'checking') {
+          const group = domain.groupId ? groups.find(g => g.id === domain.groupId) : undefined
+          const domainTags = domain.tags?.map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean) as string[] | undefined
+
           // Down notification
           if (oldStatus.status === 'online' && (result.status === 'offline' || result.status === 'dns-only')) {
-            await notificationService.sendSlackNotification(
-              notificationSettings,
-              domain.url,
-              'down',
-              undefined,
-              result.error
-            )
+            const details: NotificationDetails = {
+              domain: domain.url,
+              status: 'down',
+              error: result.error,
+              groupName: group?.name,
+              tags: domainTags,
+              ipAddress: result.ipAddress,
+              protocol: result.protocol
+            }
+            await notificationService.sendSlackNotification(notificationSettings, details)
           }
           // Recovery notification
           else if ((oldStatus.status === 'offline' || oldStatus.status === 'dns-only') && result.status === 'online') {
-            await notificationService.sendSlackNotification(
-              notificationSettings,
-              domain.url,
-              'recovery',
-              result.responseTime
-            )
+            const details: NotificationDetails = {
+              domain: domain.url,
+              status: 'recovery',
+              responseTime: result.responseTime,
+              groupName: group?.name,
+              tags: domainTags,
+              ipAddress: result.ipAddress,
+              protocol: result.protocol
+            }
+            await notificationService.sendSlackNotification(notificationSettings, details)
           }
           // Slow response notification
           else if (result.status === 'online' && result.responseTime && result.responseTime >= notificationSettings.slowThreshold) {
-            await notificationService.sendSlackNotification(
-              notificationSettings,
-              domain.url,
-              'slow',
-              result.responseTime
-            )
+            const details: NotificationDetails = {
+              domain: domain.url,
+              status: 'slow',
+              responseTime: result.responseTime,
+              groupName: group?.name,
+              tags: domainTags,
+              ipAddress: result.ipAddress,
+              protocol: result.protocol
+            }
+            await notificationService.sendSlackNotification(notificationSettings, details)
           }
         }
       }
@@ -386,7 +408,7 @@ function App() {
     toast.success('Domain dihapus dari daftar')
   }
 
-  const handleEditDomain = (id: string, newUrl: string) => {
+  const handleEditDomain = (id: string, newUrl: string, notificationsEnabled?: boolean) => {
     if (!canEdit) {
       toast.error('Anda tidak memiliki akses untuk mengedit domain')
       return
@@ -394,7 +416,7 @@ function App() {
 
     setDomains(current =>
       (current || []).map(d =>
-        d.id === id ? { ...d, url: newUrl } : d
+        d.id === id ? { ...d, url: newUrl, notificationsEnabled } : d
       )
     )
     setStatuses(current => {

@@ -12,18 +12,20 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { Domain } from '@/lib/types'
 import { toast } from 'sonner'
 
 interface EditDomainDialogProps {
   domain: Domain
-  onEdit: (id: string, newUrl: string) => void
+  onEdit: (id: string, newUrl: string, notificationsEnabled?: boolean) => void
   existingUrls: string[]
 }
 
 export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDialogProps) {
   const [open, setOpen] = useState(false)
   const [url, setUrl] = useState(domain.url)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(domain.notificationsEnabled ?? true)
   const [error, setError] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,17 +38,17 @@ export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDia
       return
     }
 
-    if (trimmedUrl === domain.url) {
+    if (trimmedUrl === domain.url && notificationsEnabled === (domain.notificationsEnabled ?? true)) {
       setOpen(false)
       return
     }
 
-    if (existingUrls.includes(trimmedUrl)) {
+    if (trimmedUrl !== domain.url && existingUrls.includes(trimmedUrl)) {
       setError('Domain sudah ada dalam daftar')
       return
     }
 
-    onEdit(domain.id, trimmedUrl)
+    onEdit(domain.id, trimmedUrl, notificationsEnabled)
     setOpen(false)
     setUrl(trimmedUrl)
     setError('')
@@ -55,6 +57,7 @@ export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDia
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setUrl(domain.url)
+      setNotificationsEnabled(domain.notificationsEnabled ?? true)
       setError('')
     }
     setOpen(newOpen)
@@ -75,8 +78,7 @@ export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDia
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Domain</DialogTitle>
-            <DialogDescription>
-              Ubah URL domain yang ingin dimonitor
+            <DialogDescriptiondan pengaturan notifikasi
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -95,6 +97,20 @@ export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDia
               />
               {error && (
                 <p className="text-xs text-destructive">{error}</p>
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="notifications">Enable Notifications</Label>
+                <p className="text-xs text-muted-foreground">
+                  Kirim notifikasi Slack saat status domain berubah
+                </p>
+              </div>
+              <Switch
+                id="notifications"
+                checked={notificationsEnabled}
+                onCheckedChange={setNotificationsEnabled}
+              /><p className="text-xs text-destructive">{error}</p>
               )}
             </div>
           </div>
