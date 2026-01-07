@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Progress } from '@/components/ui/progress'
+import { APP_VERSION } from '@/lib/version'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 import { AddDomainForm } from '@/components/AddDomainForm'
@@ -148,13 +149,13 @@ function App() {
         setTags(loadedTags)
         
         // MIGRATION: Clear old localStorage data from manual checks
-        // v2.4.1: Force clear localStorage after Firebase fallback removal
-        // This ensures clean state for all users after the latest update
+        // Version increments with each deployment to force localStorage clear
+        // This ensures clean state for all users after every update
         const statusVersion = localStorage.getItem('domain-statuses-version')
-        if (statusVersion !== '2.4.1') {
-          console.log('Clearing localStorage statuses (v2.4.1 migration)')
+        if (statusVersion !== APP_VERSION) {
+          console.log(`Clearing localStorage statuses (v${APP_VERSION} migration)`)
           localStorage.removeItem('domain-last-statuses')
-          localStorage.setItem('domain-statuses-version', '2.4.1')
+          localStorage.setItem('domain-statuses-version', APP_VERSION)
         }
         
         // Load last statuses from localStorage for statistics display
@@ -1997,7 +1998,7 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <p className="text-xs text-muted-foreground">
-                © 2026 Domain Monitor v2.2.0 • Kabupaten Kendal
+                © 2026 Domain Monitor v{APP_VERSION} • Kabupaten Kendal
               </p>
               <span className="text-xs text-muted-foreground">•</span>
               <PrivacyPolicyDialog />
