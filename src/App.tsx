@@ -238,6 +238,9 @@ function App() {
       return
     }
 
+    // Clear cooldown for test domain before sending
+    notificationService.clearCooldown('example.com')
+
     const testSettings: NotificationSettings = {
       ...notificationSettings,
       enabled: true,
