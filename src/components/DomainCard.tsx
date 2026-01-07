@@ -57,9 +57,9 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
 
   const getResponseTimeColor = (ms?: number) => {
     if (!ms) return 'text-muted-foreground'
-    if (ms < 2000) return 'text-success' // Fast
-    if (ms < 5000) return 'text-warning' // Normal
-    return 'text-destructive' // Slow
+    if (ms < 2000) return 'text-success' // Fast - green
+    if (ms < 5000) return 'text-amber-500' // Normal - orange
+    return 'text-destructive' // Slow - red
   }
 
   const getResponseTimeLabel = (ms?: number) => {
@@ -337,24 +337,6 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
               <>
                 <span className="font-mono text-accent">
                   {status.ipAddress}
-                </span>
-                <span className="text-border">|</span>
-              </>
-            )}
-            
-            {status.protocol && status.status === 'online' && (
-              <>
-                <span className={`font-mono uppercase px-1.5 py-0.5 rounded ${
-                  status.protocol === 'https' 
-                    ? 'bg-success/20' 
-                    : 'bg-amber-500/20'
-                }`}
-                style={
-                  status.protocol === 'https' 
-                    ? { color: 'oklch(0.70 0.22 145)' }
-                    : { color: 'rgb(245, 158, 11)' }
-                }>
-                  {status.protocol}
                 </span>
                 <span className="text-border">|</span>
               </>
