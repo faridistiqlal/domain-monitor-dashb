@@ -88,12 +88,8 @@ export async function updateDailyStats(
   domainId: string,
   status: DomainStatus
 ): Promise<void> {
-  console.log(`[check-history] updateDailyStats called for ${domainId}`, { status: status.status, responseTime: status.responseTime })
-  
   try {
-    console.log(`[check-history] Getting or creating daily stats...`)
     const stats = await getOrCreateDailyStats(domainId)
-    console.log(`[check-history] Stats retrieved:`, { id: stats.id, totalChecks: stats.totalChecks })
     
     const currentHour = getCurrentHour()
     
@@ -145,13 +141,11 @@ export async function updateDailyStats(
     }
     
     // Save to Firestore
-    console.log(`[check-history] Saving to Firestore...`, { statsId: stats.id })
     const statsRef = doc(db, DAILY_STATS_COLLECTION, stats.id)
     await setDoc(statsRef, stats)
-    console.log(`[check-history] ✅ Successfully saved to Firestore`)
     
   } catch (error) {
-    console.error(`[check-history] ❌ Error updating daily stats for ${domainId}:`, error)
+    console.error(`[check-history] Error updating stats for ${domainId}:`, error)
     console.error(`[check-history] Error details:`, {
       name: (error as Error).name,
       message: (error as Error).message,

@@ -313,11 +313,8 @@ function App() {
       domainsToCheck = domains.filter(domain => shouldCheckNow(domain))
       
       if (domainsToCheck.length === 0) {
-        console.log('No domains scheduled for checking at this time')
-        return
+        return // No domains in current batch window
       }
-      
-      console.log(`Checking ${domainsToCheck.length} domains in current batch`)
     }
 
     if (showToast) {
@@ -352,24 +349,15 @@ function App() {
       
       // Store check result to Firebase for history/charts
       try {
-        console.log(`📊 Updating daily stats for ${domain.url}:`, { status: newStatus, responseTime: result.responseTime })
         await updateDailyStats(result.id, result)
-        console.log(`✅ Daily stats updated for ${domain.url}`)
       } catch (error) {
-        console.error(`❌ Failed to update daily stats for ${domain.url}:`, error)
-        console.error('Error details:', {
-          domainId: result.id,
-          status: result.status,
-          error: error
-        })
+        console.error(`Failed to update stats for ${domain.url}:`, error)
       }
       
       // Detect status changes
       const statusChanged = oldStatus !== newStatus && oldStatus !== undefined
       
       if (statusChanged) {
-        console.log(`🔄 Status changed for ${domain.url}: ${oldStatus} → ${newStatus}`)
-        
         // Update domain lastStatusChange timestamp
         const updatedDomain = { ...domain, lastStatusChange: Date.now() }
         setDomains(prevDomains => 
@@ -379,17 +367,14 @@ function App() {
         // Handle incidents
         if (newStatus === 'offline' || newStatus === 'dns-only') {
           // Create new incident
-          console.log(`📝 Creating incident for ${domain.url}`)
           const incidentId = await createIncident(domain, result, oldStatus)
           if (incidentId) {
-            console.log(`✅ Incident created: ${incidentId}`)
             setActiveIncidents(prev => ({ ...prev, [domain.id]: incidentId }))
           }
         } else if (newStatus === 'online' && (oldStatus === 'offline' || oldStatus === 'dns-only')) {
           // Resolve incident
           const incidentId = activeIncidents[domain.id]
           if (incidentId) {
-            console.log(`✅ Resolving incident ${incidentId} for ${domain.url}`)
             await resolveIncident(domain.id, incidentId)
             setActiveIncidents(prev => {
               const newIncidents = { ...prev }
