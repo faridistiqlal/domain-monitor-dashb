@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -53,6 +53,32 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
     if (status.status === 'offline') return 'Offline'
     if (status.status === 'dns-only') return 'DNS Only'
     return 'Checking...'
+  }
+
+  const getResponseTimeColor = (ms?: number) => {
+    if (!ms) return 'text-muted-foreground'
+    if (ms < 2000) return 'text-success' // Fast
+    if (ms < 5000) return 'text-warning' // Normal
+    return 'text-destructive' // Slow
+  }
+
+  const getResponseTimeLabel = (ms?: number) => {
+    if (!ms) return ''
+    if (ms < 2000) return 'Cepat'
+    if (ms < 5000) return 'Normal'
+    return 'Lambat'
+  }
+
+  const getProtocolInfo = () => {
+    if (!status.protocol || status.status !== 'online') return null
+    
+    const isHttps = status.protocol === 'https'
+    const isHttpOnly = status.protocol === 'http'
+    const hasSSLIssue = status.error?.toLowerCase().includes('ssl') || 
+                        status.error?.toLowerCase().includes('cert') ||
+                        status.error?.toLowerCase().includes('sertifikat')
+    
+    return { isHttps, isHttpOnly, hasSSLIssue }
   }
 
   const getDetailedInfo = () => {
@@ -206,6 +232,42 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
               <h3 className="font-mono text-sm font-medium text-foreground truncate">
                 {domain.url}
               </h3>
+              
+              {/* Protocol Badge */}
+              {getProtocolInfo() && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      getProtocolInfo()?.isHttps 
+                        ? 'bg-success/15 text-success' 
+                        : getProtocolInfo()?.hasSSLIssue
+                        ? 'bg-destructive/15 text-destructive'
+                        : 'bg-warning/15 text-warning'
+                    }`}>
+                      {getProtocolInfo()?.isHttps ? (
+                        <LockKey size={10} weight="fill" />
+                      ) : getProtocolInfo()?.hasSSLIssue ? (
+                        <ShieldWarning size={10} weight="fill" />
+                      ) : (
+                        <LockKeyOpen size={10} weight="fill" />
+                      )}
+                      <span>{status.protocol?.toUpperCase()}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs max-w-[200px]">
+                    {getProtocolInfo()?.isHttps && (
+                      <p>🔒 Koneksi HTTPS aman (terenkripsi)</p>
+                    )}
+                    {getProtocolInfo()?.hasSSLIssue && (
+                      <p>⚠️ SSL Issue: {status.error}</p>
+                    )}
+                    {getProtocolInfo()?.isHttpOnly && (
+                      <p>⚠️ HTTP saja (tidak terenkripsi) - Pertimbangkan aktifkan HTTPS</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
               {group && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -330,9 +392,26 @@ export function DomainCard({ domain, status, onDelete, onEdit, existingUrls, gro
             <span className="text-border">|</span>
             
             {status.responseTime !== undefined ? (
-              <span className="font-mono text-muted-foreground">
-                {status.responseTime}ms
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1">
+                    {status.responseTime < 2000 && (
+                      <Lightning size={12} weight="fill" className="text-success" />
+                    )}
+                    <span className={`font-mono font-medium ${getResponseTimeColor(status.responseTime)}`}>
+                      {status.responseTime}ms
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="text-xs">
+                  <p className="font-semibold">{getResponseTimeLabel(status.responseTime)}</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    {status.responseTime < 2000 && '⚡ Sangat responsif'}
+                    {status.responseTime >= 2000 && status.responseTime < 5000 && '✓ Performa normal'}
+                    {status.responseTime >= 5000 && '⚠️ Respons lambat'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
             ) : status.error ? (
               <Tooltip>
                 <TooltipTrigger asChild>

@@ -102,25 +102,39 @@ async function checkHTTPAccess(url: string, timeout: number = 6000): Promise<{ a
   }
 }
 
-async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; responseTime?: number; error?: string; protocol?: string }> {
+async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; responseTime?: number; error?: string; protocol?: string; sslIssue?: boolean }> {
   const cleanUrl = url.replace(/^https?:\/\//, '')
   
+  // Try HTTPS first
   const httpsResult = await checkHTTPAccess(`https://${cleanUrl}`, 6000)
   
   if (httpsResult.accessible) {
-    return { ...httpsResult, protocol: 'https' }
+    return { ...httpsResult, protocol: 'https', sslIssue: false }
   }
   
+  // If HTTPS failed, check if it's SSL related
+  const isSSLError = httpsResult.error?.toLowerCase().includes('ssl') ||
+                     httpsResult.error?.toLowerCase().includes('cert') ||
+                     httpsResult.error?.toLowerCase().includes('sertifikat')
+  
+  // Try HTTP as fallback
   const httpResult = await checkHTTPAccess(`http://${cleanUrl}`, 6000)
   
   if (httpResult.accessible) {
-    return { ...httpResult, protocol: 'http' }
+    return { 
+      ...httpResult, 
+      protocol: 'http',
+      sslIssue: isSSLError, // Mark that SSL was the issue
+      error: isSSLError ? httpsResult.error : undefined
+    }
   }
   
+  // Both failed - return the more informative error
   return {
     accessible: false,
     error: httpsResult.error || httpResult.error || 'Both HTTP and HTTPS failed',
-    responseTime: Math.min(httpsResult.responseTime || 6000, httpResult.responseTime || 6000)
+    responseTime: Math.min(httpsResult.responseTime || 6000, httpResult.responseTime || 6000),
+    sslIssue: isSSLError
   }
 }
 
@@ -128,7 +142,15 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
   const ipAddress = await getIPAddress(url)
   const dnsResolvable = !!ipAddress
   
-  const httpResult = await checkHTTPSandHTTP(url)
+  let httpResult = await checkHTTPSandHTTP(url)
+  
+  // Retry once if timeout occurred
+  if (!httpResult.accessible && httpResult.error === 'Timeout') {
+    console.log(`Retrying ${url} after timeout...`)
+    await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry
+    httpResult = await checkHTTPSandHTTP(url)
+  }
+  
   const httpAccessible = httpResult.accessible
   
   let status: 'online' | 'offline' | 'dns-only' = 'offline'
