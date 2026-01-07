@@ -147,6 +147,15 @@ function App() {
         setGroups(loadedGroups)
         setTags(loadedTags)
         
+        // MIGRATION: Clear old localStorage data from manual checks
+        // This runs once to clean up data from before the manual-check-local-only update
+        const statusVersion = localStorage.getItem('domain-statuses-version')
+        if (statusVersion !== '2.4.0') {
+          console.log('Clearing old localStorage statuses (manual check cleanup)')
+          localStorage.removeItem('domain-last-statuses')
+          localStorage.setItem('domain-statuses-version', '2.4.0')
+        }
+        
         // Load last statuses from localStorage for statistics display
         const savedStatuses = localStorage.getItem('domain-last-statuses')
         if (savedStatuses) {
