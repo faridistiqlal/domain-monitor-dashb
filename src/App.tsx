@@ -55,6 +55,7 @@ import {
   assignCheckBatch,
   shouldCheckNow
 } from '@/lib/check-history'
+import { loadLastKnownStatuses } from '@/lib/status-loader'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useFilteredDomains } from '@/hooks/use-filtered-domains'
