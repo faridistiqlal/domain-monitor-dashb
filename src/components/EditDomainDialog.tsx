@@ -78,7 +78,8 @@ export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDia
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Domain</DialogTitle>
-            <DialogDescriptiondan pengaturan notifikasi
+            <DialogDescription>
+              Ubah URL domain dan pengaturan notifikasi
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -110,8 +111,7 @@ export function EditDomainDialog({ domain, onEdit, existingUrls }: EditDomainDia
                 id="notifications"
                 checked={notificationsEnabled}
                 onCheckedChange={setNotificationsEnabled}
-              /><p className="text-xs text-destructive">{error}</p>
-              )}
+              />
             </div>
           </div>
           <DialogFooter>
