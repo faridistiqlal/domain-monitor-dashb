@@ -183,14 +183,9 @@ function App() {
               
               // Assign batch to domains that don't have one
               const domainsWithBatch = loadedDomains.map((domain, index) => {
-                // Preserve local state (enabled field) from current domains
-                const currentDomain = domains?.find(d => d.id === domain.id)
-                const preservedEnabled = currentDomain?.enabled ?? domain.enabled
-                
-                // Debug log for enabled field
-                if (domain.enabled === false || preservedEnabled === false) {
-                  console.log(`[Firebase Load] Domain ${domain.url}: Firebase enabled=${domain.enabled}, Preserved=${preservedEnabled}`)
-                }
+                // Reset enabled field on background refresh
+                // Individual monitoring is not persistent and should not restart automatically
+                const preservedEnabled = false
                 
                 if (!domain.checkBatch) {
                   return {
@@ -239,6 +234,7 @@ function App() {
             trackFirebaseRead(3) // 3 collection reads
             
             // Assign batch to domains that don't have one (old domains)
+            // RESET enabled field on page load - individual monitoring is not persistent across refresh
             const domainsWithBatch = loadedDomains.map((domain, index) => {
               if (!domain.checkBatch) {
                 return {
@@ -246,10 +242,14 @@ function App() {
                   checkBatch: assignCheckBatch(index, loadedDomains.length),
                   lastStatusChange: domain.lastStatusChange || Date.now(),
                   consecutiveFailures: domain.consecutiveFailures || 0,
-                  enabled: domain.enabled // Preserve enabled field from Firebase
+                  enabled: false // Reset on page load - user must manually start monitoring
                 }
               }
-              return domain
+              // Reset enabled field on page load for all domains
+              return {
+                ...domain,
+                enabled: false // Individual monitoring is not persistent across refresh
+              }
             })
         
             setDomains(domainsWithBatch)

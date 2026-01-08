@@ -1,5 +1,51 @@
 # Changelog
 
+## Version 3.4.2 - Individual Monitoring Reset on Refresh
+**Tanggal Rilis:** 8 Januari 2026
+
+### 🔧 Bug Fix: Individual Monitoring Tidak Reset Setelah Refresh
+- **FIXED: Icon Pause (||) masih tampil padahal sudah refresh**
+  - Field `enabled: true` tersimpan di Firebase (persistent)
+  - Saat refresh, domain di-load dengan `enabled: true` dari Firebase
+  - Icon menampilkan Pause (||) tapi interval monitoring tidak berjalan
+  - User expect: refresh = reset semua monitoring ke state awal
+  
+### ✅ Solusi Implementasi
+- **Auto-reset `enabled` field ke `false` saat page load**
+- **Individual monitoring bersifat temporary** - tidak persistent antar refresh
+- **User harus klik Play lagi** setelah refresh untuk start monitoring
+- **Konsisten dengan UX expectation** - refresh = bersih/reset state
+
+### 🎯 Technical Details
+```typescript
+// BEFORE (Bug - enabled field persistent):
+const domainsWithBatch = loadedDomains.map((domain) => {
+  return {
+    ...domain,
+    enabled: domain.enabled // ❌ Preserve dari Firebase
+  }
+})
+
+// AFTER (Fix - reset on load):
+const domainsWithBatch = loadedDomains.map((domain) => {
+  return {
+    ...domain,
+    enabled: false // ✅ Reset saat page load
+  }
+})
+```
+
+### 📊 Impact
+- ✅ Icon Play/Pause sekarang akurat reflect monitoring state
+- ✅ Refresh page akan reset semua individual monitoring
+- ✅ User harus eksplisit start monitoring (lebih predictable)
+- ✅ Tidak ada phantom monitoring state
+
+### 💡 Design Decision
+Individual monitoring adalah fitur **on-demand** untuk troubleshooting, bukan persistent monitoring. User yang butuh persistent monitoring sebaiknya pakai Auto-Check global atau enable auto-refresh.
+
+---
+
 ## Version 3.4.1 - Pin Tab Firebase Sync Fix
 **Tanggal Rilis:** 8 Januari 2026
 

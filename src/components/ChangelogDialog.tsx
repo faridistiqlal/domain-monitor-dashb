@@ -45,8 +45,49 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.1</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.2</h3>
                   <p className="text-xs text-muted-foreground">Current Release • 8 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="destructive" className="text-xs">UX Fix</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-yellow-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Bug Fix</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Individual Monitoring Reset:</strong> Fixed icon Pause (||) masih tampil setelah refresh padahal monitoring tidak berjalan.</li>
+                    <li>Auto-reset enabled field ke false saat page load</li>
+                    <li>Individual monitoring sekarang bersifat temporary (tidak persistent)</li>
+                    <li>User harus klik Play lagi setelah refresh</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench size={16} className="text-blue-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Design Decision</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Individual monitoring = on-demand troubleshooting (temporary)</li>
+                    <li>Refresh = reset state untuk predictable UX</li>
+                    <li>Untuk persistent monitoring, gunakan Auto-Check global</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.1</h3>
+                  <p className="text-xs text-muted-foreground">8 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
                   <Badge variant="destructive" className="text-xs">Critical Fix</Badge>
