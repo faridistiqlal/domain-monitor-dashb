@@ -295,25 +295,14 @@ function App() {
           localStorage.setItem('domain-statuses-version', APP_VERSION)
         }
         
-        // Load last statuses from localStorage for statistics display
-        const savedStatuses = localStorage.getItem('domain-last-statuses')
-        if (savedStatuses) {
-          try {
-            const parsed = JSON.parse(savedStatuses)
-            setStatuses(parsed)
-            // Also set previous statuses for change detection
-            const prevStatuses: Record<string, 'online' | 'offline' | 'dns-only'> = {}
-            Object.entries(parsed).forEach(([id, status]) => {
-              const s = status as DomainStatus
-              if (s.status !== 'checking') {
-                prevStatuses[id] = s.status as 'online' | 'offline' | 'dns-only'
-              }
-            })
-            setPreviousStatuses(prevStatuses)
-          } catch (e) {
-            console.error('Failed to parse saved statuses:', e)
-          }
-        }
+        // AUTO-CLEAR: Always clear status on browser refresh
+        // This prevents confusion with outdated status counts
+        // User needs to manually "Check All" or enable auto-refresh to see status
+        console.log('Status cleared on browser refresh - please check domains to see current status')
+        localStorage.removeItem('domain-last-statuses')
+        setStatuses({})
+        setPreviousStatuses({})
+        
         // NOTE: Removed Firebase fallback load to prevent quota exhaustion
         // Previously: loaded from Firebase if localStorage empty (312 domain reads!)
         // Now: localStorage populated only by auto-check, manual check is local-only
@@ -1588,6 +1577,24 @@ function App() {
           </TabsList>
 
           <TabsContent value="domains" className="space-y-4 flex-1 flex flex-col overflow-hidden">
+            {!autoRefreshEnabled && !hasChecked && !isRefreshing && totalCount > 0 && (
+              <div className="space-y-3">
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                      <ArrowClockwise size={18} weight="duotone" className="text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Belum Ada Data Status</p>
+                      <p className="text-xs text-muted-foreground">
+                        Klik tombol check untuk memulai monitoring domain
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {!autoRefreshEnabled && hasChecked && !isRefreshing && totalCount > 0 && (
               <div className="space-y-3">
                 <div className="bg-success/10 border border-success/30 rounded-lg p-3">
