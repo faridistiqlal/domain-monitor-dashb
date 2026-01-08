@@ -11,9 +11,10 @@ import {
 interface UptimeBarProps {
   domainId: string
   days?: number // Default: 90 days
+  compact?: boolean // Compact mode for inline display
 }
 
-export function UptimeBar({ domainId, days = 90 }: UptimeBarProps) {
+export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarProps) {
   const [stats, setStats] = useState<DomainDailyStats[]>([])
   const [loading, setLoading] = useState(true)
   const [overallUptime, setOverallUptime] = useState<number>(0)
@@ -57,19 +58,21 @@ export function UptimeBar({ domainId, days = 90 }: UptimeBarProps) {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-1.5">
-        <div className="flex gap-0.5 h-8 items-end">
+      <div className={compact ? "flex gap-0.5 items-center" : "flex flex-col gap-1.5"}>
+        <div className={`flex gap-0.5 ${compact ? 'h-3' : 'h-8'} items-end`}>
           {Array.from({ length: Math.min(days, 90) }).map((_, i) => (
             <div
               key={i}
-              className="w-1 bg-muted/30 rounded-sm animate-pulse"
-              style={{ height: '16px' }}
+              className="w-0.5 bg-muted/30 rounded-sm animate-pulse"
+              style={{ height: compact ? '12px' : '16px' }}
             />
           ))}
         </div>
-        <div className="text-xs text-muted-foreground">
-          Loading uptime data...
-        </div>
+        {!compact && (
+          <div className="text-xs text-muted-foreground">
+            Loading uptime data...
+          </div>
+        )}
       </div>
     )
   }
@@ -95,17 +98,19 @@ export function UptimeBar({ domainId, days = 90 }: UptimeBarProps) {
   }
 
   const getBarColor = (uptime: number | undefined) => {
-    if (uptime === undefined || uptime === null) return 'bg-muted/20'
+    if (uptime === undefined || uptime === null) return 'bg-gray-700/50' // Dark gray base
     if (uptime >= 95) return 'bg-success' // Green
     if (uptime >= 80) return 'bg-yellow-500' // Yellow
     if (uptime >= 50) return 'bg-amber-500' // Orange
     if (uptime > 0) return 'bg-destructive' // Red
-    return 'bg-muted/20' // Gray (no data)
+    return 'bg-gray-700/50' // Dark gray (no data)
   }
 
-  const getBarHeight = (uptime: number | undefined) => {
-    if (uptime === undefined || uptime === null) return 4
-    return Math.max(4, (uptime / 100) * 32) // 4px min, 32px max
+  const getBarHeight = (uptime: number | undefined, isCompact: boolean) => {
+    if (uptime === undefined || uptime === null) return isCompact ? 3 : 4
+    const maxHeight = isCompact ? 12 : 32
+    const minHeight = isCompact ? 3 : 4
+    return Math.max(minHeight, (uptime / 100) * maxHeight)
   }
 
   const formatDate = (dateStr: string | undefined) => {
@@ -119,18 +124,18 @@ export function UptimeBar({ domainId, days = 90 }: UptimeBarProps) {
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex gap-0.5 h-8 items-end">
+    <div className={compact ? "flex gap-1 items-center" : "flex flex-col gap-1.5"}>
+      <div className={`flex gap-0.5 ${compact ? 'h-3' : 'h-8'} items-end`}>
         {filledStats.map((stat, index) => {
           const uptime = stat?.uptimePercent
           const barColor = getBarColor(uptime)
-          const barHeight = getBarHeight(uptime)
+          const barHeight = getBarHeight(uptime, compact)
           
           return (
             <Tooltip key={index}>
               <TooltipTrigger asChild>
                 <div
-                  className={`w-1 ${barColor} rounded-sm transition-all cursor-pointer
+                  className={`${compact ? 'w-0.5' : 'w-1'} ${barColor} rounded-sm transition-all cursor-pointer
                              hover:brightness-125 hover:scale-y-110`}
                   style={{ height: `${barHeight}px` }}
                 />
@@ -157,16 +162,18 @@ export function UptimeBar({ domainId, days = 90 }: UptimeBarProps) {
           )
         })}
       </div>
-      <div className="text-xs text-muted-foreground">
-        {overallUptime > 0 ? (
-          <span>
-            <span className="font-semibold text-foreground">{overallUptime.toFixed(1)}%</span> uptime 
-            <span className="text-muted-foreground/60"> (last {stats.length} days)</span>
-          </span>
-        ) : (
-          <span className="text-muted-foreground/60">No uptime data available</span>
-        )}
-      </div>
+      {!compact && (
+        <div className="text-xs text-muted-foreground">
+          {overallUptime > 0 ? (
+            <span>
+              <span className="font-semibold text-foreground">{overallUptime.toFixed(1)}%</span> uptime 
+              <span className="text-muted-foreground/60"> (last {stats.length} days)</span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground/60">No uptime data available</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
