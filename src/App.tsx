@@ -479,6 +479,25 @@ function App() {
     }
   }
 
+  // Auto-check pinned domains when Pin tab is opened
+  useEffect(() => {
+    if (activeTab === 'pinned' && !isLoadingData) {
+      const pinnedDomains = domains.filter(d => d.pinned)
+      if (pinnedDomains.length > 0) {
+        // Check if any pinned domain hasn't been checked yet
+        const uncheckedDomains = pinnedDomains.filter(d => {
+          const status = statuses[d.id]
+          return !status || status.status === 'checking' || !status.lastChecked
+        })
+        
+        if (uncheckedDomains.length > 0) {
+          console.log(`[Pin Tab] Auto-checking ${uncheckedDomains.length} pinned domains...`)
+          checkDomains(uncheckedDomains, false, false)
+        }
+      }
+    }
+  }, [activeTab, isLoadingData])
+
   // Check if user can edit (authenticated only)
   const canEdit = isAuthenticated
 
@@ -2190,6 +2209,24 @@ function App() {
                   Domain favorit dengan visualisasi uptime dan status real-time
                 </p>
               </div>
+              {domains.filter(d => d.pinned).length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const pinnedDomains = domains.filter(d => d.pinned)
+                    if (pinnedDomains.length === 0) return
+                    
+                    toast.info(`Checking ${pinnedDomains.length} pinned domains...`)
+                    await checkDomains(pinnedDomains, false, false)
+                    toast.success('Pinned domains updated!')
+                  }}
+                  className="h-8"
+                >
+                  <ArrowClockwise size={14} />
+                  Refresh Status
+                </Button>
+              )}
             </div>
             
             <Separator />
