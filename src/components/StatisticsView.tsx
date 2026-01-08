@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Globe, CheckCircle, XCircle, Clock, Gauge, FolderOpen, Tag, TrendUp, ChartLine } from '@phosphor-icons/react'
+import { Globe, CheckCircle, XCircle, Clock, Gauge, FolderOpen, Tag, TrendUp, ChartLine, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { DomainCharts } from './DomainCharts'
@@ -28,6 +29,7 @@ export function StatisticsView({
 }: StatisticsViewProps) {
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null)
   const [activeTab, setActiveTab] = useState<'manual' | 'firebase'>('manual')
+  const [firebaseSearchQuery, setFirebaseSearchQuery] = useState('')
 
   const stats = useMemo(() => {
     const total = domains.length
@@ -547,47 +549,83 @@ export function StatisticsView({
                     <CardDescription>
                       Pilih domain untuk melihat uptime history, response time, dan incident timeline
                     </CardDescription>
+                    {/* Search Input */}
+                    <div className="mt-3 relative">
+                      <MagnifyingGlass 
+                        size={16} 
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
+                      />
+                      <Input
+                        placeholder="Cari domain..."
+                        value={firebaseSearchQuery}
+                        onChange={(e) => setFirebaseSearchQuery(e.target.value)}
+                        className="pl-9 h-9 text-sm"
+                      />
+                      {firebaseSearchQuery && (
+                        <button
+                          onClick={() => setFirebaseSearchQuery('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <ScrollArea className="h-[400px]">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-3">
-                    {domains.slice(0, 50).map((domain) => {
-                      const status = statuses[domain.id]
-                      const statusColor =
-                        status?.status === 'online'
-                          ? 'oklch(0.70 0.22 145)'
-                          : status?.status === 'dns-only'
-                          ? 'rgb(245, 158, 11)'
-                          : 'oklch(0.60 0.25 25)'
+                    {(() => {
+                      const filtered = domains.filter(d => 
+                        d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())
+                      ).slice(0, 50)
+                      
+                      return filtered.length > 0 ? filtered.map((domain) => {
+                        const status = statuses[domain.id]
+                        const statusColor =
+                          status?.status === 'online'
+                            ? 'oklch(0.70 0.22 145)'
+                            : status?.status === 'dns-only'
+                            ? 'rgb(245, 158, 11)'
+                            : 'oklch(0.60 0.25 25)'
 
-                      return (
-                        <Button
-                          key={domain.id}
-                          variant="outline"
-                          className="justify-start h-auto p-3 hover:bg-accent"
-                          onClick={() => {
-                            setSelectedDomain(domain)
-                            console.log('Domain clicked:', domain.url)
-                          }}
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <div
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: statusColor }}
-                            />
-                            <span className="text-xs font-mono truncate flex-1 text-left">
-                              {domain.url}
-                            </span>
-                            <ChartLine size={14} className="text-muted-foreground flex-shrink-0" />
-                          </div>
-                        </Button>
+                        return (
+                          <Button
+                            key={domain.id}
+                            variant="outline"
+                            className="justify-start h-auto p-3 hover:bg-accent"
+                            onClick={() => {
+                              setSelectedDomain(domain)
+                              console.log('Domain clicked:', domain.url)
+                            }}
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <div
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: statusColor }}
+                              />
+                              <span className="text-xs font-mono truncate flex-1 text-left">
+                                {domain.url}
+                              </span>
+                              <ChartLine size={14} className="text-muted-foreground flex-shrink-0" />
+                            </div>
+                          </Button>
+                        )
+                      }) : (
+                        <div className="col-span-2 text-center py-8 text-sm text-muted-foreground">
+                          Tidak ada domain yang cocok
+                        </div>
                       )
-                    })}
+                    })()}
                   </div>
                 </ScrollArea>
-                {domains.length > 50 && (
+                {domains.length > 50 && firebaseSearchQuery === '' && (
                   <p className="text-xs text-muted-foreground text-center mt-3">
                     Menampilkan 50 dari {domains.length} domain
+                  </p>
+                )}
+                {firebaseSearchQuery && (
+                  <p className="text-xs text-muted-foreground text-center mt-3">
+                    Ditemukan {domains.filter(d => d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())).length} domain
                   </p>
                 )}
                   </CardContent>
