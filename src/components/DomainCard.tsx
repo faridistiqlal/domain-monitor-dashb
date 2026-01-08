@@ -271,22 +271,22 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={`group transition-all duration-200 p-3.5 ${isSelected ? 'bg-destructive/10 border-destructive/50' : 'hover:shadow-md hover:bg-accent/5'}`}>
-        <div className="flex items-center gap-3">
+      <Card className={`group transition-all duration-200 p-4 md:p-3.5 ${isSelected ? 'bg-destructive/10 border-destructive/50' : 'hover:shadow-md hover:bg-accent/5'}`}>
+        <div className="flex items-start md:items-center gap-3">
           {showCheckbox && (
             <div className="shrink-0 flex items-center">
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
-                className="shrink-0 outline-none focus-visible:outline-none focus-visible:ring-0"
+                className="shrink-0 outline-none focus-visible:outline-none focus-visible:ring-0 h-5 w-5 md:h-4 md:w-4"
               />
             </div>
           )}
           <StatusIndicator status={status.status} className="shrink-0" />
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <h3 className="font-mono text-sm font-medium text-foreground truncate">
+            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+              <h3 className="font-mono text-base md:text-sm font-medium text-foreground truncate">
                 {domain.url}
               </h3>
               
