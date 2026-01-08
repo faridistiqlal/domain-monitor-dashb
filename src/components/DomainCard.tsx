@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from './StatusIndicator'
 import { EditDomainDialog } from './EditDomainDialog'
 import { DomainStatisticsDialog } from './DomainStatisticsDialog'
-import { UptimeBar } from './UptimeBar'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import {
   Tooltip,
@@ -336,7 +335,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   </TooltipContent>
                 </Tooltip>
               )}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center shrink-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -361,11 +360,6 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 >
                   <Copy size={14} />
                 </Button>
-                
-                {/* Compact Uptime Bar */}
-                <div className="ml-1">
-                  <UptimeBar domainId={domain.id} days={90} compact={true} />
-                </div>
               </div>
             </div>
             {domainTags && domainTags.length > 0 && (
