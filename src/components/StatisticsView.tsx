@@ -575,9 +575,12 @@ export function StatisticsView({
                     <ScrollArea className="h-[400px]">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-3">
                     {(() => {
-                      const filtered = domains.filter(d => 
-                        d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())
-                      ).slice(0, 50)
+                      // Show all domains if search is empty, otherwise filter
+                      const filtered = firebaseSearchQuery.trim() === '' 
+                        ? domains.slice(0, 50)  // Show first 50 when no search
+                        : domains.filter(d => 
+                            d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())
+                          ).slice(0, 50)  // Show filtered results (max 50)
                       
                       return filtered.length > 0 ? filtered.map((domain) => {
                         const status = statuses[domain.id]
