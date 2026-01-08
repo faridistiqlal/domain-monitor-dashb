@@ -45,8 +45,47 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.2</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.3</h3>
                   <p className="text-xs text-muted-foreground">Current Release • 8 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="destructive" className="text-xs">Cache Fix</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-yellow-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Bug Fix</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Cache Reset Issue:</strong> Fixed localStorage cache masih punya enabled:true setelah pause. Icon Pause (||) sekarang benar-benar reset ke Play (▶️) setelah refresh.</li>
+                    <li>Reset enabled field di 3 tempat: cache load, Firebase load, background refresh</li>
+                    <li>Consistent behavior di semua load scenario</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench size={16} className="text-blue-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Technical</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Reset enabled saat JSON.parse dari localStorage</li>
+                    <li>Icon selalu akurat reflect monitoring state</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.2</h3>
+                  <p className="text-xs text-muted-foreground">8 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
                   <Badge variant="destructive" className="text-xs">UX Fix</Badge>

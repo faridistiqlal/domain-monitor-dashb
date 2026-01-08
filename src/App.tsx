@@ -166,11 +166,17 @@ function App() {
           const parsedGroups = JSON.parse(cachedGroups)
           const parsedTags = JSON.parse(cachedTags)
           
-          setDomains(parsedDomains)
+          // Reset enabled field from cache - individual monitoring is not persistent
+          const domainsWithResetEnabled = parsedDomains.map((domain: Domain) => ({
+            ...domain,
+            enabled: false // Reset on load from cache
+          }))
+          
+          setDomains(domainsWithResetEnabled)
           setGroups(parsedGroups)
           setTags(parsedTags)
           
-          console.log('Loaded from cache:', parsedDomains.length, 'domains')
+          console.log('Loaded from cache:', parsedDomains.length, 'domains (enabled fields reset)')
           
           // Refresh from Firebase after 30 seconds (same as auto-check delay)
           setTimeout(async () => {

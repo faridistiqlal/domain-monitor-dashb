@@ -1,5 +1,44 @@
 # Changelog
 
+## Version 3.4.3 - Cache Reset for Individual Monitoring
+**Tanggal Rilis:** 8 Januari 2026
+
+### 🔧 Bug Fix: Icon Pause Masih Muncul Setelah Refresh (Cache Issue)
+- **FIXED: localStorage cache masih punya `enabled: true`**
+  - User pause domain → Firebase tersimpan `enabled: false` ✅
+  - Refresh page → Load dari localStorage cache yang masih `enabled: true` ❌
+  - Icon tampil Pause (||) padahal seharusnya Play (▶️)
+  - v3.4.2 hanya reset dari Firebase, tidak reset dari cache
+  
+### ✅ Solusi Implementasi
+- **Reset `enabled` field saat load dari localStorage cache**
+- **Reset di 3 tempat:**
+  1. Load from cache (instant load)
+  2. Load from Firebase (no cache scenario)
+  3. Background refresh dari Firebase (30s interval)
+
+### 🎯 Technical Details
+```typescript
+// BEFORE (Bug - cache tidak direset):
+const parsedDomains = JSON.parse(cachedDomains)
+setDomains(parsedDomains) // ❌ enabled: true masih ada
+
+// AFTER (Fix - reset cache):
+const parsedDomains = JSON.parse(cachedDomains)
+const domainsWithResetEnabled = parsedDomains.map(domain => ({
+  ...domain,
+  enabled: false // ✅ Reset saat load dari cache
+}))
+setDomains(domainsWithResetEnabled)
+```
+
+### 📊 Impact
+- ✅ Icon selalu akurat setelah refresh (Play untuk semua domain)
+- ✅ Tidak ada state yang tersisa di cache
+- ✅ Consistent behavior di semua load scenario
+
+---
+
 ## Version 3.4.2 - Individual Monitoring Reset on Refresh
 **Tanggal Rilis:** 8 Januari 2026
 
