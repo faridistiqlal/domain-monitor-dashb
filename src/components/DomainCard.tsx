@@ -221,27 +221,6 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 </Tooltip>
               )}
 
-              {/* Statistics Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setShowStats(true)
-                    }}
-                    className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-accent hover:bg-accent/10 cursor-pointer"
-                  >
-                    <ChartLine size={16} weight="fill" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  Lihat statistik
-                </TooltipContent>
-              </Tooltip>
-
               {onEdit && existingUrls && (
                 <EditDomainDialog
                   domain={domain}
