@@ -576,20 +576,32 @@ export function StatisticsView({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-3">
                     {(() => {
                       // Show all domains if search is empty, otherwise filter
-                      const filtered = firebaseSearchQuery.trim() === '' 
+                      let toDisplay = firebaseSearchQuery.trim() === '' 
                         ? domains.slice(0, 50)  // Show first 50 when no search
                         : domains.filter(d => 
                             d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())
                           ).slice(0, 50)  // Show filtered results (max 50)
                       
-                      return filtered.length > 0 ? filtered.map((domain) => {
+                      // Sort by status to show non-online domains first (for visibility)
+                      if (firebaseSearchQuery.trim() === '') {
+                        toDisplay = toDisplay.sort((a, b) => {
+                          const statusA = statuses[a.id]?.status || 'unknown'
+                          const statusB = statuses[b.id]?.status || 'unknown'
+                          const order: Record<string, number> = { 'offline': 0, 'dns-only': 1, 'online': 2, 'checking': 3, 'unknown': 4 }
+                          return (order[statusA] || 4) - (order[statusB] || 4)
+                        })
+                      }
+                      
+                      return toDisplay.length > 0 ? toDisplay.map((domain) => {
                         const status = statuses[domain.id]
                         const statusColor =
                           status?.status === 'online'
                             ? 'oklch(0.70 0.22 145)'
                             : status?.status === 'dns-only'
                             ? 'rgb(245, 158, 11)'
-                            : 'oklch(0.60 0.25 25)'
+                            : status?.status === 'offline'
+                            ? 'oklch(0.60 0.25 25)'
+                            : 'gray'
 
                         return (
                           <Button
