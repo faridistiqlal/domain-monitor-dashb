@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar, SignOut, LockKey, Bell } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar, SignOut, LockKey, Bell, MapPin } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
+import { PinnedDomainCard } from '@/components/PinnedDomainCard'
 import { EmptyState } from '@/components/EmptyState'
 import { ImportDialog } from '@/components/ImportDialog'
 import { InfoDialog } from '@/components/InfoDialog'
@@ -87,7 +88,7 @@ function App() {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
   const [individualMonitorIntervals, setIndividualMonitorIntervals] = useState<Record<string, NodeJS.Timeout>>({})
-  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics'>('domains')
+  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'pinned'>('domains')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
@@ -778,6 +779,21 @@ function App() {
       delete newStatuses[id]
       return newStatuses
     })
+    toast.success('Domain berhasil diubah')
+  }
+
+  const handleTogglePin = (id: string) => {
+    setDomains(current =>
+      (current || []).map(d =>
+        d.id === id ? { ...d, pinned: !d.pinned } : d
+      )
+    )
+    const domain = domains.find(d => d.id === id)
+    if (domain?.pinned) {
+      toast.success('Domain di-unpin')
+    } else {
+      toast.success('Domain di-pin')
+    }
     toast.success('Domain berhasil diperbarui')
   }
 
@@ -1547,16 +1563,20 @@ function App() {
           </header>
 
         <Tabs value={activeTab} onValueChange={(val) => {
-          setActiveTab(val as 'domains' | 'groups' | 'manage' | 'tags' | 'statistics')
+          setActiveTab(val as 'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'pinned')
           if (val === 'domains' && viewMode === 'group-detail') {
             setViewMode('all')
             setSelectedGroupId(null)
           }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5 mb-4">
+          <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-4">
             <TabsTrigger value="domains" className="gap-1.5">
               <ListBullets size={14} />
               Monitoring
+            </TabsTrigger>
+            <TabsTrigger value="pinned" className="gap-1.5">
+              <MapPin size={14} weight="fill" />
+              Pin
             </TabsTrigger>
             <TabsTrigger value="statistics" className="gap-1.5">
               <ChartBar size={14} />
@@ -1911,6 +1931,7 @@ function App() {
                     statuses={statuses}
                     tags={tags}
                     onToggleMonitoring={handleToggleDomainMonitoring}
+                    onTogglePin={handleTogglePin}
                     showCheckbox={false}
                     simpleMode={false}
                   />
@@ -2145,6 +2166,7 @@ function App() {
                         onDelete={canEdit ? handleDeleteDomain : undefined}
                         onEdit={canEdit ? handleEditDomain : undefined}
                         onToggleMonitoring={handleToggleDomainMonitoring}
+                        onTogglePin={handleTogglePin}
                         existingUrls={(domains || []).filter(d => !filteredManageDomains.some(fd => fd.id === d.id)).map(d => d.url)}
                         selectedDomains={selectedDomains}
                         onSelect={canEdit ? handleSelectDomain : undefined}
@@ -2155,6 +2177,55 @@ function App() {
                   </ScrollArea>
                 </div>
               )}
+          </TabsContent>
+
+          <TabsContent value="pinned" className="space-y-4 flex-1 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <MapPin size={20} weight="fill" className="text-primary" />
+                  Domain Pinned
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Domain favorit dengan visualisasi uptime dan status real-time
+                </p>
+              </div>
+            </div>
+            
+            <Separator />
+
+            {domains.filter(d => d.pinned).length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center space-y-3 max-w-md">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+                    <MapPin size={32} className="text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Belum Ada Domain yang Di-pin</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Pin domain favorit Anda dari tab Monitoring atau Kelola Data untuk akses cepat dan monitoring visual
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                  {domains.filter(d => d.pinned).map(domain => {
+                    const domainStatus = statuses[domain.id] || { 
+                      id: domain.id, 
+                      status: 'checking' as const 
+                    }
+                    return (
+                      <PinnedDomainCard
+                        key={domain.id}
+                        domain={domain}
+                        status={domainStatus}
+                        onUnpin={handleTogglePin}
+                      />
+                    )
+                  })}
+                </div>
+              </ScrollArea>
+            )}
           </TabsContent>
 
           <TabsContent value="statistics" className="space-y-4 flex-1 flex flex-col overflow-hidden">

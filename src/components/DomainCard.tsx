@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning, Play, Pause, ChartLine } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning, Play, Pause, ChartLine, MapPin, X as XIcon } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -22,6 +22,7 @@ interface DomainCardProps {
   onDelete: (id: string) => void
   onEdit?: (id: string, newUrl: string) => void
   onToggleMonitoring?: (id: string) => void
+  onTogglePin?: (id: string) => void
   existingUrls?: string[]
   group?: DomainGroup
   tags?: DomainTag[]
@@ -31,7 +32,7 @@ interface DomainCardProps {
   simpleMode?: boolean
 }
 
-export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitoring, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
+export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitoring, onTogglePin, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
   const [showStats, setShowStats] = useState(false)
   
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
@@ -228,6 +229,26 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   existingUrls={existingUrls}
                 />
               )}
+              
+              {/* Pin Button */}
+              {onTogglePin && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onTogglePin(domain.id)}
+                      className={`h-8 w-8 ${domain.pinned ? 'text-primary' : 'text-muted-foreground'} hover:text-primary hover:bg-primary/10`}
+                    >
+                      {domain.pinned ? <MapPin size={16} weight="fill" /> : <MapPin size={16} />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    {domain.pinned ? 'Unpin domain' : 'Pin domain'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
               <Button
                 variant="ghost"
                 size="icon"

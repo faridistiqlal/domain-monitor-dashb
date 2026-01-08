@@ -10,6 +10,7 @@ export interface Domain {
   lastStatusChange?: number // timestamp when status last changed
   consecutiveFailures?: number // track failure count for smart retry
   lastStatsWrite?: number // timestamp of last Firebase stats write (for hourly policy)
+  pinned?: boolean // Pin domain for quick access dashboard
 }
 
 export interface DomainTag {

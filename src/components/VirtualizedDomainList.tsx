@@ -12,6 +12,7 @@ interface OptimizedDomainListProps {
   onDelete?: (id: string) => void
   onEdit?: (id: string, newUrl: string) => void
   onToggleMonitoring?: (id: string) => void
+  onTogglePin?: (id: string) => void
   existingUrls?: string[]
   selectedDomains?: Set<string>
   onSelect?: (id: string, selected: boolean) => void
@@ -25,6 +26,7 @@ const DomainCardMemo = memo(DomainCard, (prev, next) => {
     prev.domain.url === next.domain.url &&
     prev.domain.notificationsEnabled === next.domain.notificationsEnabled &&
     prev.domain.enabled === next.domain.enabled &&
+    prev.domain.pinned === next.domain.pinned &&
     prev.status.status === next.status.status &&
     prev.status.ipAddress === next.status.ipAddress &&
     prev.status.dnsResolvable === next.status.dnsResolvable &&
@@ -46,6 +48,7 @@ export const OptimizedDomainList = memo(({
   onDelete,
   onEdit,
   onToggleMonitoring,
+  onTogglePin,
   existingUrls,
   selectedDomains,
   onSelect,
@@ -105,6 +108,7 @@ export const OptimizedDomainList = memo(({
             onDelete={onDelete || (() => {})}
             onEdit={onEdit}
             onToggleMonitoring={onToggleMonitoring}
+            onTogglePin={onTogglePin}
             existingUrls={existingUrls}
             group={group}
             tags={tags}
