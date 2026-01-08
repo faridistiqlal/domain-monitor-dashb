@@ -40,17 +40,40 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
     
     setError(null)
     try {
+      console.log('[DomainCharts] Starting data load for:', selectedDomain.url)
+      console.log('[DomainCharts] Domain ID:', selectedDomain.id)
+      console.log('[DomainCharts] Days:', days)
+      
       const [statsData, incidentsData] = await Promise.all([
         getDomainStats(selectedDomain.id, days),
         getDomainIncidents(selectedDomain.id, days)
       ])
+      
+      console.log('[DomainCharts] Stats loaded:', statsData.length, 'records')
+      console.log('[DomainCharts] Incidents loaded:', incidentsData.length, 'records')
+      
+      if (statsData.length > 0) {
+        console.log('[DomainCharts] First stat:', statsData[0])
+        console.log('[DomainCharts] Last stat:', statsData[statsData.length - 1])
+      } else {
+        console.warn('[DomainCharts] No stats data found! Check Firebase collection "domain-stats-daily"')
+        console.warn('[DomainCharts] Query: domainId ==', selectedDomain.id)
+      }
+      
       setStats(statsData.reverse()) // Oldest first for chart
       setIncidents(incidentsData)
     } catch (error: any) {
-      console.error('Error loading domain charts:', error)
+      console.error('[DomainCharts] Error loading domain charts:', error)
+      console.error('[DomainCharts] Error details:', {
+        code: error?.code,
+        message: error?.message,
+        name: error?.name
+      })
       // Check if it's a quota error
       if (error?.code === 'resource-exhausted' || error?.message?.includes('Quota exceeded')) {
         setError('Firebase quota habis untuk hari ini. Data analytics akan tersedia kembali besok (UTC 00:00). Gunakan tab "Statistik Real-time" untuk monitoring manual.')
+      } else if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+        setError('Firebase index belum dibuat. Data sedang diproses. Coba lagi dalam beberapa menit.')
       } else {
         setError('Gagal memuat data. Silakan coba lagi nanti.')
       }
@@ -136,6 +159,18 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
     ? ((last24h.successChecks / last24h.totalChecks) * 100).toFixed(1)
     : '0'
 
+  // Get latest status from hourly data (most recent hour with checks)
+  const latestHourlyStatus = last24h 
+    ? [...last24h.hourly].reverse().find(h => h.checks > 0)?.status
+    : undefined
+  
+  // Determine current status: use currentStatus if available, otherwise from latest hourly data
+  const displayStatus = currentStatus?.status || latestHourlyStatus || 'unknown'
+  const statusLabel = displayStatus === 'online' ? 'Up' 
+    : displayStatus === 'offline' ? 'Down' 
+    : displayStatus === 'dns-only' ? 'DNS Only'
+    : 'Unknown'
+
   // Create uptime bars data (last 90 checks from hourly data)
   const uptimeBars = stats.slice(-4).flatMap(stat => 
     stat.hourly
@@ -209,10 +244,26 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
       {stats.length === 0 ? (
         <Card>
           <CardContent className="py-12">
-            <div className="text-center text-muted-foreground">
-              <ChartLine size={48} className="mx-auto mb-3 opacity-50" />
-              <p className="text-sm">Belum ada data untuk periode ini</p>
-              <p className="text-xs mt-1">Data akan tersedia setelah beberapa check dilakukan</p>
+            <div className="text-center space-y-3">
+              <ChartLine size={48} className="mx-auto text-muted-foreground/50" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Tidak Ada Data di Firebase</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Domain ini belum pernah di-check atau data belum tersimpan ke Firebase
+                </p>
+              </div>
+              <div className="text-xs text-left max-w-md mx-auto bg-muted/50 p-3 rounded-lg space-y-2">
+                <p className="font-semibold">Debug Info:</p>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Domain ID: <code className="text-xs">{selectedDomain.id}</code></li>
+                  <li>• Collection: <code className="text-xs">domain-stats-daily</code></li>
+                  <li>• Query: Last {days} days</li>
+                  <li>• Status: {stats.length === 0 ? '❌ No documents found' : '✓ Documents exist'}</li>
+                </ul>
+                <p className="text-xs mt-2">
+                  Buka browser console (F12) untuk detail logging
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -228,10 +279,10 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
                       Check every {last24h ? `${Math.round(24 * 60 / (last24h.totalChecks / last24h.hourly.filter(h => h.checks > 0).length))}` : '60'} minutes
                     </div>
                     <Badge 
-                      variant={currentStatus?.status === 'online' ? 'default' : 'destructive'}
+                      variant={displayStatus === 'online' ? 'default' : displayStatus === 'dns-only' ? 'secondary' : 'destructive'}
                       className="text-xs"
                     >
-                      {currentStatus?.status === 'online' ? 'Up' : currentStatus?.status === 'offline' ? 'Down' : 'Unknown'}
+                      {statusLabel}
                     </Badge>
                   </div>
                   <div className="flex gap-0.5 flex-wrap">

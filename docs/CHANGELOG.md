@@ -1,5 +1,51 @@
 # Changelog
 
+## Version 3.1.3 - Analytics Data Read Fix
+**Tanggal Rilis:** 8 Januari 2026
+
+### 🔧 Bug Fix: Analytics Tab Tidak Bisa Baca Data Firebase
+- **FIXED: Firebase Composite Index Error** 
+  - Query menggunakan `where + orderBy` memerlukan composite index
+  - Firebase melempar error silent, return array kosong
+  - User report: "data 20K+ di Firebase tapi chart kosong"
+  
+### ✅ Solusi Implementasi
+- **Remove orderBy dari Firebase query** - Sort in-memory instead (lebih murah)
+- **Tambah extensive logging** - Console.log untuk debug query Firebase
+- **Improved error messages** - Tampilkan debug info jika data kosong
+- **Better empty state** - Tampilkan Domain ID, collection name, query details
+
+### 🎯 Technical Details
+```typescript
+// BEFORE (Error - butuh composite index):
+const q = query(
+  collection(db, DAILY_STATS_COLLECTION),
+  where('domainId', '==', domainId),
+  where('date', '>=', cutoffString),
+  orderBy('date', 'desc')  // ❌ Composite index required
+)
+
+// AFTER (Fix - sort in-memory):
+const q = query(
+  collection(db, DAILY_STATS_COLLECTION),
+  where('domainId', '==', domainId),
+  where('date', '>=', cutoffString)  // ✅ No orderBy
+)
+// Sort in JavaScript after fetch
+results.sort((a, b) => b.date.localeCompare(a.date))
+```
+
+### 📊 Impact
+- ✅ Analytics tab sekarang bisa baca data dari Firebase
+- ✅ Chart akan tampil jika data ada di `domain-stats-daily` collection
+- ✅ Detailed logging untuk troubleshooting
+- ✅ Clear error messages untuk user
+
+### ⚠️ Note
+Jika masih kosong setelah fix ini, berarti **data memang belum ada** di Firebase. Perlu enable auto-check untuk mulai collect data.
+
+---
+
 ## Version 3.1.2 - Individual Domain Monitoring
 **Tanggal Rilis:** 7 Januari 2026
 

@@ -222,55 +222,94 @@ export async function resolveIncident(
 
 /**
  * Get recent incidents for a domain
+ * NO INDEX REQUIRED: Uses single where clause, filters in JavaScript
  */
 export async function getDomainIncidents(
   domainId: string,
   days: number = 7
 ): Promise<DomainIncident[]> {
   try {
+    console.log(`[getDomainIncidents] Loading incidents for ${domainId}, last ${days} days`)
+    
     const cutoffTime = Date.now() - (days * 24 * 60 * 60 * 1000)
     
+    console.log(`[getDomainIncidents] Cutoff time: ${new Date(cutoffTime).toISOString()}`)
+    
+    // FIXED: Single where clause only (no composite index needed!)
+    // Filter by startTime in JavaScript after fetch
     const q = query(
       collection(db, INCIDENTS_COLLECTION),
-      where('domainId', '==', domainId),
-      where('startTime', '>=', cutoffTime),
-      orderBy('startTime', 'desc'),
-      limit(50)
+      where('domainId', '==', domainId)
     )
     
+    console.log(`[getDomainIncidents] Executing query (single where, no index needed)...`)
     const snapshot = await getDocs(q)
-    return snapshot.docs.map(doc => doc.data() as DomainIncident)
-  } catch (error) {
-    console.error('Error getting domain incidents:', error)
+    console.log(`[getDomainIncidents] Found ${snapshot.docs.length} documents from Firebase`)
+    
+    // Filter by time, sort, and limit in memory
+    const results = snapshot.docs
+      .map(doc => doc.data() as DomainIncident)
+      .filter(data => data.startTime >= cutoffTime) // Filter in JS
+      .sort((a, b) => b.startTime - a.startTime) // Sort in JS
+      .slice(0, 50) // Limit in JS
+    
+    console.log(`[getDomainIncidents] After time filter (>= ${new Date(cutoffTime).toISOString()}): ${results.length} incidents`)
+    return results
+  } catch (error: any) {
+    console.error('[getDomainIncidents] ERROR:', error)
+    console.error('[getDomainIncidents] Error code:', error?.code)
+    console.error('[getDomainIncidents] Error message:', error?.message)
     return []
   }
 }
 
 /**
  * Get daily stats for a domain for date range
- * Optimized: Uses collection query instead of individual getDoc calls
+ * NO INDEX REQUIRED: Uses single where clause, filters in JavaScript
  */
 export async function getDomainStats(
   domainId: string,
   days: number = 30
 ): Promise<DomainDailyStats[]> {
   try {
+    console.log(`[getDomainStats] Loading stats for ${domainId}, last ${days} days`)
+    
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - days)
     const cutoffString = cutoffDate.toISOString().split('T')[0]
     
-    // Use collection query with where clause (more efficient than multiple getDoc calls)
+    console.log(`[getDomainStats] Cutoff date: ${cutoffString}`)
+    console.log(`[getDomainStats] Collection: ${DAILY_STATS_COLLECTION}`)
+    
+    // FIXED: Single where clause only (no composite index needed!)
+    // Filter by date in JavaScript after fetch
     const q = query(
       collection(db, DAILY_STATS_COLLECTION),
-      where('domainId', '==', domainId),
-      where('date', '>=', cutoffString),
-      orderBy('date', 'desc')
+      where('domainId', '==', domainId)
     )
     
+    console.log(`[getDomainStats] Executing query (single where, no index needed)...`)
     const snapshot = await getDocs(q)
-    return snapshot.docs.map(doc => doc.data() as DomainDailyStats)
-  } catch (error) {
-    console.error('Error getting domain stats:', error)
+    console.log(`[getDomainStats] Found ${snapshot.docs.length} documents from Firebase`)
+    
+    // Filter by date and sort in memory
+    const results = snapshot.docs
+      .map(doc => doc.data() as DomainDailyStats)
+      .filter(data => data.date >= cutoffString) // Filter in JS
+      .sort((a, b) => b.date.localeCompare(a.date)) // Sort in JS
+    
+    console.log(`[getDomainStats] After date filter (>= ${cutoffString}): ${results.length} documents`)
+    
+    if (results.length > 0) {
+      console.log(`[getDomainStats] First stat: ${results[0].date}, checks: ${results[0].totalChecks}`)
+      console.log(`[getDomainStats] Last stat: ${results[results.length - 1].date}`)
+    }
+    
+    return results
+  } catch (error: any) {
+    console.error('[getDomainStats] ERROR:', error)
+    console.error('[getDomainStats] Error code:', error?.code)
+    console.error('[getDomainStats] Error message:', error?.message)
     return []
   }
 }

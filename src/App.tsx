@@ -495,15 +495,48 @@ function App() {
   const checkAllDomains = async (showToast = false, batchCheckOnly = false, isAutoCheck = false) => {
     if (!domains || domains.length === 0) return
 
+    const now = new Date()
+    const currentMinute = now.getMinutes()
+    const currentHour = now.getHours()
+    
+    // Determine current batch and next batch schedule
+    let currentBatch = 0
+    let nextBatchMinute = 0
+    if (currentMinute >= 0 && currentMinute < 5) { currentBatch = 1; nextBatchMinute = 5 }
+    else if (currentMinute >= 5 && currentMinute < 10) { currentBatch = 2; nextBatchMinute = 10 }
+    else if (currentMinute >= 10 && currentMinute < 15) { currentBatch = 3; nextBatchMinute = 15 }
+    else if (currentMinute >= 15 && currentMinute < 20) { currentBatch = 4; nextBatchMinute = 20 }
+    else if (currentMinute >= 20 && currentMinute < 25) { currentBatch = 1; nextBatchMinute = 25 }
+    else if (currentMinute >= 25 && currentMinute < 30) { currentBatch = 2; nextBatchMinute = 30 }
+    else if (currentMinute >= 30 && currentMinute < 35) { currentBatch = 3; nextBatchMinute = 35 }
+    else if (currentMinute >= 35 && currentMinute < 40) { currentBatch = 4; nextBatchMinute = 40 }
+    else if (currentMinute >= 40 && currentMinute < 45) { currentBatch = 1; nextBatchMinute = 45 }
+    else if (currentMinute >= 45 && currentMinute < 50) { currentBatch = 2; nextBatchMinute = 50 }
+    else if (currentMinute >= 50 && currentMinute < 55) { currentBatch = 3; nextBatchMinute = 55 }
+    else { currentBatch = 4; nextBatchMinute = 0 } // 55-60
+    
+    const nextBatchHour = nextBatchMinute === 0 ? (currentHour + 1) % 24 : currentHour
+    const nextBatchTime = `${String(nextBatchHour).padStart(2, '0')}:${String(nextBatchMinute).padStart(2, '0')}`
+
     // Filter domains to check based on batch schedule (if staggered checking enabled)
     let domainsToCheck = domains
     
     if (batchCheckOnly && autoRefreshEnabled) {
+      console.log(`\n🔄 [BATCH CHECK] Starting batch check...`)
+      console.log(`📅 Current time: ${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`)
+      console.log(`📦 Current batch: BATCH ${currentBatch}`)
+      console.log(`⏭️  Next batch: BATCH ${(currentBatch % 4) + 1} at ${nextBatchTime}`)
+      
       domainsToCheck = domains.filter(domain => shouldCheckNow(domain))
       
       if (domainsToCheck.length === 0) {
+        console.log(`⏸️  No domains in current batch window - skipping`)
         return // No domains in current batch window
       }
+      
+      console.log(`✅ Domains to check in BATCH ${currentBatch}: ${domainsToCheck.length}/${domains.length}`)
+      const batchDomains = domainsToCheck.map(d => d.checkBatch).filter((v, i, a) => a.indexOf(v) === i)
+      console.log(`📊 Batch distribution: ${batchDomains.join(', ')}`)
     }
 
     if (showToast) {
@@ -545,8 +578,13 @@ function App() {
       // Write to Firebase: ONLY for auto-check (not manual check)
       // Manual check is local-only for real-time view without Firebase writes
       if (isAutoCheck && (statusChanged || shouldWriteHourly)) {
+        console.log(`💾 [FIREBASE WRITE] Domain: ${domain.url}`)
+        console.log(`   └─ Status: ${result.status} (changed: ${statusChanged}, hourly: ${shouldWriteHourly})`)
+        console.log(`   └─ Response time: ${result.responseTime}ms`)
+        
         try {
           await updateDailyStats(result.id, result)
+          console.log(`   └─ ✅ Successfully written to Firebase`)
           trackFirebaseRead(1) // Read daily stats
           trackFirebaseWrite(1) // Write updated stats
           
@@ -559,8 +597,11 @@ function App() {
             )
           )
         } catch (error) {
+          console.error(`   └─ ❌ Firebase write FAILED:`, error)
           console.error(`Failed to update stats for ${domain.url}:`, error)
         }
+      } else if (isAutoCheck) {
+        console.log(`⏭️  [FIREBASE SKIP] ${domain.url} - No write needed (last write: ${Math.round(hoursSinceLastWrite * 60)}min ago)`)
       }
       
       // Detect status changes (already calculated above for write policy)
@@ -930,7 +971,7 @@ function App() {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true)
-    setCountdown(60)
+    setCountdown(getSecondsUntilNextBatch())
     if (autoRefreshEnabled) {
       setIsPaused(false)
     }
@@ -945,7 +986,7 @@ function App() {
         toast.info('Auto-refresh dijeda')
       } else {
         toast.info('Auto-refresh dilanjutkan')
-        setCountdown(60)
+        setCountdown(getSecondsUntilNextBatch())
       }
       return newPausedState
     })
@@ -957,7 +998,7 @@ function App() {
       if (newState) {
         toast.success('Mode auto-refresh diaktifkan')
         setIsPaused(false)
-        setCountdown(60)
+        setCountdown(getSecondsUntilNextBatch())
         if (!hasChecked) {
           checkAllDomains(true, false, true) // Auto check: write to Firebase
         }
@@ -1226,30 +1267,21 @@ function App() {
     toast.success(`Tag berhasil ditambahkan ke ${domainIds.length} domain`)
   }
 
+  // Initial auto-check delay when auto-refresh enabled
   useEffect(() => {
-    if (!autoRefreshEnabled) return
+    if (!autoRefreshEnabled || isPaused) return
 
-    // Delay initial check by 30 seconds to avoid Firebase quota on app load
+    // Delay initial check by 10 seconds to avoid Firebase quota on app load
     const initialDelay = setTimeout(() => {
+      console.log('[Auto-Check] Initial check after 10s delay')
       checkAllDomains(false, true, true) // Initial batch check with Firebase
-      setCountdown(60)
-    }, 30000)
-
-    if (isPaused) {
-      clearTimeout(initialDelay)
-      return
-    }
-
-    const interval = setInterval(() => {
-      checkAllDomains(false, true, true) // Auto batch check with Firebase
-      setCountdown(60)
-    }, 60000) // Check every minute for batch schedules
+      setCountdown(getSecondsUntilNextBatch())
+    }, 10000)
 
     return () => {
       clearTimeout(initialDelay)
-      clearInterval(interval)
     }
-  }, [domains, isPaused, autoRefreshEnabled])
+  }, [autoRefreshEnabled, isPaused])
 
   // Auto-cleanup old stats (runs once per day)
   useEffect(() => {
@@ -1274,17 +1306,63 @@ function App() {
     return () => clearTimeout(cleanupTimer)
   }, [])
 
+  // Calculate seconds until next batch check
+  const getSecondsUntilNextBatch = () => {
+    const now = new Date()
+    const currentMinute = now.getMinutes()
+    const currentSecond = now.getSeconds()
+    
+    // Find next batch time (every 5 minutes: 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55)
+    const nextBatchMinute = Math.ceil((currentMinute + 1) / 5) * 5
+    const minutesUntilNext = nextBatchMinute - currentMinute
+    const secondsUntilNext = (minutesUntilNext * 60) - currentSecond
+    
+    return secondsUntilNext
+  }
+
+  // Web Worker for background auto-checking (not affected by browser tab throttling)
   useEffect(() => {
     if (!autoRefreshEnabled || isPaused) return
 
+    console.log('[Worker] Initializing background worker for auto-check...')
+    
+    // Create Web Worker
+    const worker = new Worker(new URL('@/lib/background-worker.ts', import.meta.url), {
+      type: 'module'
+    })
+
+    // Initialize countdown to next batch
+    setCountdown(getSecondsUntilNextBatch())
+
+    // Countdown UI updater (runs every second in main thread)
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) return 60
+        if (prev <= 1) {
+          return 300 // Reset to 5 minutes
+        }
         return prev - 1
       })
     }, 1000)
 
-    return () => clearInterval(countdownInterval)
+    // Handle messages from worker
+    worker.onmessage = (e: MessageEvent) => {
+      if (e.data.type === 'CHECK') {
+        console.log('[Worker] Received CHECK signal from worker, triggering batch check...')
+        checkAllDomains(false, true, true) // Batch check with Firebase write
+        setCountdown(getSecondsUntilNextBatch()) // Reset countdown
+      }
+    }
+
+    // Start worker interval
+    worker.postMessage({ type: 'START' })
+    console.log('[Worker] Background worker started')
+
+    return () => {
+      console.log('[Worker] Cleaning up background worker')
+      worker.postMessage({ type: 'STOP' })
+      worker.terminate()
+      clearInterval(countdownInterval)
+    }
   }, [isPaused, autoRefreshEnabled])
 
   useEffect(() => {
@@ -1655,7 +1733,7 @@ function App() {
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">
                       {autoRefreshEnabled 
-                        ? (isPaused ? 'Dijeda' : `Refresh dalam ${countdown}s`) 
+                        ? (isPaused ? 'Dijeda' : `Next check in ${Math.floor(countdown / 60)}m ${countdown % 60}s`) 
                         : 'Mode Manual'} • {totalCount} domain
                     </span>
                     {filteredDomains.length !== totalCount && (
@@ -1665,7 +1743,7 @@ function App() {
                     )}
                     {autoRefreshEnabled && !isPaused && (
                       <Progress 
-                        value={(countdown / 60) * 100} 
+                        value={(countdown / 300) * 100} 
                         className="w-16 h-1.5"
                       />
                     )}
