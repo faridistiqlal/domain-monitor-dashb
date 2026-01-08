@@ -579,12 +579,7 @@ export function StatisticsView({
                         d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())
                       )
                       
-                      // Tampilkan semua jika search aktif, limit 100 jika tidak
-                      const displayed = firebaseSearchQuery 
-                        ? filtered 
-                        : filtered.slice(0, 100)
-                      
-                      return displayed.length > 0 ? displayed.map((domain) => {
+                      return filtered.length > 0 ? filtered.map((domain) => {
                         const status = statuses[domain.id]
                         const statusColor =
                           status?.status === 'online'
@@ -623,11 +618,6 @@ export function StatisticsView({
                     })()}
                   </div>
                 </ScrollArea>
-                {domains.length > 100 && firebaseSearchQuery === '' && (
-                  <p className="text-xs text-muted-foreground text-center mt-3">
-                    Menampilkan 100 dari {domains.length} domain • Gunakan search untuk domain lainnya
-                  </p>
-                )}
                 {firebaseSearchQuery && (
                   <p className="text-xs text-muted-foreground text-center mt-3">
                     Ditemukan {domains.filter(d => d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())).length} domain
