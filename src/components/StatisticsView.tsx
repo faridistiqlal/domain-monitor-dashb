@@ -575,33 +575,23 @@ export function StatisticsView({
                     <ScrollArea className="h-[400px]">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-3">
                     {(() => {
-                      // Show all domains if search is empty, otherwise filter
-                      let toDisplay = firebaseSearchQuery.trim() === '' 
-                        ? domains.slice(0, 50)  // Show first 50 when no search
-                        : domains.filter(d => 
-                            d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())
-                          ).slice(0, 50)  // Show filtered results (max 50)
+                      const filtered = domains.filter(d => 
+                        d.url.toLowerCase().includes(firebaseSearchQuery.toLowerCase())
+                      )
                       
-                      // Sort by status to show non-online domains first (for visibility)
-                      if (firebaseSearchQuery.trim() === '') {
-                        toDisplay = toDisplay.sort((a, b) => {
-                          const statusA = statuses[a.id]?.status || 'unknown'
-                          const statusB = statuses[b.id]?.status || 'unknown'
-                          const order: Record<string, number> = { 'offline': 0, 'dns-only': 1, 'online': 2, 'checking': 3, 'unknown': 4 }
-                          return (order[statusA] || 4) - (order[statusB] || 4)
-                        })
-                      }
+                      // Tampilkan semua jika search aktif, limit 100 jika tidak
+                      const displayed = firebaseSearchQuery 
+                        ? filtered 
+                        : filtered.slice(0, 100)
                       
-                      return toDisplay.length > 0 ? toDisplay.map((domain) => {
+                      return displayed.length > 0 ? displayed.map((domain) => {
                         const status = statuses[domain.id]
                         const statusColor =
                           status?.status === 'online'
                             ? 'oklch(0.70 0.22 145)'
                             : status?.status === 'dns-only'
                             ? 'rgb(245, 158, 11)'
-                            : status?.status === 'offline'
-                            ? 'oklch(0.60 0.25 25)'
-                            : 'gray'
+                            : 'oklch(0.60 0.25 25)'
 
                         return (
                           <Button
@@ -633,9 +623,9 @@ export function StatisticsView({
                     })()}
                   </div>
                 </ScrollArea>
-                {domains.length > 50 && firebaseSearchQuery === '' && (
+                {domains.length > 100 && firebaseSearchQuery === '' && (
                   <p className="text-xs text-muted-foreground text-center mt-3">
-                    Menampilkan 50 dari {domains.length} domain
+                    Menampilkan 100 dari {domains.length} domain • Gunakan search untuk domain lainnya
                   </p>
                 )}
                 {firebaseSearchQuery && (
