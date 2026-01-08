@@ -211,9 +211,10 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                       variant="ghost"
                       size="icon"
                       onClick={handleToggleMonitoring}
-                      className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                      className="h-10 w-10 md:h-7 md:w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
                     >
-                      {isEnabled ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
+                      {isEnabled ? <Pause size={18} weight="fill" className="md:hidden" /> : <Play size={18} weight="fill" className="md:hidden" />}
+                      {isEnabled ? <Pause size={16} weight="fill" className="hidden md:block" /> : <Play size={16} weight="fill" className="hidden md:block" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
@@ -238,9 +239,10 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                       variant="ghost"
                       size="icon"
                       onClick={() => onTogglePin(domain.id)}
-                      className={`h-8 w-8 ${domain.pinned ? 'text-primary' : 'text-muted-foreground'} hover:text-primary hover:bg-primary/10`}
+                      className={`h-10 w-10 md:h-8 md:w-8 ${domain.pinned ? 'text-primary' : 'text-muted-foreground'} hover:text-primary hover:bg-primary/10`}
                     >
-                      {domain.pinned ? <MapPin size={16} weight="fill" /> : <MapPin size={16} />}
+                      {domain.pinned ? <MapPin size={18} weight="fill" className="md:hidden" /> : <MapPin size={18} className="md:hidden" />}
+                      {domain.pinned ? <MapPin size={16} weight="fill" className="hidden md:block" /> : <MapPin size={16} className="hidden md:block" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
@@ -253,9 +255,10 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 variant="ghost"
                 size="icon"
                 onClick={() => onDelete(domain.id)}
-                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="h-10 w-10 md:h-8 md:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
-                <Trash size={16} />
+                <Trash size={18} className="md:hidden" />
+                <Trash size={16} className="hidden md:block" />
               </Button>
             </div>
           </div>
