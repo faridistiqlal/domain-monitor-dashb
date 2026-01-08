@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from './StatusIndicator'
 import { EditDomainDialog } from './EditDomainDialog'
 import { DomainStatisticsDialog } from './DomainStatisticsDialog'
+import { UptimeBar } from './UptimeBar'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import {
   Tooltip,
@@ -462,6 +463,11 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
             )}
           </div>
 
+        </div>
+        
+        {/* Uptime Bar */}
+        <div className="mt-3 pl-10">
+          <UptimeBar domainId={domain.id} days={90} />
         </div>
       </Card>
       
