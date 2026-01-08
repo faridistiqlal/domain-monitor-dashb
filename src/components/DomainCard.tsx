@@ -234,7 +234,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
-                  View statistics
+                  Lihat statistik
                 </TooltipContent>
               </Tooltip>
 
