@@ -227,10 +227,14 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setShowStats(true)}
-                    className="h-7 w-7 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setShowStats(true)
+                    }}
+                    className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-accent hover:bg-accent/10 cursor-pointer"
                   >
-                    <ChartLine size={16} />
+                    <ChartLine size={16} weight="fill" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
@@ -249,7 +253,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 variant="ghost"
                 size="icon"
                 onClick={() => onDelete(domain.id)}
-                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
                 <Trash size={16} />
               </Button>
