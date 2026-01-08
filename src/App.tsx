@@ -17,6 +17,7 @@ import { PinnedDomainCard } from '@/components/PinnedDomainCard'
 import { EmptyState } from '@/components/EmptyState'
 import { ImportDialog } from '@/components/ImportDialog'
 import { InfoDialog } from '@/components/InfoDialog'
+import { MobileNav } from '@/components/MobileNav'
 import { GroupCard } from '@/components/GroupCard'
 import { GroupFormDialog } from '@/components/GroupFormDialog'
 import { AssignDomainsDialog } from '@/components/AssignDomainsDialog'
@@ -1519,24 +1520,39 @@ function App() {
       <div className="h-screen bg-card overflow-hidden flex flex-col">
         <div className="container mx-auto px-4 py-4 max-w-5xl flex-1 flex flex-col overflow-hidden min-h-0">
           <header className="mb-4">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-2">
+              {/* Mobile Hamburger - Only visible on mobile */}
+              <MobileNav
+                onImport={() => setShowImportDialog(true)}
+                onExport={handleExportCSV}
+                onNotificationSettings={() => setShowNotificationSettings(true)}
+                onSettings={() => setShowSettings(true)}
+                onInfo={() => setShowInfoDialog(true)}
+                onChangePassword={handlePasswordChange}
+                onLogout={handleLogout}
+                isAutoRefresh={autoRefreshEnabled}
+                onToggleAutoRefresh={handleToggleAutoRefresh}
+                notificationEnabled={notificationSettings.enabled}
+              />
+              
               <div className="flex items-center gap-2.5">
                 <img 
                   src="/logo.webp" 
                   alt="Logo Kendal"
-                  className="w-10 h-10 object-contain"
+                  className="w-8 h-8 md:w-10 md:h-10 object-contain"
                 />
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                  <h1 className="text-lg md:text-2xl font-bold tracking-tight text-foreground">
                     Domain Monitor
                   </h1>
-                  <p className="text-xs text-muted-foreground tracking-wide">
+                  <p className="text-[10px] md:text-xs text-muted-foreground tracking-wide">
                     Kabupaten Kendal
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Desktop Actions - Hidden on mobile */}
+              <div className="hidden md:flex items-center gap-2">
                 {/* Settings Menu Button */}
                 {isAuthenticated && (
                   <SettingsMenuDialog
@@ -1611,6 +1627,23 @@ function App() {
                   {isRefreshing && <span className="text-xs ml-1.5">Checking...</span>}
                 </Button>
               </div>
+              
+              {/* Mobile Quick Action - Only Check button visible */}
+              <div className="flex md:hidden items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="h-10 w-10 p-0"
+                  title="Check Sekarang"
+                >
+                  <ArrowClockwise 
+                    size={18} 
+                    className={isRefreshing ? 'animate-spin' : ''} 
+                  />
+                </Button>
+              </div>
             </div>
           </header>
 
@@ -1621,30 +1654,30 @@ function App() {
             setSelectedGroupId(null)
           }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
-          <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-4">
-            <TabsTrigger value="domains" className="gap-1.5">
-              <ListBullets size={14} />
+          <TabsList className="grid w-full max-w-3xl grid-cols-3 md:grid-cols-6 mb-4">
+            <TabsTrigger value="domains" className="gap-1 md:gap-1.5 text-xs md:text-sm">
+              <ListBullets size={14} className="hidden sm:block" />
               Monitoring
             </TabsTrigger>
-            <TabsTrigger value="pinned" className="gap-1.5">
-              <MapPin size={14} weight="fill" />
+            <TabsTrigger value="pinned" className="gap-1 md:gap-1.5 text-xs md:text-sm">
+              <MapPin size={14} weight="fill" className="hidden sm:block" />
               Pin
             </TabsTrigger>
-            <TabsTrigger value="statistics" className="gap-1.5">
-              <ChartBar size={14} />
+            <TabsTrigger value="statistics" className="gap-1 md:gap-1.5 text-xs md:text-sm">
+              <ChartBar size={14} className="hidden sm:block" />
               Statistik
             </TabsTrigger>
-            <TabsTrigger value="groups" className="gap-1.5">
-              <FolderOpen size={14} />
+            <TabsTrigger value="groups" className="gap-1 md:gap-1.5 text-xs md:text-sm">
+              <FolderOpen size={14} className="hidden sm:block" />
               Grup
             </TabsTrigger>
-            <TabsTrigger value="tags" className="gap-1.5">
-              <Tag size={14} />
+            <TabsTrigger value="tags" className="gap-1 md:gap-1.5 text-xs md:text-sm">
+              <Tag size={14} className="hidden sm:block" />
               Tag
             </TabsTrigger>
-            <TabsTrigger value="manage" className="gap-1.5">
-              <Toolbox size={14} />
-              Kelola Data
+            <TabsTrigger value="manage" className="gap-1 md:gap-1.5 text-xs md:text-sm">
+              <Toolbox size={14} className="hidden sm:block" />
+              Kelola
             </TabsTrigger>
           </TabsList>
 
