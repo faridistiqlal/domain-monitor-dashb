@@ -45,8 +45,48 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.0</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.1</h3>
                   <p className="text-xs text-muted-foreground">Current Release • 8 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="destructive" className="text-xs">Critical Fix</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-yellow-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Bug Fix</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Pin Tab Firebase Sync:</strong> Fixed pin/unpin tidak tersimpan di Firebase. Domain yang di-pin di device A sekarang langsung sync ke device B.</li>
+                    <li>Immediate sync saat pin/unpin domain dengan explicit logging</li>
+                    <li>Toast message updated untuk transparansi: "disinkronkan"</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench size={16} className="text-blue-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Technical</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Direct call syncDomainsToFirestore() saat toggle pin</li>
+                    <li>Async/await pattern untuk ensure sync completes</li>
+                    <li>Konsisten dengan Group & Tag sync behavior</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.0</h3>
+                  <p className="text-xs text-muted-foreground">8 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
                   <Badge variant="default" className="text-xs">Major Feature</Badge>

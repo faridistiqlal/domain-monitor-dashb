@@ -1,5 +1,52 @@
 # Changelog
 
+## Version 3.4.1 - Pin Tab Firebase Sync Fix
+**Tanggal Rilis:** 8 Januari 2026
+
+### 🔧 Bug Fix: Pin Tab Tidak Sinkron Antar Device
+- **FIXED: Pin status tidak tersimpan di Firebase**
+  - Tombol pin/unpin hanya update state lokal, tidak sync ke Firebase
+  - User report: "domain di-pin di device A, tapi tidak muncul di device B"
+  - Group, Tag, dan Domain list bisa sync karena ada auto-sync useEffect
+  
+### ✅ Solusi Implementasi
+- **Immediate Firebase sync saat pin/unpin** - Direct call `syncDomainsToFirestore()` 
+- **Explicit logging** - Console.log untuk confirm sync berhasil
+- **Updated toast messages** - Tampilkan "disinkronkan" untuk transparansi
+- **Async/await pattern** - Ensure sync completes before showing success
+
+### 🎯 Technical Details
+```typescript
+// BEFORE (Tidak sync ke Firebase):
+const handleTogglePin = (id: string) => {
+  setDomains(current =>
+    (current || []).map(d =>
+      d.id === id ? { ...d, pinned: !d.pinned } : d
+    )
+  )
+  toast.success('Domain di-pin') // ❌ Hanya lokal
+}
+
+// AFTER (Sync ke Firebase):
+const handleTogglePin = async (id: string) => {
+  const updatedDomains = domains.map(d =>
+    d.id === id ? { ...d, pinned: !domain?.pinned } : d
+  )
+  setDomains(updatedDomains)
+  
+  await syncDomainsToFirestore(updatedDomains) // ✅ Sync
+  toast.success('Domain di-pin dan disinkronkan')
+}
+```
+
+### 📊 Impact
+- ✅ Pin status sekarang tersimpan di Firebase
+- ✅ Pin/unpin domain di device A langsung sync ke device B
+- ✅ Konsisten dengan Group & Tag yang sudah sync
+- ✅ Explicit logging untuk troubleshooting
+
+---
+
 ## Version 3.1.3 - Analytics Data Read Fix
 **Tanggal Rilis:** 8 Januari 2026
 

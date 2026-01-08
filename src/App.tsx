@@ -818,19 +818,29 @@ function App() {
     toast.success('Domain berhasil diubah')
   }
 
-  const handleTogglePin = (id: string) => {
-    setDomains(current =>
-      (current || []).map(d =>
-        d.id === id ? { ...d, pinned: !d.pinned } : d
-      )
-    )
+  const handleTogglePin = async (id: string) => {
     const domain = domains.find(d => d.id === id)
-    if (domain?.pinned) {
-      toast.success('Domain di-unpin')
-    } else {
-      toast.success('Domain di-pin')
+    const newPinnedState = !domain?.pinned
+    
+    const updatedDomains = (domains || []).map(d =>
+      d.id === id ? { ...d, pinned: newPinnedState } : d
+    )
+    
+    setDomains(updatedDomains)
+    
+    // Immediately sync to Firebase
+    try {
+      await syncDomainsToFirestore(updatedDomains)
+      console.log(`[Pin Sync] Domain ${domain?.url} pinned state synced to Firebase: ${newPinnedState}`)
+    } catch (error) {
+      console.error('[Pin Sync] Failed to sync to Firebase:', error)
     }
-    toast.success('Domain berhasil diperbarui')
+    
+    if (newPinnedState) {
+      toast.success('Domain di-pin dan disinkronkan')
+    } else {
+      toast.success('Domain di-unpin dan disinkronkan')
+    }
   }
 
   const handleToggleDomainMonitoring = async (id: string) => {
