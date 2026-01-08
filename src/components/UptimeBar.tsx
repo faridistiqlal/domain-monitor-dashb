@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { DomainDailyStats } from '@/lib/types'
 import {
@@ -25,19 +25,21 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
         setLoading(true)
         const statsRef = collection(db, 'domain-stats-daily')
         
-        // Get last N days of stats for this domain
+        // Query without orderBy to avoid composite index requirement
+        // We'll sort in memory after fetching
         const q = query(
           statsRef,
-          where('domainId', '==', domainId),
-          orderBy('date', 'desc'),
-          limit(days)
+          where('domainId', '==', domainId)
         )
         
         const snapshot = await getDocs(q)
         const data = snapshot.docs.map(doc => doc.data() as DomainDailyStats)
         
-        // Reverse to get chronological order (oldest first)
-        const sortedData = data.reverse()
+        // Sort by date descending and take last N days
+        const sortedData = data
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, days)
+          .reverse() // Reverse to get chronological order (oldest first)
         
         // Calculate overall uptime
         const totalChecks = sortedData.reduce((sum, stat) => sum + (stat.totalChecks || 0), 0)
