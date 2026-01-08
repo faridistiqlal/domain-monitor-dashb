@@ -45,11 +45,65 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 3.1.2</h3>
-                  <p className="text-xs text-muted-foreground">Current Release • 7 Januari 2026</p>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.2.3</h3>
+                  <p className="text-xs text-muted-foreground">Current Release • 8 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
-                  <Badge variant="default" className="text-xs">Individual Monitoring</Badge>
+                  <Badge variant="default" className="text-xs">UX Improvement</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkle size={16} className="text-green-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Fitur Baru</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Auto-Clear Status on Refresh:</strong> Status counts otomatis terhapus saat browser refresh untuk mencegah kebingungan dengan data lama</li>
+                    <li><strong>Clear Status Banner:</strong> Tampilan "Belum Ada Data Status" yang informatif setelah refresh</li>
+                    <li><strong>Search in Firebase Analytics:</strong> Tambah fitur pencarian domain di tab Firebase Analytics</li>
+                    <li><strong>Unlimited Domain List:</strong> Hapus limit tampilan 50/100 domain, sekarang tampilkan semua domain tanpa batas</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-yellow-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Bug Fixes</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Fixed chart button tidak bisa diklik di tab Kelola Data</li>
+                    <li>Fixed status counts menampilkan data lama setelah browser refresh</li>
+                    <li>Fixed domain list hanya menampilkan 50-100 dari 200+ domain yang ada</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench size={16} className="text-blue-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Improvements</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>UX: Hapus tombol chart dari tab Manage (redundant dengan tab Statistik)</li>
+                    <li>UX: Localization - "View statistics" → "Lihat statistik"</li>
+                    <li>Performance: ScrollArea dapat handle 200-400 domain dengan smooth scrolling</li>
+                    <li>Clarity: User harus manual check setelah refresh untuk data real-time</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <Separator />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.1.2</h3>
+                  <p className="text-xs text-muted-foreground">7 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="outline" className="text-xs">Individual Monitoring</Badge>
                 </div>
               </div>
               

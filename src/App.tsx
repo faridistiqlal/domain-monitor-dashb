@@ -2408,14 +2408,14 @@ function App() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <p className="text-xs text-muted-foreground">
-                  © 2026 Domain Monitor v{APP_VERSION} • Kabupaten Kendal • Individual Monitoring
+                  © 2026 Domain Monitor v{APP_VERSION} • Kabupaten Kendal
                 </p>
-                <span className="text-xs text-muted-foreground">•</span>
-                <PrivacyPolicyDialog />
                 <span className="text-xs text-muted-foreground">•</span>
                 <TermsOfServiceDialog />
                 <span className="text-xs text-muted-foreground">•</span>
-                <InfoDialog triggerText="Bantuan" asLink={true} />
+                <InfoDialog triggerText="Panduan" asLink={true} />
+                <span className="text-xs text-muted-foreground">•</span>
+                <PrivacyPolicyDialog />
               </div>
               <div className="flex items-center gap-2">
                 {process.env.NODE_ENV === 'development' && (

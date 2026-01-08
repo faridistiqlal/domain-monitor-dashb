@@ -68,7 +68,7 @@ npm run preview
 
 ## 📊 Current Status
 
-**Version:** 2.1.0  
+**Version:** 3.2.3  
 **Status:** ✅ Production Ready  
 **Accuracy:** 98% documented  
 **Components:** 21 custom + 45+ UI  
@@ -96,7 +96,82 @@ src/
 
 ---
 
-## 📝 Contributing
+## � Vercel Deployment
+
+### First Time Setup
+
+```bash
+# Install Vercel CLI globally
+npm install -g vercel
+
+# Login to your Vercel account
+vercel login
+
+# Follow the prompts:
+# 1. Enter your email
+# 2. Check your email for verification link
+# 3. Click the link to complete authentication
+```
+
+### Deploy to Production
+
+```bash
+# Build the application first
+npm run build
+
+# Deploy to production
+vercel deploy --prod
+
+# The CLI will:
+# 1. Upload your build files
+# 2. Build on Vercel servers
+# 3. Deploy to production URL
+# 4. Show you the live URL
+```
+
+### Deploy to Preview (Development)
+
+```bash
+# Deploy without --prod flag for preview URL
+vercel deploy
+
+# This creates a preview deployment
+# Useful for testing before production
+```
+
+### Project Configuration
+
+The `vercel.json` file contains deployment settings:
+
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
+}
+```
+
+### Environment Variables
+
+If you need to set Firebase or other secrets:
+
+```bash
+# Set environment variable
+vercel env add VITE_FIREBASE_API_KEY
+
+# Pull environment variables locally
+vercel env pull
+```
+
+### Continuous Deployment
+
+- Push to `main` branch → Auto-deploys to production
+- Push to other branches → Auto-creates preview deployments
+- Configure in Vercel dashboard: Settings → Git
+
+---
+
+## �📝 Contributing
 
 1. Read [DEVELOPMENT-PLAN.md](./docs/DEVELOPMENT-PLAN.md) for specs
 2. Make changes
@@ -115,5 +190,5 @@ src/
 
 ---
 
-**Last Updated:** 7 Januari 2026  
+**Last Updated:** 8 Januari 2026  
 **Documentation:** 98% Accurate ✅
