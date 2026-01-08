@@ -55,6 +55,8 @@ export function PrivacyPolicyDialog() {
                 <li>Mengorganisir domain dalam grup dan tag</li>
                 <li>Mengekspor data monitoring ke format CSV</li>
                 <li>Mengirim notifikasi ke Slack melalui webhook (jika diaktifkan)</li>
+                <li>Menyimpan preferensi domain favorit (pinned) untuk akses cepat</li>
+                <li>Menampilkan visualisasi uptime history 90 hari dari Firebase Firestore</li>
               </ul>
             </section>
 

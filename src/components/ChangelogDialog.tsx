@@ -45,8 +45,48 @@ export function ChangelogDialog() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 3.2.3</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.4.0</h3>
                   <p className="text-xs text-muted-foreground">Current Release • 8 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="default" className="text-xs">Major Feature</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkle size={16} className="text-green-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Fitur Baru</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Tab Pin - Favorite Domains:</strong> Tab khusus untuk domain favorit dengan visualisasi uptime 90 hari. Pin/unpin domain dengan icon MapPin, auto-check saat tab dibuka, refresh manual dengan tombol, tampilan compact dengan status real-time.</li>
+                    <li><strong>Uptime Bar Visualization:</strong> Bar chart 90 hari di setiap pinned domain card. Warna green (95%+), yellow (80-95%), orange (50-80%), red (&lt;50%), hover untuk detail per hari.</li>
+                    <li><strong>Firebase Query Optimization:</strong> In-memory sorting untuk uptime data, hindari composite index requirement, performa lebih cepat tanpa Firebase index creation.</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-yellow-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Bug Fixes</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Fixed ReferenceError saat auto-check pinned domains</li>
+                    <li>Fixed Firebase composite index error di uptime query</li>
+                    <li>Fixed last check timestamp tidak muncul di Pin tab</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.2.3</h3>
+                  <p className="text-xs text-muted-foreground">8 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
                   <Badge variant="default" className="text-xs">UX Improvement</Badge>

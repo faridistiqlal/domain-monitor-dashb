@@ -64,6 +64,8 @@ export function TermsOfServiceDialog() {
                 <li>Mengekspor data monitoring untuk keperluan pelaporan</li>
                 <li>Menggunakan fitur auto-refresh untuk monitoring berkelanjutan</li>
                 <li>Menggunakan fitur notifikasi webhook untuk alert monitoring (dengan izin)</li>
+                <li>Pin/unpin domain favorit untuk akses cepat di tab khusus</li>
+                <li>Melihat visualisasi uptime history dari data Firebase Firestore</li>
               </ul>
             </section>
 

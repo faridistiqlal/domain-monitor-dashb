@@ -49,6 +49,7 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
             <li><span className="font-semibold text-foreground">Tambah Domain:</span> Buka tab "Kelola Data", masukkan URL domain, klik "Tambah Domain"</li>
             <li><span className="font-semibold text-foreground">Pilih Mode:</span> Pilih "Auto" untuk monitoring real-time atau "Manual" untuk check sekali</li>
             <li><span className="font-semibold text-foreground">Individual Monitoring:</span> Klik Play (▶️) per domain untuk monitoring continuous setiap 5 menit</li>
+            <li><span className="font-semibold text-foreground">Pin Favorit:</span> Klik icon MapPin untuk pin domain favorit ke tab khusus dengan uptime visualization</li>
             <li><span className="font-semibold text-foreground">Monitor Status:</span> Lihat status Online (hijau), DNS Only (kuning), Offline (merah)</li>
             <li><span className="font-semibold text-foreground">Statistics:</span> Klik icon chart di domain untuk lihat uptime & response time trends</li>
             <li><span className="font-semibold text-foreground">Export Data:</span> Klik tombol "Export" untuk download hasil monitoring ke CSV</li>
@@ -97,6 +98,18 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
                 <div className="flex gap-2">
                   <span className="font-semibold text-accent">•</span>
                   <p>Per-domain notification: Edit domain, toggle "Enable Notifications" untuk kontrol notifikasi per domain</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p><span className="font-semibold text-foreground">Tab Pin:</span> Klik icon MapPin di domain card untuk pin ke tab favorit dengan uptime bar 90 hari</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p><span className="font-semibold text-foreground">Uptime Visualization:</span> Hover ke bar uptime untuk lihat detail persentase per hari (green=95%+, yellow=80-95%, orange=50-80%, red=&lt;50%)</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-accent">•</span>
+                  <p><span className="font-semibold text-foreground">Auto-Check Pinned:</span> Domain di tab Pin otomatis ter-check saat tab dibuka, atau klik "Refresh Status" untuk manual refresh</p>
                 </div>
               </div>
             </AccordionContent>
