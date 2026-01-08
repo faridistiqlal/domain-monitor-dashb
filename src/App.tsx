@@ -492,7 +492,24 @@ function App() {
         
         if (uncheckedDomains.length > 0) {
           console.log(`[Pin Tab] Auto-checking ${uncheckedDomains.length} pinned domains...`)
-          checkDomains(uncheckedDomains, false, false)
+          
+          // Set checking status
+          const checkingStatuses: Record<string, DomainStatus> = {}
+          uncheckedDomains.forEach(domain => {
+            checkingStatuses[domain.id] = { id: domain.id, status: 'checking' }
+          })
+          setStatuses(prev => ({ ...prev, ...checkingStatuses }))
+          
+          // Check domains
+          Promise.all(
+            uncheckedDomains.map(domain => checkDomainStatus(domain.url, domain.id))
+          ).then(results => {
+            const newStatuses: Record<string, DomainStatus> = {}
+            results.forEach(result => {
+              newStatuses[result.id] = result
+            })
+            setStatuses(prev => ({ ...prev, ...newStatuses }))
+          })
         }
       }
     }
@@ -2218,7 +2235,25 @@ function App() {
                     if (pinnedDomains.length === 0) return
                     
                     toast.info(`Checking ${pinnedDomains.length} pinned domains...`)
-                    await checkDomains(pinnedDomains, false, false)
+                    
+                    // Set checking status
+                    const checkingStatuses: Record<string, DomainStatus> = {}
+                    pinnedDomains.forEach(domain => {
+                      checkingStatuses[domain.id] = { id: domain.id, status: 'checking' }
+                    })
+                    setStatuses(prev => ({ ...prev, ...checkingStatuses }))
+                    
+                    // Check domains
+                    const results = await Promise.all(
+                      pinnedDomains.map(domain => checkDomainStatus(domain.url, domain.id))
+                    )
+                    
+                    const newStatuses: Record<string, DomainStatus> = {}
+                    results.forEach(result => {
+                      newStatuses[result.id] = result
+                    })
+                    setStatuses(prev => ({ ...prev, ...newStatuses }))
+                    
                     toast.success('Pinned domains updated!')
                   }}
                   className="h-8"
