@@ -9,7 +9,8 @@
         "build": "tsc -b --noCheck && vite build",
         "lint": "eslint .",
         "optimize": "vite optimize",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "monitor": "node scripts/monitor-cron.js"
     },
     "dependencies": {
         "@github/spark": ">=0.43.1 <1",
@@ -59,6 +60,7 @@
         "lucide-react": "^0.484.0",
         "marked": "^15.0.7",
         "next-themes": "^0.4.6",
+        "node-fetch": "^3.3.2",
         "octokit": "^4.1.2",
         "react": "^19.0.0",
         "react-day-picker": "^9.6.7",
