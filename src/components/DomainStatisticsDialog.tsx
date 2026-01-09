@@ -153,8 +153,8 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] p-0">
-        <DialogHeader className="px-6 pt-6 pb-4">
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-2">
             <ChartLine size={24} weight="duotone" className="text-primary" />
             <DialogTitle className="text-2xl font-bold">Statistics</DialogTitle>
@@ -164,7 +164,7 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(85vh-100px)]">
+        <ScrollArea className="flex-1 overflow-y-auto">
           <div className="px-6 pb-6 space-y-6">
             {/* Period Selector */}
             <div className="flex items-center gap-2">
