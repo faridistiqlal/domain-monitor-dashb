@@ -39,36 +39,36 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
     try {
       const db = getFirestore()
       const days = parseInt(period)
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(startDate.getDate() - days)
 
-      const startDateStr = startDate.toISOString().split('T')[0]
-      const endDateStr = endDate.toISOString().split('T')[0]
-
-      // Load daily stats
+      // Load daily stats - without orderBy to avoid composite index requirement
       const statsQuery = query(
         collection(db, 'domain-stats-daily'),
-        where('domainId', '==', domainId),
-        where('date', '>=', startDateStr),
-        where('date', '<=', endDateStr),
-        orderBy('date', 'asc')
+        where('domainId', '==', domainId)
       )
 
       const statsSnapshot = await getDocs(statsQuery)
-      const loadedStats = statsSnapshot.docs.map(doc => doc.data() as DomainDailyStats)
+      const loadedStats = statsSnapshot.docs
+        .map(doc => doc.data() as DomainDailyStats)
+        .sort((a, b) => a.date.localeCompare(b.date)) // Sort in memory
+        .slice(-days) // Take last N days
+
       setStats(loadedStats)
 
-      // Load incidents
+      // Load incidents - without orderBy to avoid composite index
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - days)
+      
       const incidentsQuery = query(
         collection(db, 'domain-incidents'),
-        where('domainId', '==', domainId),
-        where('startTime', '>=', startDate.getTime()),
-        orderBy('startTime', 'desc')
+        where('domainId', '==', domainId)
       )
 
       const incidentsSnapshot = await getDocs(incidentsQuery)
-      const loadedIncidents = incidentsSnapshot.docs.map(doc => doc.data() as DomainIncident)
+      const loadedIncidents = incidentsSnapshot.docs
+        .map(doc => doc.data() as DomainIncident)
+        .filter(inc => inc.startTime >= startDate.getTime()) // Filter in memory
+        .sort((a, b) => b.startTime - a.startTime) // Sort in memory
+
       setIncidents(loadedIncidents)
 
     } catch (err) {
