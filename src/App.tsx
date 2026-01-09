@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, SignOut, LockKey, Bell, MapPin } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Bell, MapPin } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
