@@ -238,12 +238,12 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="font-semibold flex items-center gap-2">
                           <TrendUp size={18} />
-                          90-Day Uptime Overview
+                          30-Day Uptime Overview
                         </h4>
-                        <span className="text-xs text-muted-foreground">Same as Pin Tab</span>
+                        <span className="text-xs text-muted-foreground">Compact View</span>
                       </div>
-                      <div className="space-y-2">
-                        <UptimeBar domainId={domainId} days={90} compact={false} />
+                      <div className="space-y-1.5">
+                        <UptimeBar domainId={domainId} days={30} compact={false} />
                         <p className="text-xs text-muted-foreground text-center">
                           Each bar represents 1 day • Hover for details
                         </p>
