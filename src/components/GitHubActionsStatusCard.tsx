@@ -3,7 +3,7 @@ import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestor
 import { db } from '@/lib/firebase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Clock, CheckCircle, XCircle, AlertTriangle, Activity } from '@phosphor-icons/react'
+import { Clock, CheckCircle, XCircle, Warning, ChartLine } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 
@@ -71,14 +71,14 @@ export function GitHubActionsStatusCard() {
   }
 
   const getStatusIcon = () => {
-    if (!lastRun) return <AlertTriangle className="w-5 h-5" />
+    if (!lastRun) return <Warning className="w-5 h-5" />
     
     const minutesSinceLastRun = lastRun.timestamp 
       ? (Date.now() - lastRun.timestamp.getTime()) / 1000 / 60 
       : 999
     
     if (lastRun.status === 'error') return <XCircle className="w-5 h-5" />
-    if (minutesSinceLastRun > 25) return <AlertTriangle className="w-5 h-5" />
+    if (minutesSinceLastRun > 25) return <Warning className="w-5 h-5" />
     return <CheckCircle className="w-5 h-5" />
   }
 
@@ -87,7 +87,7 @@ export function GitHubActionsStatusCard() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
+            <ChartLine className="w-5 h-5" />
             GitHub Actions Status
           </CardTitle>
           <CardDescription>24/7 Background Monitoring</CardDescription>
@@ -103,7 +103,7 @@ export function GitHubActionsStatusCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Activity className="w-5 h-5" />
+          <ChartLine className="w-5 h-5" />
           GitHub Actions Status
         </CardTitle>
         <CardDescription>24/7 Background Monitoring (Every 20 minutes)</CardDescription>
@@ -203,7 +203,7 @@ export function GitHubActionsStatusCard() {
         {/* No Data */}
         {!lastRun && (
           <div className="text-sm text-muted-foreground text-center py-4">
-            <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <Warning className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p>No GitHub Actions runs detected yet.</p>
             <p className="text-xs mt-1">First run should appear within 20 minutes.</p>
           </div>
