@@ -8,7 +8,7 @@
  */
 
 import { initializeApp } from 'firebase/app'
-import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore'
+import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore'
 import dns from 'dns'
 import { promisify } from 'util'
 import fetch from 'node-fetch'
@@ -231,11 +231,45 @@ Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
     
     await sendSlackNotification(summary)
     
-    // TODO: Write results to Firebase (implement if needed)
+    // Write log to Firebase for web app monitoring
+    try {
+      const logsRef = collection(db, 'github-actions-logs')
+      await addDoc(logsRef, {
+        timestamp: serverTimestamp(),
+        batch: currentBatch,
+        totalDomains: allDomains.length,
+        domainsChecked: domainsToCheck.length,
+        results: {
+          online,
+          dnsOnly,
+          offline
+        },
+        duration: null, // GitHub Actions will track this
+        status: 'success'
+      })
+      console.log('[Monitor] Log written to Firebase')
+    } catch (logError) {
+      console.error('[Monitor] Failed to write log:', logError.message)
+    }
+    
     console.log('[Monitor] Monitoring cycle complete')
     
   } catch (error) {
     console.error('[Monitor] Error:', error)
+    
+    // Write error log to Firebase
+    try {
+      const logsRef = collection(db, 'github-actions-logs')
+      await addDoc(logsRef, {
+        timestamp: serverTimestamp(),
+        status: 'error',
+        error: error.message,
+        stack: error.stack
+      })
+    } catch (logError) {
+      console.error('[Monitor] Failed to write error log:', logError.message)
+    }
+    
     await sendSlackNotification(`❌ Monitoring Error: ${error.message}`)
     process.exit(1)
   }

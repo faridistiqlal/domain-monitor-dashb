@@ -26,6 +26,7 @@ import { AssignTagsDialog } from '@/components/AssignTagsDialog'
 import { TagCard } from '@/components/TagCard'
 import { OptimizedDomainList } from '@/components/VirtualizedDomainList'
 import { StatisticsView } from '@/components/StatisticsView'
+import { GitHubActionsStatusCard } from '@/components/GitHubActionsStatusCard'
 import { ChangelogDialog } from '@/components/ChangelogDialog'
 import { PrivacyPolicyDialog } from '@/components/PrivacyPolicyDialog'
 import { TermsOfServiceDialog } from '@/components/TermsOfServiceDialog'
@@ -2381,6 +2382,9 @@ function App() {
             </div>
             
             <Separator />
+
+            {/* GitHub Actions Status Card */}
+            <GitHubActionsStatusCard />
 
             <StatisticsView
               domains={domains || []}
