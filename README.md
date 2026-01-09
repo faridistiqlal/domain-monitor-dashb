@@ -1,8 +1,9 @@
 # 📊 Domain Monitor Dashboard - Kabupaten Kendal
 
-Real-time monitoring dashboard untuk track availability status dari multiple subdomain kendalkab.go.id.
+Real-time monitoring dashboard untuk track availability status dari multiple subdomain kendalkab.go.id. **Fully mobile responsive!**
 
 🌐 **Live App:** https://kendal-uptime.vercel.app  
+📱 **Mobile Ready:** Optimized untuk smartphone & tablet  
 📚 **Dokumentasi:** [docs/](./docs/)  
 🔥 **Firebase:** kendal-monitor project
 
@@ -30,8 +31,9 @@ npm run preview
 
 ## ✨ Features
 
-- ✅ **Individual Domain Monitoring (NEW!)** - Per-domain continuous monitoring dengan Play/Pause (setiap 5 menit)
-- ✅ **Domain Statistics Dialog (NEW!)** - Charts per domain: uptime %, response time, incidents
+### **Core Features**
+- ✅ **Individual Domain Monitoring** - Per-domain continuous monitoring dengan Play/Pause (setiap 5 menit)
+- ✅ **Domain Statistics Dialog** - Charts per domain: uptime %, response time, incidents
 - ✅ Real-time monitoring (3-state: Online/DNS-Only/Offline)
 - ✅ Firebase cloud sync antar device
 - ✅ Password authentication + auto-logout (30 min)
@@ -41,6 +43,15 @@ npm run preview
 - ✅ Statistics & analytics
 - ✅ Dual mode: Auto-refresh & Manual
 
+### **Mobile Features (v3.5.0+)** 📱
+- ✅ **Hamburger Menu** - Sheet drawer navigation dengan touch-friendly spacing
+- ✅ **Responsive Tabs** - 3-column mobile grid layout (Monitoring, Pin, Statistik / Grup, Tag, Kelola)
+- ✅ **Touch Targets** - 40px minimum untuk iOS/Android compliance
+- ✅ **Dropdown Actions** - Three-dot menu untuk Copy, Open, Pin, Stats, Delete
+- ✅ **Compact UI** - Optimized space usage, minimalist design
+- ✅ **Globe & Copy Icons** - Quick access di setiap domain card
+- ✅ **2-Row Layout** - Tab Kelola dengan action icons visible di mobile
+
 ---
 
 ## 📚 Documentation
@@ -49,10 +60,11 @@ npm run preview
 1. **[PROJECT-STATUS.md](./docs/PROJECT-STATUS.md)** - Current state & metrics
 2. **[DEVELOPMENT-PLAN.md](./docs/DEVELOPMENT-PLAN.md)** - Features & roadmap
 3. **[GUIDES.md](./docs/GUIDES.md)** - User guide & troubleshooting
+4. **[CHANGELOG.md](./docs/CHANGELOG.md)** - Version history (see v3.5.0 for mobile features)
 
 ### **Reference:**
 - [FILE-REFERENCE.md](./docs/FILE-REFERENCE.md) - Code structure
-- [CHANGELOG.md](./docs/CHANGELOG.md) - Version history
+- [OPTIMIZATION-SUMMARY.md](./docs/OPTIMIZATION-SUMMARY.md) - Performance optimizations
 
 ---
 
@@ -63,16 +75,18 @@ npm run preview
 - Firebase Firestore
 - shadcn/ui v4 + Phosphor Icons
 - Vercel (deployment)
+- **Responsive Design:** Mobile-first breakpoints (sm:640px, md:768px, lg:1024px)
 
 ---
 
 ## 📊 Current Status
 
-**Version:** 3.2.3  
-**Status:** ✅ Production Ready  
+**Version:** 3.5.1  
+**Status:** ✅ Production Ready + Mobile Optimized  
 **Accuracy:** 98% documented  
-**Components:** 21 custom + 45+ UI  
-**Lines of Code:** ~7,000+
+**Components:** 22 custom + 45+ UI  
+**Lines of Code:** ~7,500+  
+**Mobile Support:** ✅ Fully responsive (iPhone, Android, Tablet)
 
 ---
 

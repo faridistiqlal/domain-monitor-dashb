@@ -11,7 +11,11 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 
-export function PrivacyPolicyDialog() {
+interface PrivacyPolicyDialogProps {
+  triggerText?: string
+}
+
+export function PrivacyPolicyDialog({ triggerText = 'Kebijakan Privasi' }: PrivacyPolicyDialogProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -22,7 +26,7 @@ export function PrivacyPolicyDialog() {
           size="sm"
           className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent"
         >
-          Kebijakan Privasi
+          {triggerText}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">

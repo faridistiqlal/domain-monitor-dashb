@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from './StatusIndicator'
 import { UptimeBar } from './UptimeBar'
+import { DomainStatisticsDialog } from './DomainStatisticsDialog'
 import { Domain, DomainStatus } from '@/lib/types'
 import {
   Tooltip,
@@ -19,6 +20,8 @@ interface PinnedDomainCardProps {
 }
 
 export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardProps) {
+  const [showStats, setShowStats] = useState(false)
+
   const getStatusText = () => {
     if (status.status === 'online') return 'Online'
     if (status.status === 'offline') return 'Offline'
@@ -125,7 +128,16 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
         </div>
 
         {/* Uptime Bar */}
-        <div className="pt-2">
+        <div className="pt-2 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">90-day uptime • Daily view</span>
+            <button
+              onClick={() => setShowStats(true)}
+              className="text-xs text-primary hover:underline"
+            >
+              View detailed →
+            </button>
+          </div>
           <UptimeBar domainId={domain.id} days={90} compact={false} />
         </div>
 
@@ -144,6 +156,14 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
           </div>
         )}
       </CardContent>
+
+      {/* Statistics Dialog */}
+      <DomainStatisticsDialog
+        domainId={domain.id}
+        domainUrl={domain.url}
+        open={showStats}
+        onOpenChange={setShowStats}
+      />
     </Card>
   )
 }

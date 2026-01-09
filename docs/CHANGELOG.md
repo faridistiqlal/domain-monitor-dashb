@@ -1,5 +1,280 @@
 # Changelog
 
+## Version 3.5.2 - Unified Chart Visualization
+**Tanggal Rilis:** 9 Januari 2026
+
+### 📊 Chart Consistency & UX Improvements
+
+#### **Problem Solved:**
+User confusion antara chart di Pin Tab vs Statistics Dialog:
+- Pin Tab: 1 bar = 1 hari (90 hari)
+- Statistics: 1 bar = 1 jam (~96 bars dari 4 hari)
+- Tidak ada visual consistency
+
+#### **Solution: 3-Tab Statistics Dialog**
+
+**Tab 1: Daily Overview**
+- ✅ **SAMA seperti Pin Tab** - Visual consistency
+- 90-day uptime bar (1 bar = 1 day)
+- Uptime trend line chart
+- Label: "Same as Pin Tab" untuk clarity
+
+**Tab 2: Hourly Detail** (NEW!)
+- Hourly breakdown last 7 days
+- 1 bar = 1 jam dengan checks
+- Max 168 bars (7 × 24 jam)
+- Color coding:
+  - Green = 100% success
+  - Yellow = partial success
+  - Red = all failed
+- Tooltip: Date, hour, success rate
+
+**Tab 3: Response Time**
+- Line chart response time
+- Same as before (unchanged)
+
+#### **Pin Tab Enhancement:**
+- Added label: "90-day uptime • Daily view"
+- Added link: "View detailed →" to open Statistics
+- Clear mental model: Pin = preview, Statistics = detailed
+
+### 🎯 Benefits
+
+1. **Visual Consistency** ✅
+   - Daily overview di Statistics = sama dengan Pin
+   - User langsung paham: "Oh ini continuation!"
+
+2. **Progressive Disclosure** ✅
+   - Tab 1: Quick overview (daily)
+   - Tab 2: Deep dive (hourly)
+   - Tab 3: Performance metrics
+
+3. **Better UX** ✅
+   - No confusion
+   - Follow mental model: overview → detail
+   - Easy to compare domains
+
+4. **Flexibility** ✅
+   - User bisa pilih view sesuai kebutuhan
+   - Daily = long-term trend
+   - Hourly = troubleshooting
+
+### 🔧 Technical Changes
+
+```tsx
+// DomainStatisticsDialog.tsx
+- Import UptimeBar component
+- Add getHourlyBarsData() function
+- Change to 3 tabs: overview/hourly/response
+- Tab 1: UptimeBar component (reuse dari Pin)
+- Tab 2: Custom hourly bars dengan tooltip
+
+// PinnedDomainCard.tsx
+- Add DomainStatisticsDialog state
+- Add label & link untuk clarity
+- Integrate statistics dialog
+
+// version.ts
+- Bump to 3.5.2
+```
+
+### 📊 Chart Comparison
+
+| View | Bar Unit | Count | Use Case |
+|------|----------|-------|----------|
+| **Pin Tab** | 1 day | 90 | Quick glance |
+| **Statistics Tab 1** | 1 day | 90 | Same as Pin |
+| **Statistics Tab 2** | 1 hour | 168 (7 days) | Troubleshooting |
+| **Statistics Tab 3** | Line chart | 7-30 days | Performance |
+
+### ✅ Impact
+- Reduced user confusion about "why charts look different"
+- Better mental model: Pin = mini, Statistics = full
+- Consistent visualization across all views
+- Easy comparison between domains
+
+---
+
+## Version 3.5.1 - Mobile UX Refinements
+**Tanggal Rilis:** 8 Januari 2026
+
+### 📱 Mobile UI/UX Improvements - Final Polish
+
+#### 1. **Check Selesai Box - Compact & Minimalist**
+- **Before**: Large box dengan padding besar, vertical layout
+- **After**: Super compact single-row layout
+  - Padding: `p-3` → `p-2.5` (space saving 40%)
+  - Icon: 8x8 → 6x6 (lebih kecil)
+  - Stats: Hapus label text, hanya angka + dot warna
+  - Buttons: h-9 → h-7 (lebih pendek)
+  - Reset: Icon-only X button
+  - Export: Full desktop, icon-only mobile
+
+#### 2. **Stats Bar - Responsive Layout**
+- **Mobile**: 2-row layout dengan flex-wrap
+  - Row 1: Status counts (Online, DNS, Offline)
+  - Row 2: Mode info + badges (compact text)
+- **Desktop**: Single row horizontal
+- **Text simplification**:
+  - "Mode Manual • 312" (lebih pendek)
+  - "265 shown" badge (compact)
+  - Timer: "5:32" format (bukan "5m 32s")
+  - Progress bar hidden di mobile
+
+#### 3. **Domain Card - Clean Layout**
+- **Mobile**: Globe & Copy icons restored
+- **Layout**: Simplified metadata display
+  - IP + Response time di bawah
+  - URL full width (tidak terpotong)
+  - Flex-wrap untuk info
+
+#### 4. **Footer - Center Alignment**
+- **All text centered** untuk visual balance
+- **Version number removed** (ada di Changelog button)
+- **Single line**: "© 2026 Domain Monitor • Kabupaten Kendal"
+
+#### 5. **Tab Kelola - Action Icons Visible**
+- **Problem**: Icons terpotong/tidak terlihat di mobile
+- **Solution**: 2-row responsive layout
+  - Row 1: Checkbox + URL + Badges
+  - Row 2: Bell + Action buttons (Play, Edit, Pin, Delete)
+  - Icons align right, jelas terlihat
+  - Touch target: 36px (h-9 w-9)
+  - No dropdown menu, semua visible
+
+### 🎯 Technical Changes
+```typescript
+// Compact Check Selesai box
+<div className="p-2.5"> // was p-3/p-4
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2">
+      <CheckSquare size={14} /> // was 18
+      <span>Check Selesai!</span>
+      <span>265</span> <span>44</span> <span>1</span>
+    </div>
+    <Button className="h-7 w-7"> // was h-9
+      <X size={16} />
+    </Button>
+  </div>
+</div>
+
+// Kelola 2-row layout
+<div className="flex flex-col md:flex-row gap-2">
+  <div className="flex-1">URL + Badges</div>
+  <div className="flex gap-1 justify-end">
+    {/* All action icons visible */}
+  </div>
+</div>
+```
+
+### 📊 Impact
+- ✅ 40% space saving di "Check Selesai" box
+- ✅ All action icons visible di tab Kelola
+- ✅ Mobile responsive lebih clean
+- ✅ Better touch targets (36px minimum)
+- ✅ Consistent layout across all screens
+
+---
+
+## Version 3.5.0 - Mobile Responsive Implementation
+**Tanggal Rilis:** 8 Januari 2026
+
+### 📱 Major Feature: Complete Mobile Responsive Design
+
+#### 1. **Mobile Header with Hamburger Menu**
+- **Hamburger drawer navigation** (Sheet component)
+- **Responsive header elements**:
+  - Logo & title stack vertical on mobile
+  - Settings/Import/Export hidden, moved to menu
+  - Refresh button always visible
+- **Touch-friendly menu sections**:
+  - Monitoring mode toggle
+  - Import/Export functions  
+  - Settings & notifications
+  - Logout button
+- **Spacing**: h-12 buttons, size-22 icons, px-6 padding
+
+#### 2. **Responsive Tabs Navigation**
+- **Mobile**: 3-column grid layout
+  - Monitoring, Pin, Statistik (row 1)
+  - Grup, Tag, Kelola (row 2)
+  - Height: h-11, text: text-[11px]
+  - Gap: gap-1 untuk compact spacing
+- **Desktop**: 6-column single row
+  - Height: h-9/h-10
+  - Text: text-sm
+- **Icon size**: 16px untuk better visibility
+
+#### 3. **DomainCard Mobile Optimization**
+- **Touch targets**: 40px minimum (iOS standard)
+  - Checkbox: h-5 w-5 mobile, h-4 w-4 desktop
+  - Action buttons: h-10 w-10 mobile, h-7/h-8 desktop
+  - Icons: 18px mobile, 16px desktop
+- **Layout responsive**:
+  - Card padding: p-3.5 sama di mobile & desktop
+  - Text: text-base mobile, text-sm desktop
+  - Metadata: flex-col sm:flex-row (vertical stack mobile)
+- **Three-dot dropdown menu** (mobile):
+  - Play/Pause monitoring
+  - Pin/Unpin domain
+  - Copy URL & Open browser
+  - Statistik
+  - Delete
+- **Desktop**: Icon buttons inline (tetap sama)
+
+#### 4. **Info Hasil - Better Mobile Layout**
+- **Color-coded dots** untuk setiap status
+  - Green dot: Online
+  - Orange dot: DNS Only
+  - Red dot: Offline
+- **Vertical layout mobile**:
+  - Each status own line
+  - Font-semibold numbers
+- **Desktop**: Horizontal with bullets
+
+#### 5. **Footer Responsive**
+- **Mobile**: flex-col, multi-line layout
+  - Copyright & location separate lines
+  - Links wrapped with spacing
+  - All center-aligned
+- **Desktop**: flex-row, single line
+
+### 🎯 Technical Implementation
+```typescript
+// Mobile header with hamburger
+<div className="md:hidden">
+  <MobileNav /> // Sheet drawer
+</div>
+<div className="hidden md:flex">
+  {/* Desktop buttons */}
+</div>
+
+// Responsive tabs
+<TabsList className="grid grid-cols-3 md:grid-cols-6 gap-1">
+  <TabsTrigger className="h-11 md:h-9 text-[11px] md:text-sm">
+
+// Touch targets
+<Button className="h-10 w-10 md:h-7 md:w-7">
+  <Icon size={18} className="md:hidden" />
+  <Icon size={16} className="hidden md:block" />
+</Button>
+```
+
+### 📊 Mobile Breakpoints
+- **sm**: 640px
+- **md**: 768px (main mobile/desktop split)
+- **lg**: 1024px
+
+### ✅ Testing Results
+- ✅ Deployed to production: https://kendal-uptime.vercel.app
+- ✅ User tested on real mobile device
+- ✅ All UI elements accessible
+- ✅ Touch targets meet iOS/Android guidelines
+- ✅ No horizontal scroll
+- ✅ Responsive at all breakpoints
+
+---
+
 ## Version 3.4.3 - Cache Reset for Individual Monitoring
 **Tanggal Rilis:** 8 Januari 2026
 

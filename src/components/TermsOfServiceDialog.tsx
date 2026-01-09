@@ -11,7 +11,11 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 
-export function TermsOfServiceDialog() {
+interface TermsOfServiceDialogProps {
+  triggerText?: string
+}
+
+export function TermsOfServiceDialog({ triggerText = 'Syarat & Ketentuan' }: TermsOfServiceDialogProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -22,7 +26,7 @@ export function TermsOfServiceDialog() {
           size="sm"
           className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent"
         >
-          Syarat & Ketentuan
+          {triggerText}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">

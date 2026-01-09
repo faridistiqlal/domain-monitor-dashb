@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning, Play, Pause, ChartLine, MapPin, X as XIcon } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning, Play, Pause, ChartLine, MapPin, X as XIcon, DotsThree } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -14,6 +14,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 
 interface DomainCardProps {
@@ -132,23 +139,29 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
         exit={{ opacity: 0, x: -100 }}
         transition={{ duration: 0.2 }}
       >
-        <Card className={`group transition-all duration-200 p-3.5 ${isSelected ? 'bg-destructive/10 border-destructive/50' : 'hover:shadow-md hover:bg-accent/5'}`}>
-          <div className="flex items-center gap-3">
-            {showCheckbox && (
-              <div className="shrink-0 flex items-center">
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
-                  className="shrink-0 outline-none focus-visible:outline-none focus-visible:ring-0"
-                />
-              </div>
-            )}
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <h3 className="font-mono text-sm font-medium text-foreground truncate">
-                  {domain.url}
-                </h3>
+        <Card className={`group transition-all duration-200 p-2 md:p-3 ${isSelected ? 'bg-destructive/10 border-destructive/50' : 'hover:shadow-md hover:bg-accent/5'}`}>
+          <div className="flex flex-col gap-2">
+            {/* Row 1: Checkbox + URL */}
+            <div className="flex items-center gap-2 min-w-0">
+              {showCheckbox && (
+                <div className="shrink-0 flex items-center">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={(checked) => onSelect?.(domain.id, checked as boolean)}
+                    className="shrink-0 outline-none focus-visible:outline-none focus-visible:ring-0 h-5 w-5 md:h-4 md:w-4"
+                  />
+                </div>
+              )}
+              
+              <h3 className="font-mono text-base md:text-sm font-medium text-foreground truncate flex-1">
+                {domain.url}
+              </h3>
+            </div>
+
+            {/* Row 2: Badges + Action buttons */}
+            <div className="flex items-center justify-between gap-2">
+              {/* Left: Badges */}
+              <div className="flex items-center gap-1 flex-wrap min-w-0">
                 {!isEnabled && (
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
                     Paused
@@ -156,71 +169,57 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 )}
                 {group && (
                   <div 
-                    className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] shrink-0"
                     style={{ backgroundColor: `${group.color}20`, color: group.color }}
                   >
-                    <Tag size={10} weight="fill" />
+                    <Tag size={9} weight="fill" />
                     <span className="font-medium">{group.name}</span>
                   </div>
                 )}
+                {domainTags && domainTags.length > 0 && (
+                  <>
+                    {domainTags.map(tag => (
+                      <Badge
+                        key={tag.id}
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                        style={{
+                          backgroundColor: `${tag.color}20`,
+                          color: tag.color,
+                          borderColor: `${tag.color}40`,
+                        }}
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </>
+                )}
               </div>
-              {domainTags && domainTags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {domainTags.map(tag => (
-                    <Badge
-                      key={tag.id}
-                      variant="secondary"
-                      className="text-[10px] px-1.5 py-0 h-4 font-medium"
-                      style={{
-                        backgroundColor: `${tag.color}20`,
-                        color: tag.color,
-                        borderColor: `${tag.color}40`,
-                      }}
-                    >
-                      {tag.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            <div className="flex items-center gap-1 shrink-0">
+              {/* Right: Action buttons */}
+              <div className="flex items-center gap-1 shrink-0">
               {/* Notification Indicator */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="shrink-0 flex items-center">
-                    {domain.notificationsEnabled ? (
-                      <Bell size={16} weight="fill" className="text-primary" />
-                    ) : (
-                      <BellSlash size={16} className="text-muted-foreground/40" />
-                    )}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  {domain.notificationsEnabled 
-                    ? 'Notifikasi Aktif' 
-                    : 'Notifikasi Nonaktif'}
-                </TooltipContent>
-              </Tooltip>
+              <div className="shrink-0 flex items-center mr-1">
+                {domain.notificationsEnabled ? (
+                  <Bell size={16} weight="fill" className="text-primary" />
+                ) : (
+                  <BellSlash size={16} className="text-muted-foreground/40" />
+                )}
+              </div>
 
+              {/* Action Buttons */}
               {/* Play/Pause Button */}
               {onToggleMonitoring && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleToggleMonitoring}
-                      className="h-10 w-10 md:h-7 md:w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                    >
-                      {isEnabled ? <Pause size={18} weight="fill" className="md:hidden" /> : <Play size={18} weight="fill" className="md:hidden" />}
-                      {isEnabled ? <Pause size={16} weight="fill" className="hidden md:block" /> : <Play size={16} weight="fill" className="hidden md:block" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
-                    {isEnabled ? 'Pause individual monitoring' : 'Play & check now'}
-                  </TooltipContent>
-                </Tooltip>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleMonitoring}
+                  className="h-9 w-9 md:h-7 md:w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  title={isEnabled ? 'Pause' : 'Play'}
+                >
+                  {isEnabled ? <Pause size={18} weight="fill" className="md:hidden" /> : <Play size={18} weight="fill" className="md:hidden" />}
+                  {isEnabled ? <Pause size={16} weight="fill" className="hidden md:block" /> : <Play size={16} weight="fill" className="hidden md:block" />}
+                </Button>
               )}
 
               {onEdit && existingUrls && (
@@ -233,33 +232,29 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
               
               {/* Pin Button */}
               {onTogglePin && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onTogglePin(domain.id)}
-                      className={`h-10 w-10 md:h-8 md:w-8 ${domain.pinned ? 'text-primary' : 'text-muted-foreground'} hover:text-primary hover:bg-primary/10`}
-                    >
-                      {domain.pinned ? <MapPin size={18} weight="fill" className="md:hidden" /> : <MapPin size={18} className="md:hidden" />}
-                      {domain.pinned ? <MapPin size={16} weight="fill" className="hidden md:block" /> : <MapPin size={16} className="hidden md:block" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
-                    {domain.pinned ? 'Unpin domain' : 'Pin domain'}
-                  </TooltipContent>
-                </Tooltip>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onTogglePin(domain.id)}
+                  className={`h-9 w-9 md:h-7 md:w-7 ${domain.pinned ? 'text-primary' : 'text-muted-foreground'} hover:text-primary hover:bg-primary/10`}
+                  title={domain.pinned ? 'Unpin' : 'Pin'}
+                >
+                  {domain.pinned ? <MapPin size={18} weight="fill" className="md:hidden" /> : <MapPin size={18} className="md:hidden" />}
+                  {domain.pinned ? <MapPin size={16} weight="fill" className="hidden md:block" /> : <MapPin size={16} className="hidden md:block" />}
+                </Button>
               )}
               
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onDelete(domain.id)}
-                className="h-10 w-10 md:h-8 md:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="h-9 w-9 md:h-7 md:w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                title="Delete"
               >
                 <Trash size={18} className="md:hidden" />
                 <Trash size={16} className="hidden md:block" />
               </Button>
+              </div>
             </div>
           </div>
         </Card>
@@ -274,8 +269,8 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={`group transition-all duration-200 p-4 md:p-3.5 ${isSelected ? 'bg-destructive/10 border-destructive/50' : 'hover:shadow-md hover:bg-accent/5'}`}>
-        <div className="flex items-start md:items-center gap-3">
+      <Card className={`group transition-all duration-200 p-2 md:p-3 ${isSelected ? 'bg-destructive/10 border-destructive/50' : 'hover:shadow-md hover:bg-accent/5'}`}>
+        <div className="flex items-center gap-2">
           {showCheckbox && (
             <div className="shrink-0 flex items-center">
               <Checkbox
@@ -292,6 +287,51 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
               <h3 className="font-mono text-base md:text-sm font-medium text-foreground truncate">
                 {domain.url}
               </h3>
+              
+              {group && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
+                      style={{ backgroundColor: `${group.color}20`, color: group.color }}
+                    >
+                      <Tag size={10} weight="fill" />
+                      <span className="font-medium">{group.name}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Grup: {group.name}</p>
+                    {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            
+            {/* Tags */}
+            {domainTags && domainTags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {domainTags.map(tag => (
+                  <Badge
+                    key={tag.id}
+                    variant="secondary"
+                    className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                    style={{
+                      backgroundColor: `${tag.color}20`,
+                      color: tag.color,
+                      borderColor: `${tag.color}40`,
+                    }}
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            
+            {/* Quick info with Protocol & Batch badges */}
+            <div className="flex items-center gap-2 mt-1 text-xs flex-wrap">
+              {status.ipAddress && (
+                <span className="font-mono text-muted-foreground">{status.ipAddress}</span>
+              )}
               
               {/* Protocol Badge */}
               {getProtocolInfo() && (
@@ -342,40 +382,25 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 </Tooltip>
               )}
               
-              {group && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div 
-                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
-                      style={{ backgroundColor: `${group.color}20`, color: group.color }}
-                    >
-                      <Tag size={10} weight="fill" />
-                      <span className="font-medium">{group.name}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Grup: {group.name}</p>
-                    {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
-                  </TooltipContent>
-                </Tooltip>
+              {status.responseTime !== undefined && (
+                <span className="flex items-center gap-1">
+                  {status.responseTime < 2000 && (
+                    <Lightning size={12} weight="fill" className="text-success" />
+                  )}
+                  <span className={`font-mono ${getResponseTimeColor(status.responseTime)}`}>
+                    {status.responseTime}ms
+                  </span>
+                </span>
               )}
-              <div className="flex items-center shrink-0">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
-                      className="h-6 w-6 text-muted-foreground hover:text-accent hover:bg-accent/10"
-                    >
-                      <Globe size={14} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Buka di tab baru</p>
-                  </TooltipContent>
-                </Tooltip>
-                
+              <div className="flex items-center gap-1 ml-auto">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
+                  className="h-6 w-6 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                >
+                  <Globe size={14} />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -386,104 +411,6 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 </Button>
               </div>
             </div>
-            {domainTags && domainTags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {domainTags.map(tag => (
-                  <Badge
-                    key={tag.id}
-                    variant="secondary"
-                    className="text-[10px] px-1.5 py-0 h-4 font-medium"
-                    style={{
-                      backgroundColor: `${tag.color}20`,
-                      color: tag.color,
-                      borderColor: `${tag.color}40`,
-                    }}
-                  >
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0 text-xs">
-            {status.ipAddress && (
-              <>
-                <span className="font-mono text-accent">
-                  {status.ipAddress}
-                </span>
-                <span className="text-border">|</span>
-              </>
-            )}
-            
-            <div className="flex items-center gap-1">
-              <span className={`font-medium ${
-                status.status === 'online' ? '' :
-                status.status === 'dns-only' ? '' :
-                status.status === 'offline' ? 'text-destructive' :
-                'text-muted-foreground'
-              }`}
-              style={
-                status.status === 'online' ? { color: 'oklch(0.70 0.22 145)' } :
-                status.status === 'dns-only' ? { color: 'rgb(245, 158, 11)' } :
-                undefined
-              }>
-                {getStatusText()}
-              </span>
-              
-              {status.status === 'dns-only' && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Warning size={14} className="text-amber-500" weight="fill" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs max-w-[250px] whitespace-pre-line">
-                      {getDetailedInfo()}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-            
-            <span className="text-border">|</span>
-            
-            {status.responseTime !== undefined ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1">
-                    {status.responseTime < 2000 && (
-                      <Lightning size={12} weight="fill" className="text-success" />
-                    )}
-                    <span className={`font-mono font-medium ${getResponseTimeColor(status.responseTime)}`}>
-                      {status.responseTime}ms
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs">
-                  <p className="font-semibold">{getResponseTimeLabel(status.responseTime)}</p>
-                  <p className="text-muted-foreground mt-0.5">
-                    {status.responseTime < 2000 && '⚡ Sangat responsif'}
-                    {status.responseTime >= 2000 && status.responseTime < 5000 && '✓ Performa normal'}
-                    {status.responseTime >= 5000 && '⚠️ Respons lambat'}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            ) : status.error ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-destructive truncate max-w-[120px] cursor-help">
-                    {status.error}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs max-w-[250px] whitespace-pre-line">
-                    {getDetailedInfo()}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <span className="text-muted-foreground">-</span>
-            )}
           </div>
 
         </div>

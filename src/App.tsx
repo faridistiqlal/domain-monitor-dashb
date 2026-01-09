@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, ListBullets, Trash, CheckSquare, Toolbox, Info, ChartBar, SignOut, LockKey, Bell, MapPin } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, SignOut, LockKey, Bell, MapPin } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -1518,21 +1518,22 @@ function App() {
   return (
     <TooltipProvider>
       <div className="h-screen bg-card overflow-hidden flex flex-col">
-        <div className="container mx-auto px-4 py-4 max-w-5xl flex-1 flex flex-col overflow-hidden min-h-0">
+        <div className="container mx-auto px-2 md:px-4 py-4 max-w-5xl flex-1 flex flex-col overflow-hidden min-h-0">
           <header className="mb-4">
             <div className="flex items-center justify-between gap-2">
               {/* Mobile Hamburger - Only visible on mobile */}
               <MobileNav
                 onImport={() => setShowImportDialog(true)}
                 onExport={handleExportCSV}
-                onNotificationSettings={() => setShowNotificationSettings(true)}
-                onSettings={() => setShowSettings(true)}
-                onInfo={() => setShowInfoDialog(true)}
+                notificationSettings={notificationSettings}
+                onNotificationSettingsSave={handleNotificationSettingsSave}
+                onTestNotification={handleTestNotification}
+                getHistory={() => notificationService.getHistory()}
+                clearHistory={() => notificationService.clearHistory()}
                 onChangePassword={handlePasswordChange}
                 onLogout={handleLogout}
                 isAutoRefresh={autoRefreshEnabled}
                 onToggleAutoRefresh={handleToggleAutoRefresh}
-                notificationEnabled={notificationSettings.enabled}
               />
               
               <div className="flex items-center gap-2.5">
@@ -1654,71 +1655,87 @@ function App() {
             setSelectedGroupId(null)
           }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
-          <TabsList className="grid w-full max-w-3xl grid-cols-3 md:grid-cols-6 mb-4">
-            <TabsTrigger value="domains" className="gap-1 md:gap-1.5 text-xs md:text-sm">
-              <ListBullets size={14} className="hidden sm:block" />
-              Monitoring
+          <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-4 gap-1 md:gap-0 h-10 p-1 mt-2">
+            <TabsTrigger value="domains" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+              <Monitor size={18} className="md:size-4" />
+              <span className="hidden md:inline">Monitoring</span>
             </TabsTrigger>
-            <TabsTrigger value="pinned" className="gap-1 md:gap-1.5 text-xs md:text-sm">
-              <MapPin size={14} weight="fill" className="hidden sm:block" />
-              Pin
+            <TabsTrigger value="pinned" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+              <MapPin size={18} weight="fill" className="md:size-4" />
+              <span className="hidden md:inline">Pin</span>
             </TabsTrigger>
-            <TabsTrigger value="statistics" className="gap-1 md:gap-1.5 text-xs md:text-sm">
-              <ChartBar size={14} className="hidden sm:block" />
-              Statistik
+            <TabsTrigger value="statistics" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+              <ChartBar size={18} className="md:size-4" />
+              <span className="hidden md:inline">Statistik</span>
             </TabsTrigger>
-            <TabsTrigger value="groups" className="gap-1 md:gap-1.5 text-xs md:text-sm">
-              <FolderOpen size={14} className="hidden sm:block" />
-              Grup
+            <TabsTrigger value="groups" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+              <FolderOpen size={18} className="md:size-4" />
+              <span className="hidden md:inline">Grup</span>
             </TabsTrigger>
-            <TabsTrigger value="tags" className="gap-1 md:gap-1.5 text-xs md:text-sm">
-              <Tag size={14} className="hidden sm:block" />
-              Tag
+            <TabsTrigger value="tags" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+              <Tag size={18} className="md:size-4" />
+              <span className="hidden md:inline">Tag</span>
             </TabsTrigger>
-            <TabsTrigger value="manage" className="gap-1 md:gap-1.5 text-xs md:text-sm">
-              <Toolbox size={14} className="hidden sm:block" />
-              Kelola
+            <TabsTrigger value="manage" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+              <Toolbox size={18} className="md:size-4" />
+              <span className="hidden md:inline">Kelola</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="domains" className="space-y-4 flex-1 flex flex-col overflow-hidden">
             {!autoRefreshEnabled && hasChecked && !isRefreshing && totalCount > 0 && (
               <div className="space-y-3">
-                <div className="bg-success/10 border border-success/30 rounded-lg p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
-                        <CheckSquare size={18} weight="duotone" className="text-success" />
+                <div className="bg-success/10 border border-success/30 rounded-lg p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-6 h-6 rounded bg-success/20 flex items-center justify-center flex-shrink-0">
+                        <CheckSquare size={14} weight="duotone" className="text-success" />
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.22 145)' }}>Check Selesai!</p>
-                        <p className="text-xs text-muted-foreground">
-                          Online: {onlineCount} • DNS Only: {dnsOnlyCount} • Offline: {offlineCount}
-                        </p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs flex-1 min-w-0">
+                        <span className="font-semibold text-success whitespace-nowrap">Check Selesai!</span>
+                        <div className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
+                          <span className="text-muted-foreground">{onlineCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                          <span className="text-muted-foreground">{dnsOnlyCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-destructive"></span>
+                          <span className="text-muted-foreground">{offlineCount}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => {
                           setHasChecked(false)
                           setStatuses({})
                           toast.info('Status domain direset')
                         }}
-                        className="h-8"
+                        className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
                       >
-                        <X size={14} />
-                        Reset
+                        <X size={16} />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="default"
                         size="sm"
                         onClick={handleExportCSV}
-                        className="h-8 bg-success text-success-foreground hover:bg-success/90"
+                        className="h-7 bg-success text-success-foreground hover:bg-success/90 hidden sm:flex"
                       >
                         <DownloadSimple size={14} />
-                        Export Hasil
+                        <span className="ml-1">Export</span>
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="icon"
+                        onClick={handleExportCSV}
+                        className="h-7 w-7 bg-success text-success-foreground hover:bg-success/90 sm:hidden"
+                      >
+                        <DownloadSimple size={14} />
                       </Button>
                     </div>
                   </div>
@@ -1804,8 +1821,10 @@ function App() {
 
             {totalCount > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs px-1">
-                  <div className="flex items-center gap-3">
+                {/* Stats Bar - Responsive */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs px-1">
+                  {/* Left: Status counts */}
+                  <div className="flex flex-wrap items-center gap-2 md:gap-3">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)]" />
                       <span className="text-muted-foreground">Online</span>
@@ -1824,21 +1843,23 @@ function App() {
                       <span className="font-semibold text-destructive">{offlineCount}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">
+                  
+                  {/* Right: Mode & Actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-muted-foreground whitespace-nowrap">
                       {autoRefreshEnabled 
-                        ? (isPaused ? 'Dijeda' : `Next check in ${Math.floor(countdown / 60)}m ${countdown % 60}s`) 
-                        : 'Mode Manual'} • {totalCount} domain
+                        ? (isPaused ? 'Dijeda' : `Auto • ${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}`) 
+                        : 'Manual'} • {totalCount}
                     </span>
                     {filteredDomains.length !== totalCount && (
-                      <Badge variant="secondary" className="text-xs font-mono">
-                        {filteredDomains.length} ditampilkan
+                      <Badge variant="secondary" className="text-[10px] font-mono h-5">
+                        {filteredDomains.length} shown
                       </Badge>
                     )}
                     {autoRefreshEnabled && !isPaused && (
                       <Progress 
                         value={(countdown / 300) * 100} 
-                        className="w-16 h-1.5"
+                        className="w-12 h-1.5 hidden md:block"
                       />
                     )}
                     {viewMode !== 'group-detail' && (filter !== 'all' || searchQuery !== '') && filteredDomains.length > 0 && (
@@ -1847,11 +1868,11 @@ function App() {
                         size="sm"
                         onClick={handleExportFilteredCSV}
                         disabled={!autoRefreshEnabled && !hasChecked}
-                        className="h-7 text-xs ml-2"
+                        className="h-7 text-xs hidden md:flex"
                         title={!autoRefreshEnabled && !hasChecked ? "Check domain terlebih dahulu" : ""}
                       >
                         <DownloadSimple size={14} />
-                        Export Terfilter
+                        Export
                       </Button>
                     )}
                   </div>
@@ -1901,7 +1922,7 @@ function App() {
                   <div className="flex items-center gap-2">
                     <div className="flex-1 lg:flex-none lg:w-40">
                       <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
-                        <SelectTrigger className="h-8 py-0 text-xs w-full">
+                        <SelectTrigger className="h-9 text-xs w-full">
                           <div className="flex items-center gap-1.5">
                             <SortAscending size={14} />
                             <SelectValue placeholder="Urutkan" />
@@ -1927,14 +1948,14 @@ function App() {
                         placeholder="Cari domain..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-8 pl-8 pr-8 text-xs w-full"
+                        className="h-9 pl-8 pr-8 text-xs w-full"
                       />
                       {searchQuery && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setSearchQuery('')}
-                          className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
+                          className="absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9 p-0 hover:bg-transparent"
                         >
                           <X size={14} className="text-muted-foreground hover:text-foreground" />
                         </Button>
@@ -2010,7 +2031,7 @@ function App() {
               </div>
             ) : (
               <ScrollArea className="flex-1 min-h-0">
-                <div className="pr-4">
+                <div className="md:pr-4">
                   <OptimizedDomainList
                     domains={sortedDomains}
                     statuses={statuses}
@@ -2242,7 +2263,7 @@ function App() {
                     </span>
                   </div>
                   <ScrollArea className="flex-1 min-h-0">
-                    <div className="pr-4">
+                    <div className="md:pr-4">
                       <OptimizedDomainList
                         domains={filteredManageDomains}
                         statuses={statuses}
@@ -2578,28 +2599,39 @@ function App() {
         </div>
 
         <footer className="bg-card border-t border-border">
-          <div className="container mx-auto px-4 py-3 max-w-5xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <p className="text-xs text-muted-foreground">
-                  © 2026 Domain Monitor v{APP_VERSION} • Kabupaten Kendal
-                </p>
-                <span className="text-xs text-muted-foreground">•</span>
+          <div className="container mx-auto px-2 md:px-4 py-2 max-w-5xl">
+            <div className="flex items-center justify-center gap-1.5 text-[10px] md:text-xs text-center flex-wrap">
+              {/* Mobile compact layout */}
+              <span className="text-muted-foreground md:hidden">© 2026 Kab Kendal</span>
+              
+              {/* Desktop full text */}
+              <span className="text-muted-foreground hidden md:inline">© 2026 Domain Monitor • Kabupaten Kendal</span>
+              
+              <span className="text-muted-foreground">•</span>
+              
+              {/* Terms - "S&K" mobile, full desktop */}
+              <div className="md:hidden">
+                <TermsOfServiceDialog triggerText="S&K" />
+              </div>
+              <div className="hidden md:block">
                 <TermsOfServiceDialog />
-                <span className="text-xs text-muted-foreground">•</span>
-                <InfoDialog triggerText="Panduan" asLink={true} />
-                <span className="text-xs text-muted-foreground">•</span>
-                <PrivacyPolicyDialog />
               </div>
-              <div className="flex items-center gap-2">
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="text-xs text-muted-foreground bg-yellow-500/10 px-2 py-1 rounded">
-                    Firebase: {firebaseOps.reads}R / {firebaseOps.writes}W today
-                  </div>
-                )}
-                <ChangelogDialog />
-              </div>
+              
+              <span className="text-muted-foreground">•</span>
+              <InfoDialog triggerText="Panduan" asLink={true} />
+              
+              <span className="text-muted-foreground">•</span>
+              <PrivacyPolicyDialog triggerText="Privacy" />
+              
+              <span className="text-muted-foreground">•</span>
+              <ChangelogDialog triggerText={`v${APP_VERSION}`} showIcon={false} />
             </div>
+              
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-muted-foreground bg-yellow-500/10 px-2 py-1 rounded text-center mt-2">
+                Firebase: {firebaseOps.reads}R / {firebaseOps.writes}W
+              </div>
+            )}
           </div>
         </footer>
       </div>

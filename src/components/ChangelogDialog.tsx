@@ -14,8 +14,14 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { APP_VERSION } from '@/lib/version'
 
-export function ChangelogDialog() {
+interface ChangelogDialogProps {
+  triggerText?: string
+  showIcon?: boolean
+}
+
+export function ChangelogDialog({ triggerText, showIcon = true }: ChangelogDialogProps) {
   const [open, setOpen] = useState(false)
+  const displayText = triggerText || `Changelog v${APP_VERSION}`
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -23,10 +29,10 @@ export function ChangelogDialog() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors"
         >
-          <Clock size={12} className="mr-1" />
-          Changelog v{APP_VERSION}
+          {showIcon && <Clock size={12} className="mr-1" />}
+          {displayText}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[85vh] p-0">
@@ -42,11 +48,99 @@ export function ChangelogDialog() {
         
         <ScrollArea className="px-6 pb-6 max-h-[calc(85vh-120px)]">
           <div className="space-y-6 pr-4">
+            
+            {/* Version 3.5.1 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.5.1</h3>
+                  <p className="text-xs text-muted-foreground">Current Release • 8 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-blue-500 to-purple-500">Mobile Polish</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Palette size={16} className="text-purple-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Mobile UX Refinements</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Check Selesai Box:</strong> 40% space saving dengan compact layout, icon 6x6, stats hanya angka + dot warna</li>
+                    <li><strong>Stats Bar:</strong> 2-row responsive layout mobile, simplified text format</li>
+                    <li><strong>Domain Card:</strong> Globe & Copy icons restored, full width URL</li>
+                    <li><strong>Footer:</strong> Center alignment, version di Changelog button</li>
+                    <li><strong>Tab Kelola:</strong> 2-row layout, semua action icons visible (Play, Edit, Pin, Delete)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench size={16} className="text-blue-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Technical</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Touch targets 36px (h-9 w-9) untuk iOS compliance</li>
+                    <li>flex-col md:flex-row pattern untuk responsive</li>
+                    <li>Better visual hierarchy & spacing</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Version 3.5.0 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.5.0</h3>
+                  <p className="text-xs text-muted-foreground">8 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-green-500 to-blue-500">Mobile Responsive</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Rocket size={16} className="text-green-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Major Features</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Hamburger Menu:</strong> Sheet drawer navigation untuk mobile dengan touch-friendly spacing</li>
+                    <li><strong>Responsive Tabs:</strong> 3-column grid mobile (h-11), 6-column desktop</li>
+                    <li><strong>DomainCard Touch Targets:</strong> 40px minimum, responsive icons 18px mobile / 16px desktop</li>
+                    <li><strong>Three-dot Dropdown:</strong> Mobile menu untuk actions (Copy, Open, Pin, Stats, Delete)</li>
+                    <li><strong>Info Hasil Layout:</strong> Color-coded dots, vertical mobile / horizontal desktop</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench size={16} className="text-blue-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Technical</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>Breakpoint md: 768px untuk mobile/desktop split</li>
+                    <li>grid-cols-3 md:grid-cols-6 pattern</li>
+                    <li>iOS/Android touch target compliance</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Version 3.4.3 */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">Version 3.4.3</h3>
-                  <p className="text-xs text-muted-foreground">Current Release • 8 Januari 2026</p>
+                  <p className="text-xs text-muted-foreground">8 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
                   <Badge variant="destructive" className="text-xs">Cache Fix</Badge>

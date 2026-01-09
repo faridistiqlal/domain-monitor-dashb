@@ -9,6 +9,8 @@ import { ChartLine, Clock, TrendUp, Warning, CheckCircle } from '@phosphor-icons
 import { Skeleton } from '@/components/ui/skeleton'
 import { getFirestore, collection, query, where, orderBy, getDocs } from 'firebase/firestore'
 import { DomainDailyStats, DomainIncident } from '@/lib/types'
+import { UptimeBar } from './UptimeBar'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface DomainStatisticsDialogProps {
   domainId: string
@@ -114,6 +116,22 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
     }))
   }
 
+  const getHourlyBarsData = () => {
+    // Get last 7 days for hourly view
+    const last7Days = stats.slice(-7)
+    return last7Days.flatMap(stat => 
+      stat.hourly
+        .filter(h => h.checks > 0)
+        .map(h => ({
+          status: h.successChecks === h.checks ? 'online' : h.successChecks > 0 ? 'partial' : 'offline',
+          checks: h.checks,
+          successChecks: h.successChecks,
+          date: stat.date,
+          hour: h.hour
+        }))
+    ).slice(-168) // Max 7 days × 24 hours
+  }
+
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds} detik`
     if (seconds < 3600) return `${Math.round(seconds / 60)} menit`
@@ -131,6 +149,7 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
 
   const summary = calculateSummary()
   const chartData = getChartData()
+  const hourlyBars = getHourlyBarsData()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -207,17 +226,34 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                 </div>
 
                 {/* Charts */}
-                <Tabs defaultValue="uptime" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="uptime">Uptime Trend</TabsTrigger>
+                <Tabs defaultValue="overview" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="overview">Daily Overview</TabsTrigger>
+                    <TabsTrigger value="hourly">Hourly Detail</TabsTrigger>
                     <TabsTrigger value="response">Response Time</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="uptime" className="space-y-4">
+                  <TabsContent value="overview" className="space-y-4">
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <TrendUp size={18} />
+                          90-Day Uptime Overview
+                        </h4>
+                        <span className="text-xs text-muted-foreground">Same as Pin Tab</span>
+                      </div>
+                      <div className="space-y-2">
+                        <UptimeBar domainId={domainId} days={90} compact={false} />
+                        <p className="text-xs text-muted-foreground text-center">
+                          Each bar represents 1 day • Hover for details
+                        </p>
+                      </div>
+                    </div>
+
                     <div className="border rounded-lg p-4">
                       <h4 className="font-semibold mb-4 flex items-center gap-2">
                         <TrendUp size={18} />
-                        Uptime Percentage
+                        Uptime Trend ({period} Days)
                       </h4>
                       <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={chartData}>
@@ -239,11 +275,68 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                     </div>
                   </TabsContent>
 
+                  <TabsContent value="hourly" className="space-y-4">
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <Clock size={18} />
+                          Hourly Breakdown (Last 7 Days)
+                        </h4>
+                        <Badge variant="secondary" className="text-xs">
+                          {hourlyBars.length} hours monitored
+                        </Badge>
+                      </div>
+                      {hourlyBars.length > 0 ? (
+                        <>
+                          <div className="flex gap-0.5 flex-wrap items-end h-10">
+                            {hourlyBars.map((bar, i) => (
+                              <Tooltip key={i}>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className={`w-1.5 h-8 rounded-sm transition-all cursor-pointer hover:brightness-125 ${
+                                      bar.status === 'online'
+                                        ? 'bg-success'
+                                        : bar.status === 'partial'
+                                        ? 'bg-warning'
+                                        : 'bg-destructive'
+                                    }`}
+                                    title={`${bar.date} ${String(bar.hour).padStart(2, '0')}:00`}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  <div className="space-y-0.5">
+                                    <div className="font-semibold">
+                                      {new Date(bar.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} • {String(bar.hour).padStart(2, '0')}:00
+                                    </div>
+                                    <div>
+                                      {bar.successChecks}/{bar.checks} checks successful
+                                    </div>
+                                    <div className={bar.status === 'online' ? 'text-success' : bar.status === 'partial' ? 'text-warning' : 'text-destructive'}>
+                                      {bar.status === 'online' ? '✅ All Online' : bar.status === 'partial' ? '⚠️ Partial' : '❌ All Failed'}
+                                    </div>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center mt-3">
+                            Each bar represents 1 hour with checks • Green = 100% success, Yellow = partial, Red = all failed
+                          </p>
+                        </>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Clock size={32} className="mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No hourly data available</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
                   <TabsContent value="response" className="space-y-4">
                     <div className="border rounded-lg p-4">
                       <h4 className="font-semibold mb-4 flex items-center gap-2">
                         <Clock size={18} />
-                        Response Time (ms)
+                        Response Time ({period} Days)
                       </h4>
                       <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={chartData}>

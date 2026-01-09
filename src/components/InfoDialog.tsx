@@ -46,14 +46,26 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
         <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-4">
           <h3 className="text-sm font-semibold mb-2 text-foreground">🚀 Quick Start</h3>
           <ol className="text-sm text-muted-foreground space-y-1.5 pl-5 list-decimal">
-            <li><span className="font-semibold text-foreground">Tambah Domain:</span> Buka tab "Kelola Data", masukkan URL domain, klik "Tambah Domain"</li>
+            <li><span className="font-semibold text-foreground">Tambah Domain:</span> Buka tab "Kelola", masukkan URL domain, klik "Tambah Domain"</li>
             <li><span className="font-semibold text-foreground">Pilih Mode:</span> Pilih "Auto" untuk monitoring real-time atau "Manual" untuk check sekali</li>
             <li><span className="font-semibold text-foreground">Individual Monitoring:</span> Klik Play (▶️) per domain untuk monitoring continuous setiap 5 menit</li>
-            <li><span className="font-semibold text-foreground">Pin Favorit:</span> Klik icon MapPin untuk pin domain favorit ke tab khusus dengan uptime visualization</li>
+            <li><span className="font-semibold text-foreground">Pin Favorit:</span> Klik icon Pin untuk pin domain favorit ke tab khusus dengan uptime visualization</li>
             <li><span className="font-semibold text-foreground">Monitor Status:</span> Lihat status Online (hijau), DNS Only (kuning), Offline (merah)</li>
-            <li><span className="font-semibold text-foreground">Statistics:</span> Klik icon chart di domain untuk lihat uptime & response time trends</li>
+            <li><span className="font-semibold text-foreground">Statistics:</span> Klik icon chart untuk lihat uptime & response time trends</li>
             <li><span className="font-semibold text-foreground">Export Data:</span> Klik tombol "Export" untuk download hasil monitoring ke CSV</li>
           </ol>
+        </div>
+
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-4">
+          <h3 className="text-sm font-semibold mb-2 text-foreground">📱 Mobile Usage</h3>
+          <ul className="text-sm text-muted-foreground space-y-1.5 pl-5 list-disc">
+            <li><span className="font-semibold text-foreground">Hamburger Menu:</span> Klik ☰ di kiri atas untuk akses Import, Export, Settings, Notifications</li>
+            <li><span className="font-semibold text-foreground">Tab Navigation:</span> 3-kolom layout (Monitoring, Pin, Statistik / Grup, Tag, Kelola)</li>
+            <li><span className="font-semibold text-foreground">Domain Actions:</span> Tap domain untuk quick info, gunakan three-dot menu (⋮) untuk actions lengkap</li>
+            <li><span className="font-semibold text-foreground">Tab Kelola:</span> Action icons (Play, Edit, Pin, Delete) visible di baris kedua card</li>
+            <li><span className="font-semibold text-foreground">Globe & Copy:</span> Icon globe (buka browser) dan copy URL ada di setiap domain card</li>
+            <li><span className="font-semibold text-foreground">Touch Targets:</span> Semua buttons 36px+ untuk comfortable tap</li>
+          </ul>
         </div>
         
         <Accordion type="multiple" defaultValue={["quick-tips"]} className="w-full pt-2">
@@ -93,7 +105,7 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
                 </div>
                 <div className="flex gap-2">
                   <span className="font-semibold text-accent">•</span>
-                  <p>Setup <span className="font-semibold text-foreground">Notifikasi Slack</span>: Klik icon Bell di header, paste Webhook URL, aktifkan notification rules</p>
+                  <p>Setup <span className="font-semibold text-foreground">Notifikasi Slack</span>: Klik icon Bell di header (atau hamburger menu di mobile), paste Webhook URL, aktifkan notification rules</p>
                 </div>
                 <div className="flex gap-2">
                   <span className="font-semibold text-accent">•</span>
