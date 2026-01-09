@@ -1524,7 +1524,7 @@ function App() {
             <div className="flex items-center justify-between gap-2">
               {/* Mobile Hamburger - Only visible on mobile */}
               <MobileNav
-                onImport={() => setShowImportDialog(true)}
+                onImport={() => {}} 
                 onExport={handleExportCSV}
                 notificationSettings={notificationSettings}
                 onNotificationSettingsSave={handleNotificationSettingsSave}
