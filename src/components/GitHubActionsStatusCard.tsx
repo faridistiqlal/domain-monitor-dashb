@@ -26,6 +26,7 @@ export function GitHubActionsStatusCard() {
   const [lastRun, setLastRun] = useState<GitHubActionsLog | null>(null)
   const [recentRuns, setRecentRuns] = useState<GitHubActionsLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [nextRunIn, setNextRunIn] = useState<string>('')
 
   useEffect(() => {
     const logsRef = collection(db, 'github-actions-logs')
@@ -45,6 +46,31 @@ export function GitHubActionsStatusCard() {
 
     return () => unsubscribe()
   }, [])
+
+  // Calculate next run countdown
+  useEffect(() => {
+    if (!lastRun?.timestamp) return
+
+    const updateCountdown = () => {
+      const now = Date.now()
+      const lastRunTime = lastRun.timestamp.getTime()
+      const nextRunTime = lastRunTime + (20 * 60 * 1000) // 20 minutes
+      const timeLeft = nextRunTime - now
+
+      if (timeLeft <= 0) {
+        setNextRunIn('Running now...')
+      } else {
+        const minutes = Math.floor(timeLeft / 60000)
+        const seconds = Math.floor((timeLeft % 60000) / 1000)
+        setNextRunIn(`${minutes}m ${seconds}s`)
+      }
+    }
+
+    updateCountdown()
+    const interval = setInterval(updateCountdown, 1000)
+
+    return () => clearInterval(interval)
+  }, [lastRun])
 
   const getStatusColor = () => {
     if (!lastRun) return 'bg-gray-500'
@@ -128,6 +154,14 @@ export function GitHubActionsStatusCard() {
                 locale: idLocale 
               })}
             </div>
+
+            {nextRunIn && (
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-primary" />
+                <span className="text-foreground">Next run in: </span>
+                <span className="font-semibold text-primary">{nextRunIn}</span>
+              </div>
+            )}
 
             {lastRun.status === 'success' && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
