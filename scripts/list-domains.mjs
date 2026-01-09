@@ -51,7 +51,7 @@ async function listDomains() {
       console.log('')
     })
     
-    console.log(`\n📝 Gunakan: node check-firebase-data.mjs "<url-exact>" untuk detail\n`)
+    console.log(`\n📝 Gunakan: node scripts/check-firebase-data.mjs "<url-exact>" untuk detail\n`)
     
   } catch (error) {
     console.error('❌ Error:', error.message)
