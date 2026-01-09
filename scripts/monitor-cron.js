@@ -199,6 +199,28 @@ async function runMonitoring() {
     
     if (domainsToCheck.length === 0) {
       console.log('[Monitor] No domains in current batch')
+      
+      // Write log even if no domains checked
+      try {
+        const logsRef = collection(db, 'github-actions-logs')
+        await addDoc(logsRef, {
+          timestamp: serverTimestamp(),
+          batch: currentBatch,
+          totalDomains: allDomains.length,
+          domainsChecked: 0,
+          results: {
+            online: 0,
+            dnsOnly: 0,
+            offline: 0
+          },
+          status: 'success',
+          message: 'No domains in current batch'
+        })
+        console.log('[Monitor] Log written to Firebase (empty batch)')
+      } catch (logError) {
+        console.error('[Monitor] Failed to write log:', logError.message)
+      }
+      
       return
     }
     
