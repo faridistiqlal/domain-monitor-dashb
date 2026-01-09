@@ -206,22 +206,22 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
             ) : (
               <>
                 {/* Summary Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="border rounded-lg p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Total Uptime</div>
-                    <div className="text-2xl font-bold text-success">{summary.totalUptime}%</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+                  <div className="border rounded p-2">
+                    <div className="text-[10px] text-muted-foreground mb-0.5">Uptime</div>
+                    <div className="text-base font-bold text-success">{summary.totalUptime}%</div>
                   </div>
-                  <div className="border rounded-lg p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Avg Response</div>
-                    <div className="text-2xl font-bold">{summary.avgResponse}ms</div>
+                  <div className="border rounded p-2">
+                    <div className="text-[10px] text-muted-foreground mb-0.5">Response</div>
+                    <div className="text-base font-bold">{summary.avgResponse}ms</div>
                   </div>
-                  <div className="border rounded-lg p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Total Checks</div>
-                    <div className="text-2xl font-bold">{summary.totalChecks.toLocaleString()}</div>
+                  <div className="border rounded p-2">
+                    <div className="text-[10px] text-muted-foreground mb-0.5">Checks</div>
+                    <div className="text-base font-bold">{summary.totalChecks.toLocaleString()}</div>
                   </div>
-                  <div className="border rounded-lg p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Incidents</div>
-                    <div className="text-2xl font-bold text-destructive">{summary.totalIncidents}</div>
+                  <div className="border rounded p-2">
+                    <div className="text-[10px] text-muted-foreground mb-0.5">Incidents</div>
+                    <div className="text-base font-bold text-destructive">{summary.totalIncidents}</div>
                   </div>
                 </div>
 
