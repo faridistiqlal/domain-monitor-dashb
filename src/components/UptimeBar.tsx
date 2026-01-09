@@ -100,12 +100,12 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
   }
 
   const getBarColor = (uptime: number | undefined) => {
-    if (uptime === undefined || uptime === null) return 'bg-muted/40 dark:bg-muted/20' // Lighter gray for visibility
+    if (uptime === undefined || uptime === null) return 'bg-gray-700' // Dark gray untuk no data
     if (uptime >= 95) return 'bg-success' // Green
     if (uptime >= 80) return 'bg-yellow-500' // Yellow
     if (uptime >= 50) return 'bg-amber-500' // Orange
     if (uptime > 0) return 'bg-destructive' // Red
-    return 'bg-muted/40 dark:bg-muted/20' // Lighter gray (no data)
+    return 'bg-gray-700' // Dark gray (no data)
   }
 
   const getBarHeight = (uptime: number | undefined, isCompact: boolean) => {
