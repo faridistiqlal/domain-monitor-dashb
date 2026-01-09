@@ -188,7 +188,7 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
             </div>
 
             {loading ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-64 w-full" />
                 <Skeleton className="h-64 w-full" />
@@ -233,7 +233,7 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                     <TabsTrigger value="response">Response Time</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="overview" className="space-y-4">
+                  <TabsContent value="overview" className="space-y-3">
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="font-semibold flex items-center gap-2">
@@ -255,7 +255,7 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                         <TrendUp size={18} />
                         Uptime Trend ({period} Days)
                       </h4>
-                      <ResponsiveContainer width="100%" height={300}>
+                      <ResponsiveContainer width="100%" height={220}>
                         <LineChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="date" />
@@ -275,7 +275,7 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="hourly" className="space-y-4">
+                  <TabsContent value="hourly" className="space-y-3">
                     <div className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="font-semibold flex items-center gap-2">
@@ -332,13 +332,13 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="response" className="space-y-4">
+                  <TabsContent value="response" className="space-y-3">
                     <div className="border rounded-lg p-4">
                       <h4 className="font-semibold mb-4 flex items-center gap-2">
                         <Clock size={18} />
                         Response Time ({period} Days)
                       </h4>
-                      <ResponsiveContainer width="100%" height={300}>
+                      <ResponsiveContainer width="100%" height={220}>
                         <LineChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="date" />
