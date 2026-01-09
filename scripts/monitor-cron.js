@@ -182,10 +182,14 @@ async function runMonitoring() {
       return
     }
     
-    const allDomains = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
+    // Get domains array from default-user document
+    let allDomains = []
+    snapshot.docs.forEach(doc => {
+      const data = doc.data()
+      if (data.domains && Array.isArray(data.domains)) {
+        allDomains = allDomains.concat(data.domains)
+      }
+    })
     
     console.log(`[Monitor] Found ${allDomains.length} total domains`)
     
