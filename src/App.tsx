@@ -1655,7 +1655,7 @@ function App() {
             setSelectedGroupId(null)
           }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
-          <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-4 gap-1 md:gap-0 h-10 p-1 mt-2">
+          <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-6 gap-1 md:gap-0 h-10 p-1 mt-2">
             <TabsTrigger value="domains" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
               <Monitor size={18} className="md:size-4" />
               <span className="hidden md:inline">Monitoring</span>
