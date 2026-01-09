@@ -127,7 +127,7 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
 
   return (
     <div className={compact ? "flex gap-1 items-center" : "flex flex-col gap-1.5"}>
-      <div className={`flex gap-0.5 ${compact ? 'h-3' : 'h-8'} items-end`}>
+      <div className={`flex gap-0.5 ${compact ? 'h-3' : 'h-8'} items-end w-full`}>
         {filledStats.map((stat, index) => {
           const uptime = stat?.uptimePercent
           const barColor = getBarColor(uptime)
@@ -137,7 +137,7 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
             <Tooltip key={index}>
               <TooltipTrigger asChild>
                 <div
-                  className={`${compact ? 'w-0.5' : 'w-1'} ${barColor} rounded-sm transition-all cursor-pointer
+                  className={`flex-1 ${barColor} rounded-sm transition-all cursor-pointer
                              hover:brightness-125 hover:scale-y-110`}
                   style={{ height: `${barHeight}px` }}
                 />
