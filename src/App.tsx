@@ -90,7 +90,7 @@ function App() {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
   const [individualMonitorIntervals, setIndividualMonitorIntervals] = useState<Record<string, NodeJS.Timeout>>({})
-  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'analytics' | 'pinned'>('domains')
+  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'pinned'>('domains')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
@@ -1650,13 +1650,13 @@ function App() {
           </header>
 
         <Tabs value={activeTab} onValueChange={(val) => {
-          setActiveTab(val as 'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'analytics' | 'pinned')
+          setActiveTab(val as 'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'pinned')
           if (val === 'domains' && viewMode === 'group-detail') {
             setViewMode('all')
             setSelectedGroupId(null)
           }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
-          <TabsList className="grid w-full max-w-4xl grid-cols-7 mb-8 md:mb-6 gap-1 md:gap-0 h-10 p-1 mt-2">
+          <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-8 md:mb-6 gap-1 md:gap-0 h-10 p-1 mt-2">
             <TabsTrigger value="domains" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
               <Monitor size={18} className="md:size-4" />
               <span className="hidden md:inline">Monitoring</span>
@@ -1668,10 +1668,6 @@ function App() {
             <TabsTrigger value="statistics" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
               <ChartBar size={18} className="md:size-4" />
               <span className="hidden md:inline">Statistik</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
-              <ChartLine size={18} className="md:size-4" />
-              <span className="hidden md:inline">Analytics</span>
             </TabsTrigger>
             <TabsTrigger value="groups" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
               <FolderOpen size={18} className="md:size-4" />
@@ -2381,22 +2377,6 @@ function App() {
                 <h2 className="text-lg font-semibold text-foreground">GitHub Actions Monitoring</h2>
                 <p className="text-sm text-muted-foreground">
                   Status 24/7 background monitoring
-                </p>
-              </div>
-            </div>
-            
-            <Separator />
-
-            {/* GitHub Actions Status Card */}
-            <GitHubActionsStatusCard />
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-4 flex-1 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Statistik & Analisis</h2>
-                <p className="text-sm text-muted-foreground">
-                  Ringkasan dan analisis performa monitoring domain
                 </p>
               </div>
             </div>

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
 import { DomainCharts } from './DomainCharts'
+import { GitHubActionsStatusCard } from './GitHubActionsStatusCard'
 
 interface StatisticsViewProps {
   domains: Domain[]
@@ -28,7 +29,7 @@ export function StatisticsView({
   autoRefreshEnabled,
 }: StatisticsViewProps) {
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null)
-  const [activeTab, setActiveTab] = useState<'manual' | 'firebase'>('manual')
+  const [activeTab, setActiveTab] = useState<'manual' | 'firebase' | 'github-actions'>('manual')
   const [firebaseSearchQuery, setFirebaseSearchQuery] = useState('')
 
   const stats = useMemo(() => {
@@ -142,7 +143,7 @@ export function StatisticsView({
       <div className="space-y-4 pr-4">
         {/* Tabs untuk Manual vs Firebase */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="manual" className="gap-2">
               <Gauge size={16} />
               Statistik Real-time
@@ -150,6 +151,10 @@ export function StatisticsView({
             <TabsTrigger value="firebase" className="gap-2">
               <ChartLine size={16} />
               Analytics (Firebase)
+            </TabsTrigger>
+            <TabsTrigger value="github-actions" className="gap-2">
+              <TrendUp size={16} />
+              GitHub Actions
             </TabsTrigger>
           </TabsList>
 
@@ -627,6 +632,11 @@ export function StatisticsView({
                 </Card>
               </>
             )}
+          </TabsContent>
+
+          {/* Tab Content: GitHub Actions Status */}
+          <TabsContent value="github-actions" className="space-y-4 mt-4">
+            <GitHubActionsStatusCard />
           </TabsContent>
         </Tabs>
       </div>
