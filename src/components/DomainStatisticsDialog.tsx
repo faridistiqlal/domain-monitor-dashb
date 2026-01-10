@@ -293,9 +293,10 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                           <Line
                             type="monotone"
                             dataKey="uptime"
-                            stroke="hsl(var(--success))"
-                            strokeWidth={2}
-                            dot={{ fill: 'hsl(var(--success))' }}
+                            stroke="#22c55e"
+                            strokeWidth={3}
+                            dot={{ fill: '#22c55e', r: 4 }}
+                            activeDot={{ r: 6 }}
                             name="Uptime %"
                           />
                         </LineChart>
@@ -403,8 +404,10 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                           <Line
                             type="monotone"
                             dataKey="responseTime"
-                            stroke="hsl(var(--primary))"
-                            strokeWidth={2}
+                            stroke="#3b82f6"
+                            strokeWidth={3}
+                            dot={{ fill: '#3b82f6', r: 4 }}
+                            activeDot={{ r: 6 }}
                             dot={{ fill: 'hsl(var(--primary))' }}
                             name="Response Time (ms)"
                           />
