@@ -872,11 +872,16 @@ function App() {
       return
     }
 
-    setDomains(current =>
-      (current || []).map(d =>
-        d.id === id ? { ...d, url: newUrl, notificationsEnabled } : d
-      )
+    const updatedDomains = (domains || []).map(d =>
+      d.id === id ? { ...d, url: newUrl, notificationsEnabled } : d
     )
+    
+    setDomains(updatedDomains)
+    
+    // Immediately update localStorage cache (prevent data loss on refresh)
+    localStorage.setItem('monitoring-domains', JSON.stringify(updatedDomains))
+    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    
     setStatuses(current => {
       const newStatuses = { ...current }
       delete newStatuses[id]
