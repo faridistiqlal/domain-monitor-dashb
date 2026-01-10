@@ -887,7 +887,7 @@ function App() {
       delete newStatuses[id]
       return newStatuses
     })
-    toast.success('Domain berhasil diubah')
+    toast.success('Pengaturan domain berhasil disimpan')
   }
 
   const handleTogglePin = async (id: string) => {
