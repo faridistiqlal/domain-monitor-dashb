@@ -52,40 +52,45 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-200">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <StatusIndicator status={status.status} />
+            <StatusIndicator status={status.status} className="shrink-0" />
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-base font-mono truncate">
+              <CardTitle className="text-sm font-mono truncate leading-tight">
                 {domain.url}
               </CardTitle>
-              <CardDescription className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-0.5">
                 <Badge 
                   variant="secondary" 
-                  className="text-xs font-semibold"
+                  className="text-[10px] h-4 px-1.5 font-semibold"
                   style={{ backgroundColor: `${getStatusColor()}20`, color: getStatusColor() }}
                 >
                   {getStatusText()}
                 </Badge>
                 {status.responseTime && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[10px] text-muted-foreground">
                     {status.responseTime}ms
                   </span>
                 )}
-              </CardDescription>
+                {status.ipAddress && (
+                  <span className="text-[10px] font-mono text-muted-foreground/70">
+                    {status.ipAddress}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 shrink-0">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
-                  className="h-8 w-8 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                  className="h-7 w-7 text-muted-foreground hover:text-accent hover:bg-accent/10"
                 >
-                  <Globe size={16} />
+                  <Globe size={14} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -98,9 +103,9 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
                   variant="ghost"
                   size="icon"
                   onClick={() => onUnpin(domain.id)}
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 >
-                  <XIcon size={16} />
+                  <XIcon size={14} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -110,13 +115,27 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Last Check Info */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Clock size={14} />
-          <span>Last checked: {formatLastChecked()}</span>
-          {status.lastChecked && (
-            <span className="text-muted-foreground/60">
+      <CardContent className="pt-0 pb-3 space-y-2">
+        {/* Uptime Bar - Simplified */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-muted-foreground">90-day uptime</span>
+            <button
+              onClick={() => setShowStats(true)}
+              className="text-primary hover:underline font-medium"
+            >
+              Details →
+            </button>
+          </div>
+          <UptimeBar domainId={domain.id} days={90} compact={true} />
+        </div>
+
+        {/* Last Check - Compact */}
+        {status.lastChecked && (
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <Clock size={12} />
+            <span>{formatLastChecked()}</span>
+            <span className="text-muted-foreground/50">
               • {new Date(status.lastChecked).toLocaleString('id-ID', { 
                 day: 'numeric',
                 month: 'short',
@@ -124,34 +143,12 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
                 minute: '2-digit'
               })}
             </span>
-          )}
-        </div>
-
-        {/* Uptime Bar */}
-        <div className="pt-2 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">90-day uptime • Daily view</span>
-            <button
-              onClick={() => setShowStats(true)}
-              className="text-xs text-primary hover:underline"
-            >
-              View detailed →
-            </button>
-          </div>
-          <UptimeBar domainId={domain.id} days={90} compact={false} />
-        </div>
-
-        {/* IP Address */}
-        {status.ipAddress && (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground">IP:</span>
-            <span className="font-mono text-accent">{status.ipAddress}</span>
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Error Message - Compact */}
         {status.error && (
-          <div className="text-xs text-destructive bg-destructive/10 rounded p-2">
+          <div className="text-[10px] text-destructive bg-destructive/10 rounded p-1.5 leading-tight">
             {status.error}
           </div>
         )}
