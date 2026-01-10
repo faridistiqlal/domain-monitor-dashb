@@ -836,12 +836,18 @@ function App() {
     
     setDomains(updatedDomains)
     
+    // Immediately update localStorage cache (prevent data loss on refresh)
+    localStorage.setItem('monitoring-domains', JSON.stringify(updatedDomains))
+    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    
     // Immediately sync to Firebase
     try {
       await syncDomainsToFirestore(updatedDomains)
       console.log(`[Pin Sync] Domain ${domain?.url} pinned state synced to Firebase: ${newPinnedState}`)
     } catch (error) {
       console.error('[Pin Sync] Failed to sync to Firebase:', error)
+      toast.error('Gagal sync ke Firebase. Coba lagi.')
+      return
     }
     
     if (newPinnedState) {

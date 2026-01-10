@@ -1,5 +1,154 @@
 # Changelog
 
+## Version 3.7.3 - Next Run Countdown Timer
+**Tanggal Rilis:** 10 Januari 2026
+
+### ⏰ GitHub Actions Countdown Enhancement
+
+**Fitur Baru:**
+- ✅ **Next Run Countdown Timer** di GitHub Actions Status Card
+- ✅ Live countdown yang update setiap detik
+- ✅ Format: "Next check in: 15:32"
+- ✅ Auto-calculate berdasarkan cron schedule (setiap 20 menit)
+- ✅ Visual indicator kapan monitoring berikutnya
+
+**Benefits:**
+- User tahu kapan GitHub Actions akan check berikutnya
+- Transparansi monitoring schedule
+- Better UX dengan real-time information
+
+---
+
+## Version 3.7.2 - Firebase Query Fix
+**Tanggal Rilis:** 10 Januari 2026
+
+### 🔧 Bug Fix: Firebase Query
+
+**Fixed:**
+- ✅ Correct Firebase query untuk get domains array
+- ✅ Proper data fetching dari Firestore
+- ✅ Ensure monitoring script dapat access domain list
+
+---
+
+## Version 3.7.1 - GitHub Actions Tab Organization
+**Tanggal Rilis:** 10 Januari 2026
+
+### 📊 UI/UX Enhancement
+
+**Changes:**
+- ✅ **GitHub Actions as 3rd Sub-Tab** di Statistics Tab
+- ✅ Separate dedicated tab untuk GitHub Actions monitoring
+- ✅ Better organization: Daily / Hourly / GitHub Actions
+- ✅ Cleaner navigation structure
+- ✅ Fix missing ChartLine icon import
+
+**Tab Structure:**
+```
+Statistics Tab
+├── Daily Overview (90-day uptime)
+├── Hourly Detail (7-day hourly)
+└── GitHub Actions (monitoring health) ← NEW POSITION
+```
+
+---
+
+## Version 3.7.0 - GitHub Actions Health Monitoring
+**Tanggal Rilis:** 10 Januari 2026
+
+### 🤖 Major Feature: GitHub Actions Health Dashboard
+
+**New Component: GitHubActionsStatusCard**
+- ✅ **Real-time health monitoring** GitHub Actions workflow
+- ✅ **Last run information**: Time, duration, batch, status
+- ✅ **Success rate tracking**: Overall percentage
+- ✅ **Run history visualization**: Last 10 runs dengan status
+- ✅ **Color coding**: Green (success), Red (failed), Gray (pending)
+
+**Features:**
+```typescript
+// Dashboard menampilkan:
+- Last Run: "2 minutes ago"
+- Duration: "34 seconds"
+- Batch: "B1" (currently checking)
+- Status: "Success" / "Failed"
+- Success Rate: "95.5%" (last 30 days)
+- Run History: Bar chart 10 runs terakhir
+```
+
+**Integration:**
+- Displayed di Statistics View
+- Auto-refresh data dari Firebase
+- Phosphor icons untuk visual consistency
+- Mobile responsive layout
+
+---
+
+## Version 3.6.1 - GitHub Actions 24/7 Monitoring (FREE!)
+**Tanggal Rilis:** 9 Januari 2026
+
+### 🤖 Major Feature: Automated Background Monitoring
+
+**Switch to GitHub Actions Cron (100% FREE!)**
+- ✅ **Auto-runs every 20 minutes** - 24/7 tanpa browser terbuka
+- ✅ **4 Batch System** - B1, B2, B3, B4 staggered checking
+- ✅ **Firebase Direct Query** - Script query Firestore langsung
+- ✅ **Slack Notifications** - Summary results (optional)
+- ✅ **No Cost** - 2000 min/month GitHub Actions (private repo)
+- ✅ **Smart Duration** - ~34 seconds per run, ~1,231 min/month
+
+**Technical Implementation:**
+```yaml
+# .github/workflows/monitor-cron.yml
+schedule:
+  - cron: '*/20 * * * *'  # Every 20 minutes
+
+# Runs: scripts/monitor-cron.js
+# Queries: Firebase domains collection
+# Writes: Firebase stats & incidents
+# Notifies: Slack webhook (optional)
+```
+
+**Cron Schedule:**
+- Batch 1: Menit 0, 20, 40
+- Batch 2: Menit 5, 25, 45
+- Batch 3: Menit 10, 30, 50
+- Batch 4: Menit 15, 35, 55
+
+**Benefits:**
+- ✅ True 24/7 monitoring tanpa user intervention
+- ✅ No laptop/browser perlu nyala
+- ✅ Consistent checking schedule
+- ✅ 100% free dengan private repo
+- ✅ Automated incident detection
+- ✅ Scalable to 300+ domains
+
+**Documentation:**
+- Added comprehensive docs untuk GitHub Actions setup
+- Monitor script: `scripts/monitor-cron.js`
+- Workflow config: `.github/workflows/monitor-cron.yml`
+- Firebase service account integration
+
+---
+
+## Version 3.6.0 - Render.com Cron Job (Deprecated)
+**Tanggal Rilis:** 9 Januari 2026
+
+### 🔧 Experimental: Render.com Cron Service
+
+**Features:**
+- ✅ Render.com cron job untuk background monitoring
+- ✅ render.yaml configuration
+- ✅ Scheduled checks setiap 20 menit
+
+**Status:** ⚠️ **DEPRECATED**
+- Switched to GitHub Actions di v3.6.1
+- Render.com memerlukan credit card
+- GitHub Actions lebih cost-effective
+- Configuration removed from repo
+
+---
+
 ## Version 3.5.2 - Unified Chart Visualization
 **Tanggal Rilis:** 9 Januari 2026
 

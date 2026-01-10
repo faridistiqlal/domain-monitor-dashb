@@ -6,7 +6,7 @@ Real-time monitoring dashboard untuk track availability status dari multiple sub
 📱 **Mobile Ready:** Optimized untuk smartphone & tablet  
 📚 **Dokumentasi:** [docs/](./docs/)  
 🔥 **Firebase:** kendal-monitor project  
-🔧 **Current Version:** 3.6.1  
+🔧 **Current Version:** 3.7.3  
 🤖 **24/7 Monitoring:** GitHub Actions (auto-runs every 20 minutes)
 
 ---
@@ -48,7 +48,7 @@ Real-time monitoring dashboard untuk track availability status dari multiple sub
 **Dokumentasi Lengkap:**
 - [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md) - Current state & metrics
 - [docs/CHECKPOINT.md](docs/CHECKPOINT.md) - Complete implementation history
-- [docs/CHANGELOG.md](docs/CHANGELOG.md) - Version history (NOW: v3.5.10)
+- [docs/CHANGELOG.md](docs/CHANGELOG.md) - Version history (NOW: v3.7.3)
 - [docs/GUIDES.md](docs/GUIDES.md) - User guide
 - [docs/FIREBASE-QUERY-GUIDE.md](docs/FIREBASE-QUERY-GUIDE.md) - Query tools
 
