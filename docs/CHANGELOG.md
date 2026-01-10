@@ -1,5 +1,32 @@
 # Changelog
 
+## Version 3.8.5 - Domain Persistence Fix
+**Tanggal Rilis:** 10 Januari 2026
+
+### 🔧 Bug Fix: Add/Delete Domain Persistence
+
+**Fixed:**
+- ✅ Immediate localStorage updates saat add domain
+- ✅ Immediate localStorage updates saat delete domain
+- ✅ Store ke both `monitoring-domains` dan `domains-cache` keys
+- ✅ Prevent data loss ketika user refresh setelah add/delete domain
+- ✅ Ensure domain changes persist across page reloads
+
+**Technical Changes:**
+```typescript
+// handleAddDomain & handleDeleteDomain now:
+- localStorage.setItem('monitoring-domains', ...)
+- localStorage.setItem('domains-cache', ...)
+- Immediate write, no waiting for next sync
+```
+
+**Benefits:**
+- No more lost domains after refresh
+- Better data persistence reliability
+- Improved user experience
+
+---
+
 ## Version 3.7.3 - Next Run Countdown Timer
 **Tanggal Rilis:** 10 Januari 2026
 
