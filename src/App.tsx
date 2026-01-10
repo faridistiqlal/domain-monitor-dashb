@@ -294,14 +294,54 @@ function App() {
         }
         
         // MIGRATION: Clear old localStorage data only on version change
-        const statusVersion = localStorage.getItem('domain-statuses-version')
-        if (!statusVersion) {
+        const appVersion = localStorage.getItem('app-version')
+        if (!appVersion) {
           // First time - set version without clearing
-          localStorage.setItem('domain-statuses-version', APP_VERSION)
-        } else if (statusVersion !== APP_VERSION) {
-          console.log(`Clearing localStorage statuses (v${APP_VERSION} migration)`)
+          localStorage.setItem('app-version', APP_VERSION)
+        } else if (appVersion !== APP_VERSION) {
+          console.log(`🔄 Version changed: ${appVersion} → ${APP_VERSION}`)
+          console.log('Clearing cache to load fresh data from Firebase...')
+          
+          // Clear all caches to force reload from Firebase
+          localStorage.removeItem('domains-cache')
+          localStorage.removeItem('groups-cache')
+          localStorage.removeItem('tags-cache')
           localStorage.removeItem('domain-last-statuses')
-          localStorage.setItem('domain-statuses-version', APP_VERSION)
+          
+          // Update version
+          localStorage.setItem('app-version', APP_VERSION)
+          
+          // Force immediate Firebase load (no cache)
+          const [loadedDomains, loadedGroups, loadedTags] = await Promise.all([
+            loadDomains(),
+            loadGroups(),
+            loadTags()
+          ])
+          
+          // Assign batch and reset enabled field
+          const domainsWithBatch = loadedDomains.map((domain, index) => {
+            if (!domain.checkBatch) {
+              return {
+                ...domain,
+                checkBatch: assignCheckBatch(index, loadedDomains.length),
+                lastStatusChange: domain.lastStatusChange || Date.now(),
+                consecutiveFailures: domain.consecutiveFailures || 0,
+                enabled: false
+              }
+            }
+            return { ...domain, enabled: false }
+          })
+          
+          setDomains(domainsWithBatch)
+          setGroups(loadedGroups)
+          setTags(loadedTags)
+          
+          // Save to cache for future loads
+          localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
+          localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
+          localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
+          
+          console.log('✅ Fresh data loaded from Firebase after version update')
         }
         
         // AUTO-CLEAR: Always clear status on browser refresh
