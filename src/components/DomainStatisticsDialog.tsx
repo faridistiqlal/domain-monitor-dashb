@@ -257,11 +257,39 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                       </h4>
                       <ResponsiveContainer width="100%" height={220}>
                         <LineChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis domain={[0, 100]} />
-                          <RechartsTooltip />
-                          <Legend />
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis 
+                            dataKey="date" 
+                            className="text-xs"
+                            tick={{ fill: 'hsl(var(--foreground))' }}
+                          />
+                          <YAxis 
+                            domain={[0, 100]} 
+                            className="text-xs"
+                            tick={{ fill: 'hsl(var(--foreground))' }}
+                          />
+                          <RechartsTooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--popover))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '0.5rem',
+                              padding: '8px 12px',
+                              color: 'hsl(var(--popover-foreground))'
+                            }}
+                            labelStyle={{ 
+                              color: 'hsl(var(--popover-foreground))',
+                              fontWeight: 600,
+                              marginBottom: '4px'
+                            }}
+                            itemStyle={{ 
+                              color: 'hsl(var(--popover-foreground))' 
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{ 
+                              color: 'hsl(var(--foreground))' 
+                            }}
+                          />
                           <Line
                             type="monotone"
                             dataKey="uptime"
@@ -340,11 +368,38 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                       </h4>
                       <ResponsiveContainer width="100%" height={220}>
                         <LineChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <RechartsTooltip />
-                          <Legend />
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis 
+                            dataKey="date" 
+                            className="text-xs"
+                            tick={{ fill: 'hsl(var(--foreground))' }}
+                          />
+                          <YAxis 
+                            className="text-xs"
+                            tick={{ fill: 'hsl(var(--foreground))' }}
+                          />
+                          <RechartsTooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--popover))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '0.5rem',
+                              padding: '8px 12px',
+                              color: 'hsl(var(--popover-foreground))'
+                            }}
+                            labelStyle={{ 
+                              color: 'hsl(var(--popover-foreground))',
+                              fontWeight: 600,
+                              marginBottom: '4px'
+                            }}
+                            itemStyle={{ 
+                              color: 'hsl(var(--popover-foreground))' 
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{ 
+                              color: 'hsl(var(--foreground))' 
+                            }}
+                          />
                           <Line
                             type="monotone"
                             dataKey="responseTime"
