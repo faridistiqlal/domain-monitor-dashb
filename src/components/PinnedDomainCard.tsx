@@ -117,7 +117,7 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
       </CardHeader>
       <CardContent className="pt-0 pb-3 space-y-2">
         {/* Uptime Bar - Simplified */}
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[10px]">
             <span className="text-muted-foreground">90-day uptime</span>
             <button
@@ -127,7 +127,7 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
               Details →
             </button>
           </div>
-          <UptimeBar domainId={domain.id} days={90} compact={true} />
+          <UptimeBar domainId={domain.id} days={90} compact={false} />
         </div>
 
         {/* Last Check - Compact */}
