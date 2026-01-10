@@ -189,41 +189,58 @@ function App() {
                 loadTags()
               ])
               
-              // Assign batch to domains that don't have one
-              const domainsWithBatch = loadedDomains.map((domain, index) => {
-                // Reset enabled field on background refresh
-                // Individual monitoring is not persistent and should not restart automatically
-                const preservedEnabled = false
+              // Merge with current state to preserve recent local changes (e.g., pin/unpin)
+              setDomains(currentDomains => {
+                // Create a map of current domains for quick lookup
+                const currentDomainsMap = new Map(currentDomains.map(d => [d.id, d]))
                 
-                if (!domain.checkBatch) {
-                  return {
-                    ...domain,
+                // Merge: Use Firebase data but preserve pin state and enabled from local
+                const mergedDomains = loadedDomains.map((firebaseDomain, index) => {
+                  const localDomain = currentDomainsMap.get(firebaseDomain.id)
+                  
+                  // Assign batch if not exists
+                  const domainWithBatch = !firebaseDomain.checkBatch ? {
+                    ...firebaseDomain,
                     checkBatch: assignCheckBatch(index, loadedDomains.length),
-                    lastStatusChange: domain.lastStatusChange || Date.now(),
-                    consecutiveFailures: domain.consecutiveFailures || 0,
-                    enabled: preservedEnabled
+                    lastStatusChange: firebaseDomain.lastStatusChange || Date.now(),
+                    consecutiveFailures: firebaseDomain.consecutiveFailures || 0,
+                  } : firebaseDomain
+                  
+                  // If domain exists locally, preserve pin and enabled state
+                  if (localDomain) {
+                    return {
+                      ...domainWithBatch,
+                      pinned: localDomain.pinned, // Preserve local pin state
+                      enabled: false // Always reset enabled (monitoring is not persistent)
+                    }
                   }
-                }
-                return {
-                  ...domain,
-                  enabled: preservedEnabled
-                }
+                  
+                  // New domain from Firebase
+                  return {
+                    ...domainWithBatch,
+                    enabled: false
+                  }
+                })
+                
+                // Debug log
+                const pinnedCount = mergedDomains.filter(d => d.pinned).length
+                const enabledCount = mergedDomains.filter(d => d.enabled).length
+                console.log(`[Background Refresh] Merged ${mergedDomains.length} domains (${pinnedCount} pinned, ${enabledCount} enabled)`)
+                
+                // Update cache with merged data
+                localStorage.setItem('domains-cache', JSON.stringify(mergedDomains))
+                
+                return mergedDomains
               })
               
-              setDomains(domainsWithBatch)
               setGroups(loadedGroups)
               setTags(loadedTags)
               
-              // Debug: Log enabled domains
-              const enabledDomains = domainsWithBatch.filter(d => d.enabled === true)
-              console.log(`[Background Refresh] Loaded ${domainsWithBatch.length} domains, ${enabledDomains.length} enabled`)
-              
-              // Update cache
-              localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
+              // Update cache for groups and tags
               localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
               localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
               
-              console.log('Refreshed from Firebase:', domainsWithBatch.length, 'domains')
+              console.log('✅ Background refresh completed with local state preserved')
             } catch (error: any) {
               console.warn('Background refresh skipped - Firebase quota exceeded or error:', error)
               // Silently fail background refresh, keep using cache
