@@ -842,7 +842,13 @@ function App() {
       consecutiveFailures: 0
     }
 
-    setDomains(current => [...(current || []), newDomain])
+    const updatedDomains = [...(domains || []), newDomain]
+    setDomains(updatedDomains)
+    
+    // Immediately update localStorage to persist the new domain
+    localStorage.setItem('monitoring-domains', JSON.stringify(updatedDomains))
+    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    
     toast.success(`Domain berhasil ditambahkan (Batch ${batch})`)
   }
 
@@ -852,7 +858,13 @@ function App() {
       return
     }
 
-    setDomains(current => (current || []).filter(d => d.id !== id))
+    const updatedDomains = (domains || []).filter(d => d.id !== id)
+    setDomains(updatedDomains)
+    
+    // Immediately update localStorage to persist the deletion
+    localStorage.setItem('monitoring-domains', JSON.stringify(updatedDomains))
+    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    
     setStatuses(current => {
       const newStatuses = { ...current }
       delete newStatuses[id]
