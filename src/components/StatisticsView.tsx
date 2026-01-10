@@ -143,18 +143,18 @@ export function StatisticsView({
       <div className="space-y-4 pr-4">
         {/* Tabs untuk Manual vs Firebase */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
-            <TabsTrigger value="manual" className="gap-2">
-              <Gauge size={16} />
-              Statistik Real-time
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 h-auto p-1">
+            <TabsTrigger value="manual" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row">
+              <Gauge size={14} className="md:size-4" />
+              <span className="leading-tight">Real-time</span>
             </TabsTrigger>
-            <TabsTrigger value="firebase" className="gap-2">
-              <ChartLine size={16} />
-              Analytics (Firebase)
+            <TabsTrigger value="firebase" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row">
+              <ChartLine size={14} className="md:size-4" />
+              <span className="leading-tight">Analytics</span>
             </TabsTrigger>
-            <TabsTrigger value="github-actions" className="gap-2">
-              <TrendUp size={16} />
-              GitHub Actions
+            <TabsTrigger value="github-actions" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row">
+              <TrendUp size={14} className="md:size-4" />
+              <span className="leading-tight">GitHub</span>
             </TabsTrigger>
           </TabsList>
 
