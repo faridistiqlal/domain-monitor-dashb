@@ -2414,7 +2414,7 @@ function App() {
               </div>
             ) : (
               <ScrollArea className="flex-1 h-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4 md:pr-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20 md:pb-4 md:pr-4">
                   {domains.filter(d => d.pinned).map(domain => {
                     const domainStatus = statuses[domain.id] || { 
                       id: domain.id, 
