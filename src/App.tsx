@@ -100,6 +100,8 @@ function App() {
   const debouncedManageSearchQuery = useDebounce(manageSearchQuery, 300)
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
   const [manageTagFilter, setManageTagFilter] = useState<string>('all')
+  const [manageNotificationFilter, setManageNotificationFilter] = useState<string>('all')
+  const [managePinFilter, setManagePinFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
   
   // Firebase operation tracking (for development monitoring)
@@ -1563,9 +1565,17 @@ function App() {
         (manageTagFilter === 'untagged' && (!domain.tags || domain.tags.length === 0)) ||
         (domain.tags && domain.tags.includes(manageTagFilter))
       
-      return matchesSearch && matchesGroup && matchesTag
+      const matchesNotification = manageNotificationFilter === 'all' ||
+        (manageNotificationFilter === 'enabled' && domain.notificationsEnabled === true) ||
+        (manageNotificationFilter === 'disabled' && domain.notificationsEnabled !== true)
+      
+      const matchesPin = managePinFilter === 'all' ||
+        (managePinFilter === 'pinned' && domain.pinned === true) ||
+        (managePinFilter === 'unpinned' && domain.pinned !== true)
+      
+      return matchesSearch && matchesGroup && matchesTag && matchesNotification && matchesPin
     }),
-    [domains, debouncedManageSearchQuery, manageGroupFilter, manageTagFilter]
+    [domains, debouncedManageSearchQuery, manageGroupFilter, manageTagFilter, manageNotificationFilter, managePinFilter]
   )
 
   const selectedGroup = selectedGroupId ? groups?.find(g => g.id === selectedGroupId) : null
@@ -2121,13 +2131,13 @@ function App() {
 
             {globalTotalCount > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 lg:flex-none lg:w-48">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex-1 lg:flex-none lg:w-40">
                     <Select value={manageGroupFilter} onValueChange={setManageGroupFilter}>
                       <SelectTrigger className="h-9 py-0 text-xs w-full">
                         <div className="flex items-center gap-1.5">
                           <FolderOpen size={14} />
-                          <SelectValue placeholder="Filter Grup" />
+                          <SelectValue placeholder="Grup" />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
@@ -2148,12 +2158,12 @@ function App() {
                     </Select>
                   </div>
 
-                  <div className="flex-1 lg:flex-none lg:w-48">
+                  <div className="flex-1 lg:flex-none lg:w-40">
                     <Select value={manageTagFilter} onValueChange={setManageTagFilter}>
                       <SelectTrigger className="h-9 py-0 text-xs w-full">
                         <div className="flex items-center gap-1.5">
                           <Tag size={14} />
-                          <SelectValue placeholder="Filter Tag" />
+                          <SelectValue placeholder="Tag" />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
@@ -2170,6 +2180,38 @@ function App() {
                             </div>
                           </SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex-1 lg:flex-none lg:w-40">
+                    <Select value={manageNotificationFilter} onValueChange={setManageNotificationFilter}>
+                      <SelectTrigger className="h-9 py-0 text-xs w-full">
+                        <div className="flex items-center gap-1.5">
+                          <Bell size={14} />
+                          <SelectValue placeholder="Notif" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all" className="text-xs">Semua Notif</SelectItem>
+                        <SelectItem value="enabled" className="text-xs">Notif Aktif</SelectItem>
+                        <SelectItem value="disabled" className="text-xs">Notif Nonaktif</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex-1 lg:flex-none lg:w-40">
+                    <Select value={managePinFilter} onValueChange={setManagePinFilter}>
+                      <SelectTrigger className="h-9 py-0 text-xs w-full">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin size={14} />
+                          <SelectValue placeholder="Pin" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all" className="text-xs">Semua Domain</SelectItem>
+                        <SelectItem value="pinned" className="text-xs">Di-pin</SelectItem>
+                        <SelectItem value="unpinned" className="text-xs">Tidak Di-pin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
