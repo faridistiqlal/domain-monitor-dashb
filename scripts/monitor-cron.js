@@ -8,7 +8,7 @@
  */
 
 import { initializeApp } from 'firebase/app'
-import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore'
+import { getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import dns from 'dns'
 import { promisify } from 'util'
 import fetch from 'node-fetch'
@@ -150,6 +150,171 @@ function getCurrentBatch() {
 }
 
 /**
+ * Get today's date string in YYYY-MM-DD format in Asia/Jakarta timezone
+ */
+function getTodayString() {
+  const now = new Date()
+  // Convert to Jakarta time
+  const jakartaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+  return jakartaTime.toISOString().split('T')[0]
+}
+
+/**
+ * Get current hour in Asia/Jakarta timezone (0-23)
+ */
+function getCurrentHour() {
+  const now = new Date()
+  const jakartaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+  return jakartaTime.getHours()
+}
+
+/**
+ * Get or create daily stats for a domain
+ */
+async function getOrCreateDailyStats(domainId) {
+  const today = getTodayString()
+  const statsId = `${domainId}-${today}`
+  
+  try {
+    const statsRef = doc(db, 'domain-stats-daily', statsId)
+    const statsSnap = await getDoc(statsRef)
+    
+    if (statsSnap.exists()) {
+      return { id: statsId, ...statsSnap.data() }
+    }
+    
+    // Create new stats
+    const newStats = {
+      id: statsId,
+      domainId,
+      date: today,
+      totalChecks: 0,
+      successChecks: 0,
+      uptimePercent: 0,
+      hourly: Array.from({ length: 24 }, (_, i) => ({
+        hour: i,
+        checks: 0,
+        successChecks: 0,
+        status: 'offline'
+      })),
+      incidentIds: []
+    }
+    
+    await setDoc(statsRef, newStats)
+    return newStats
+  } catch (error) {
+    console.error(`[Stats] Error getting/creating stats for ${domainId}:`, error.message)
+    // Return default if Firebase fails
+    return {
+      id: statsId,
+      domainId,
+      date: today,
+      totalChecks: 0,
+      successChecks: 0,
+      uptimePercent: 0,
+      hourly: Array.from({ length: 24 }, (_, i) => ({
+        hour: i,
+        checks: 0,
+        successChecks: 0,
+        status: 'offline'
+      })),
+      incidentIds: []
+    }
+  }
+}
+
+/**
+ * Update daily stats with check result
+ */
+async function updateDailyStats(domainId, checkResult) {
+  try {
+    const stats = await getOrCreateDailyStats(domainId)
+    const currentHour = getCurrentHour()
+    
+    // Update total checks
+    stats.totalChecks++
+    if (checkResult.status === 'online') {
+      stats.successChecks++
+    }
+    
+    // Update uptime percentage
+    stats.uptimePercent = (stats.successChecks / stats.totalChecks) * 100
+    
+    // Update hourly aggregate
+    const hourlyData = stats.hourly[currentHour]
+    hourlyData.checks++
+    if (checkResult.status === 'online') {
+      hourlyData.successChecks++
+    }
+    hourlyData.status = checkResult.status
+    
+    // Update response time stats
+    if (checkResult.responseTime) {
+      // Update hourly avg
+      if (!hourlyData.avgResponseTime) {
+        hourlyData.avgResponseTime = checkResult.responseTime
+      } else {
+        hourlyData.avgResponseTime = 
+          (hourlyData.avgResponseTime * (hourlyData.checks - 1) + checkResult.responseTime) / hourlyData.checks
+      }
+      
+      // Update daily min/max
+      if (!stats.minResponseTime || checkResult.responseTime < stats.minResponseTime) {
+        stats.minResponseTime = checkResult.responseTime
+      }
+      if (!stats.maxResponseTime || checkResult.responseTime > stats.maxResponseTime) {
+        stats.maxResponseTime = checkResult.responseTime
+      }
+      
+      // Update daily average
+      if (!stats.avgResponseTime) {
+        stats.avgResponseTime = checkResult.responseTime
+      } else {
+        stats.avgResponseTime = 
+          (stats.avgResponseTime * (stats.totalChecks - 1) + checkResult.responseTime) / stats.totalChecks
+      }
+    }
+    
+    // Save to Firestore
+    const statsRef = doc(db, 'domain-stats-daily', stats.id)
+    await setDoc(statsRef, stats, { merge: true })
+    
+    console.log(`[Stats] Updated stats for ${domainId}: ${stats.totalChecks} checks, ${stats.uptimePercent.toFixed(1)}% uptime`)
+  } catch (error) {
+    console.error(`[Stats] Error updating stats for ${domainId}:`, error.message)
+  }
+}
+
+/**
+ * Update domain status in domains collection
+ */
+async function updateDomainStatus(domainId, checkResult, allDomains) {
+  try {
+    // Find the domain in the array
+    const domainIndex = allDomains.findIndex(d => d.id === domainId)
+    if (domainIndex === -1) return
+    
+    // Update the domain object
+    allDomains[domainIndex].status = checkResult.status
+    allDomains[domainIndex].responseTime = checkResult.responseTime
+    allDomains[domainIndex].ipAddress = checkResult.ipAddress
+    allDomains[domainIndex].lastChecked = Date.now()
+    allDomains[domainIndex].error = checkResult.error
+    
+    // Write back to Firebase (default-user document)
+    const domainsRef = doc(db, 'domains', 'default-user')
+    await setDoc(domainsRef, {
+      domains: allDomains,
+      updatedAt: Date.now()
+    }, { merge: true })
+    
+    console.log(`[Domain] Updated domain status: ${allDomains[domainIndex].url} -> ${checkResult.status}`)
+  } catch (error) {
+    console.error(`[Domain] Error updating domain status:`, error.message)
+  }
+}
+
+/**
  * Send Slack notification
  */
 async function sendSlackNotification(message) {
@@ -233,12 +398,21 @@ async function runMonitoring() {
       domainsToCheck.map(async domain => {
         console.log(`[Monitor] Checking: ${domain.url}`)
         const result = await checkDomain(domain)
+        
+        // Update daily stats
+        await updateDailyStats(domain.id, result)
+        
         return {
           domain,
           result
         }
       })
     )
+    
+    // Update domain statuses in batch
+    for (const { domain, result } of results) {
+      await updateDomainStatus(domain.id, result, allDomains)
+    }
     
     // Count results
     const online = results.filter(r => r.result.status === 'online').length

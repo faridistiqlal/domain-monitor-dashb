@@ -32,6 +32,7 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [days, setDays] = useState<7 | 30>(7)
+  const [viewMode, setViewMode] = useState<'daily' | 'hourly'>('daily')
 
   const loadData = async () => {
     const refreshing = !isLoading
@@ -43,9 +44,13 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
       console.log('[DomainCharts] Starting data load for:', selectedDomain.url)
       console.log('[DomainCharts] Domain ID:', selectedDomain.id)
       console.log('[DomainCharts] Days:', days)
+      console.log('[DomainCharts] View mode:', viewMode)
+      
+      // Load more days for daily view to show 90 days
+      const daysToLoad = viewMode === 'daily' ? 90 : days
       
       const [statsData, incidentsData] = await Promise.all([
-        getDomainStats(selectedDomain.id, days),
+        getDomainStats(selectedDomain.id, daysToLoad),
         getDomainIncidents(selectedDomain.id, days)
       ])
       
@@ -85,7 +90,7 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
 
   useEffect(() => {
     loadData()
-  }, [selectedDomain.id, days])
+  }, [selectedDomain.id, days, viewMode])
 
   if (isLoading) {
     return (
@@ -171,16 +176,32 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
     : displayStatus === 'dns-only' ? 'DNS Only'
     : 'Unknown'
 
-  // Create uptime bars data (last 90 checks from hourly data)
-  const uptimeBars = stats.slice(-4).flatMap(stat => 
-    stat.hourly
-      .filter(h => h.checks > 0)
-      .map(h => ({
-        status: h.successChecks === h.checks ? 'online' : h.successChecks > 0 ? 'partial' : 'offline',
-        checks: h.checks,
-        successChecks: h.successChecks
+  // Create uptime bars based on view mode
+  const uptimeBars = viewMode === 'daily'
+    ? // Daily view: 1 bar per day (90 days)
+      stats.slice(-90).map(stat => ({
+        date: stat.date,
+        status: stat.uptimePercent >= 95 ? 'online' 
+          : stat.uptimePercent > 0 ? 'partial' 
+          : 'offline',
+        uptime: stat.uptimePercent,
+        checks: stat.totalChecks,
+        successChecks: stat.successChecks
       }))
-  ).slice(-90) // Last 90 hourly checks
+    : // Hourly view: 1 bar per hour (last 7 days)
+      stats.slice(-7).flatMap(stat => 
+        stat.hourly
+          .filter(h => h.checks > 0)
+          .map(h => ({
+            date: stat.date,
+            hour: h.hour,
+            status: h.successChecks === h.checks ? 'online' 
+              : h.successChecks > 0 ? 'partial' 
+              : 'offline',
+            checks: h.checks,
+            successChecks: h.successChecks
+          }))
+      )
 
   // Find max values for chart scaling
   const maxChecks = Math.max(...stats.map(s => s.totalChecks), 1)
@@ -204,6 +225,31 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex gap-1 border rounded p-0.5">
+            <button
+              onClick={() => setViewMode('daily')}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                viewMode === 'daily'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title="Daily view - 90 hari"
+            >
+              Daily
+            </button>
+            <button
+              onClick={() => setViewMode('hourly')}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                viewMode === 'hourly'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title="Hourly view - 7 hari detail"
+            >
+              Hourly
+            </button>
+          </div>
           <Button
             onClick={() => loadData()}
             disabled={isRefreshing}
@@ -276,7 +322,10 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-muted-foreground">
-                      Check every {last24h ? `${Math.round(24 * 60 / (last24h.totalChecks / last24h.hourly.filter(h => h.checks > 0).length))}` : '60'} minutes
+                      {viewMode === 'daily' 
+                        ? `${uptimeBars.length} days • 1 bar = 1 day`
+                        : `${uptimeBars.length} hourly checks • Last 7 days`
+                      }
                     </div>
                     <Badge 
                       variant={displayStatus === 'online' ? 'default' : displayStatus === 'dns-only' ? 'secondary' : 'destructive'}
@@ -289,14 +338,18 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
                     {uptimeBars.map((bar, i) => (
                       <div
                         key={i}
-                        className={`w-1.5 h-8 rounded-sm transition-all ${
+                        className={`${viewMode === 'daily' ? 'w-2' : 'w-1.5'} h-8 rounded-sm transition-all ${
                           bar.status === 'online'
                             ? 'bg-success hover:opacity-80'
                             : bar.status === 'partial'
                             ? 'bg-warning hover:opacity-80'
                             : 'bg-destructive hover:opacity-80'
                         }`}
-                        title={`${bar.successChecks}/${bar.checks} checks successful`}
+                        title={
+                          viewMode === 'daily'
+                            ? `${(bar as any).date}: ${(bar as any).uptime?.toFixed(1)}% uptime (${bar.successChecks}/${bar.checks} checks)`
+                            : `${(bar as any).date} ${(bar as any).hour}:00 - ${bar.successChecks}/${bar.checks} checks successful`
+                        }
                       />
                     ))}
                   </div>
