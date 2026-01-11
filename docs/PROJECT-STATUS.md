@@ -1,7 +1,7 @@
 # 📊 PROJECT STATUS - Domain Monitor Kendal
 
 **Last Updated:** 11 Januari 2026  
-**Version:** 3.8.6  
+**Version:** 3.8.7  
 **Status:** ✅ Production Ready & Live  
 **Live URL:** https://kendal-uptime.vercel.app  
 **Deployment:** Vercel (Auto-deploy from Git)

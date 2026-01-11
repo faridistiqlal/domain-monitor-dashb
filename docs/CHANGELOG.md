@@ -1,5 +1,53 @@
 # Changelog
 
+## Version 3.8.7 - UptimeBar Display Fix for 0% Uptime
+**Tanggal Rilis:** 11 Januari 2026
+
+### 🐛 Bug Fixes: UptimeBar Visual Display
+
+**Problem:**
+- ❌ Bar dengan 0% uptime (offline) di-render sebagai grey (no data) padahal seharusnya red
+- ❌ Bar dengan 0% uptime tingginya terlalu kecil sehingga tidak terlihat
+- ❌ User melihat hanya 3 bars padahal data ada 4
+
+**Root Cause:**
+```javascript
+// BEFORE (Bug):
+if (uptime > 0) return 'bg-destructive'  // 0% masuk else = grey
+return 'bg-gray-700'
+
+const minHeight = isCompact ? 3 : 4  // Terlalu kecil
+return Math.max(minHeight, (uptime / 100) * maxHeight)  // 0% = 4px
+```
+
+**Fixes Applied:**
+- ✅ **Color logic fixed**: `uptime >= 0` untuk include 0% sebagai red
+- ✅ **Min height increased**: 4:6 (compact:normal) untuk visibility lebih baik
+- ✅ **Explicit 0% handling**: `if (uptime === 0) return minHeight`
+- ✅ **Stats text improved**: "X days of data" lebih clear daripada "last X days"
+
+**After:**
+```javascript
+// Color logic:
+if (uptime >= 0) return 'bg-destructive'  // ✅ 0% = red
+
+// Height logic:
+const minHeight = isCompact ? 4 : 6  // ✅ Increased
+if (uptime === 0) return minHeight  // ✅ Ensure visible
+```
+
+**Impact:**
+- ✅ Bars dengan 0% uptime sekarang tampil **merah** dan **terlihat jelas**
+- ✅ Users dapat membedakan "no data" (grey) vs "offline" (red)
+- ✅ Visual consistency dengan status indicators lainnya
+
+**Testing:**
+- Verified dengan kendalkab.go.id (0% uptime pada 11 Jan - HTTP 500 error)
+- Verified dengan ppid.kendalkab.go.id (50% uptime pada 11 Jan)
+- Both domains sekarang menampilkan 4 colored bars dengan benar
+
+---
+
 ## Version 3.8.6 - GitHub Actions Stats Writing & Daily/Hourly Toggle
 **Tanggal Rilis:** 11 Januari 2026
 
