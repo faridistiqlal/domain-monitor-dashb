@@ -104,14 +104,16 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
     if (uptime >= 95) return 'bg-success' // Green
     if (uptime >= 80) return 'bg-yellow-500' // Yellow
     if (uptime >= 50) return 'bg-amber-500' // Orange
-    if (uptime > 0) return 'bg-destructive' // Red
-    return 'bg-gray-700' // Dark gray (no data)
+    if (uptime >= 0) return 'bg-destructive' // Red (includes 0%)
+    return 'bg-gray-700' // Dark gray (should not reach here)
   }
 
   const getBarHeight = (uptime: number | undefined, isCompact: boolean) => {
     if (uptime === undefined || uptime === null) return isCompact ? 3 : 4
     const maxHeight = isCompact ? 12 : 32
-    const minHeight = isCompact ? 3 : 4
+    const minHeight = isCompact ? 4 : 6 // Increased min height untuk visibility
+    // For 0% uptime, use minimum height to ensure visibility
+    if (uptime === 0) return minHeight
     return Math.max(minHeight, (uptime / 100) * maxHeight)
   }
 
@@ -166,13 +168,13 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
       </div>
       {!compact && (
         <div className="text-xs text-muted-foreground">
-          {overallUptime > 0 ? (
+          {stats.length > 0 ? (
             <span>
-              <span className="font-semibold text-foreground">{overallUptime.toFixed(1)}%</span> uptime 
-              <span className="text-muted-foreground/60"> (last {stats.length} days)</span>
+              <span className="font-semibold text-foreground">{overallUptime.toFixed(1)}%</span> uptime
+              <span className="text-muted-foreground/60"> • {stats.length} day{stats.length !== 1 ? 's' : ''} of data</span>
             </span>
           ) : (
-            <span className="text-muted-foreground/60">No uptime data available</span>
+            <span className="text-muted-foreground/60">No uptime data yet • monitoring in progress</span>
           )}
         </div>
       )}
