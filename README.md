@@ -6,7 +6,7 @@ Real-time monitoring dashboard untuk track availability status dari multiple sub
 📱 **Mobile Ready:** Optimized untuk smartphone & tablet  
 📚 **Dokumentasi:** [docs/](./docs/)  
 🔥 **Firebase:** kendal-monitor project  
-🔧 **Current Version:** 3.8.5  
+🔧 **Current Version:** 3.8.6  
 🤖 **24/7 Monitoring:** GitHub Actions (auto-runs every 20 minutes)
 
 ---
@@ -25,8 +25,9 @@ Real-time monitoring dashboard untuk track availability status dari multiple sub
 
 **Struktur Data Firebase:**
 - `domains` - Domain list dengan batch assignment (B1-B4)
-- `domain-stats-daily` - Daily stats dengan hourly aggregates (30-day retention)
+- `domain-stats-daily` - Daily stats dengan hourly aggregates (written by GitHub Actions)
 - `domain-incidents` - Down/recovery tracking
+- `github-actions-logs` - Monitoring execution logs (setiap 20 menit)
 - `groups` - Domain groups
 - `tags` - Domain tags
 - `notifications` - Slack notification history

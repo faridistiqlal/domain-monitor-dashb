@@ -1,5 +1,52 @@
 # Changelog
 
+## Version 3.8.6 - GitHub Actions Stats Writing & Daily/Hourly Toggle
+**Tanggal Rilis:** 11 Januari 2026
+
+### 🎯 Major Fix: GitHub Actions Monitoring Data Persistence
+
+**Critical Fix:**
+- ✅ **GitHub Actions sekarang menulis ke `domain-stats-daily`** - sebelumnya hanya menulis logs
+- ✅ **Uptime chart akan auto-update** setiap 20 menit (24/7 monitoring)
+- ✅ **Update domain status** di Firebase setiap check
+- ✅ **Data persistence** tanpa butuh browser terbuka
+
+**Technical Changes:**
+```javascript
+// monitor-cron.js sekarang:
+- getOrCreateDailyStats(domainId)
+- updateDailyStats(domainId, checkResult)
+- updateDomainStatus(domainId, checkResult, allDomains)
+- Writes to: domain-stats-daily, domains collection, github-actions-logs
+```
+
+### 📊 New Feature: Daily/Hourly Toggle di Statistics View
+
+**Fitur Baru:**
+- ✅ **Daily View**: 90 hari (1 bar = 1 hari) - konsisten dengan Pin tab
+- ✅ **Hourly View**: 7 hari detail (1 bar = 1 jam)
+- ✅ Toggle button untuk switch between views
+- ✅ Auto-load 90 hari data untuk daily view
+
+**Benefits:**
+- Konsistensi data antara Pin tab dan Statistics tab
+- Flexibility: quick overview (daily) vs detailed analysis (hourly)
+- Better user experience dengan multi-view options
+
+### 🔧 Impact:
+
+**Before:**
+- GitHub Actions run setiap 20 menit tapi TIDAK simpan stats ❌
+- Uptime chart hanya update kalau browser terbuka ❌
+- Data hilang untuk hari tanpa browser monitoring ❌
+
+**After:**
+- GitHub Actions run DAN simpan stats setiap 20 menit ✅
+- Uptime chart auto-update 24/7 tanpa browser ✅
+- Historical data lengkap untuk analisis ✅
+
+---
+
 ## Version 3.8.5 - Domain Persistence Fix
 **Tanggal Rilis:** 10 Januari 2026
 

@@ -1,7 +1,7 @@
 # 📊 PROJECT STATUS - Domain Monitor Kendal
 
-**Last Updated:** 10 Januari 2026  
-**Version:** 3.8.5  
+**Last Updated:** 11 Januari 2026  
+**Version:** 3.8.6  
 **Status:** ✅ Production Ready & Live  
 **Live URL:** https://kendal-uptime.vercel.app  
 **Deployment:** Vercel (Auto-deploy from Git)
@@ -37,13 +37,15 @@ Aplikasi monitoring real-time untuk melacak status availability dari multiple su
 - ✅ **Virtual Scrolling** - Handle 300+ domains smoothly
 - ✅ **Debounced Search** - 300ms delay, instant results
 
-### 24/7 Automated Monitoring (v3.6.0-3.7.3) 🤖
+### 24/7 Automated Monitoring (v3.6.0-3.8.6) 🤖
 - ✅ **GitHub Actions Cron** - Auto-runs every 20 minutes, 24/7
-- ✅ **4 Batch System** - Staggered checking (B1-B4)
+- ✅ **4 Batch System** - Staggered checking by time (B1: 0,20,40 / B2: 5,25,45 / etc)
+- ✅ **Full Data Persistence** - Writes to domain-stats-daily, domains, logs
+- ✅ **Uptime Chart Auto-Update** - Chart nambah setiap 20 menit tanpa browser
 - ✅ **Health Dashboard** - Monitor GitHub Actions status & success rate
 - ✅ **Next Run Countdown** - Live timer kapan check berikutnya
 - ✅ **100% Free** - No credit card, private repo (2000 min/month)
-- ✅ **Smart Duration** - ~34 seconds per run
+- ✅ **Smart Duration** - ~30-60 seconds per run
 
 ### Mobile Responsive (v3.5.0+) 📱
 - ✅ **Hamburger Menu** - Sheet drawer navigation
@@ -52,11 +54,12 @@ Aplikasi monitoring real-time untuk melacak status availability dari multiple su
 - ✅ **Dropdown Actions** - Three-dot menu di mobile
 - ✅ **Compact UI** - Space-optimized layouts
 
-### Individual Monitoring (v3.1.x)
+### Individual Monitoring (v3.1.x - v3.8.6)
 - ✅ **Play/Pause per Domain** - On-demand monitoring
 - ✅ **Statistics Dialog** - 3-tab charts (Daily/Hourly/GitHub Actions)
-- ✅ **Uptime Tracking** - 90-day uptime bar
-- ✅ **Pin Domains** - Quick access
+- ✅ **Daily/Hourly Toggle** - Switch between 90-day overview vs 7-day detail
+- ✅ **Uptime Tracking** - 90-day uptime bar (consistent across views)
+- ✅ **Pin Domains** - Quick access dengan auto-check
 
 ### Notifications (v2.2.0)
 - ✅ **Slack Webhook Integration** - Real-time alerts ke Slack channel

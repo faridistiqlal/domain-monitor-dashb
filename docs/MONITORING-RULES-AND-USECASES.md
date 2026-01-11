@@ -273,12 +273,16 @@ const handleCheckDomain = async (domainId) => {
 
 ### ⚙️ Rules
 - **Schedule:** `*/20 * * * *` (setiap 20 menit)
-- **Check Scope:** ALL domains (no batch filtering)
-- **Firebase Write:** ✅ YES - Full history write
-- **Slack Notification:** ✅ YES - Summary results
-- **4 Batch System:** Check staggered (B1→B2→B3→B4)
-- **Duration:** ~34 seconds per run
+- **Check Scope:** Batch-based (1 batch per run, rotates B1→B2→B3→B4)
+- **Firebase Write:** ✅ YES - Writes to `domain-stats-daily`, `domains`, and `github-actions-logs`
+- **Slack Notification:** ✅ YES - Summary results per batch
+- **4 Batch System:** Check staggered by time (B1: 0,20,40 / B2: 5,25,45 / B3: 10,30,50 / B4: 15,35,55)
+- **Duration:** ~30-60 seconds per run
 - **Free Tier:** 2000 minutes/month (≈1,231 min/month used)
+- **Data Written:**
+  - Daily stats dengan hourly breakdown
+  - Domain status updates (last checked, response time, IP)
+  - Execution logs untuk monitoring health
 
 ### ✅ Use Cases
 
@@ -333,8 +337,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run domain monitoring
-        run: npm run monitor
+        run: npm run monitor  # Runs scripts/monitor-cron.js
 ```
+
+**Script Flow (monitor-cron.js):**
+1. Load domains from Firebase
+2. Determine current batch (1-4) based on time
+3. Check all domains in that batch
+4. For each domain:
+   - Get/create daily stats
+   - Update stats with check result
+   - Update domain status
+5. Write execution log
+6. Send Slack summary
+
+**Firebase Collections Updated:**
+- `domain-stats-daily/{domainId}-{date}` - Daily aggregates + hourly breakdown
+- `domains/default-user` - Domain status updates
+- `github-actions-logs` - Execution logs dengan batch info
 
 ### 📊 GitHub Actions Health Dashboard
 Aplikasi memiliki **dedicated tab** untuk monitor health GitHub Actions:
