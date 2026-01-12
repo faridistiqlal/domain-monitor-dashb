@@ -2231,21 +2231,6 @@ function App() {
                   </div>
                 </ScrollArea>
               </>
-            ) : (
-              <ScrollArea className="flex-1 min-h-0">
-                <div className="md:pr-4">
-                  <OptimizedDomainList
-                    domains={sortedDomains}
-                    statuses={statuses}
-                    groups={groups}
-                    tags={tags}
-                    onToggleMonitoring={handleToggleDomainMonitoring}
-                    onTogglePin={handleTogglePin}
-                    showCheckbox={false}
-                    simpleMode={false}
-                  />
-                </div>
-              </ScrollArea>
             )}
           </TabsContent>
 
