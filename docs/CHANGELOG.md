@@ -1,5 +1,36 @@
 # Changelog
 
+## Version 3.10.0 - Sticky Bar & Last Checked Timestamp
+**Tanggal Rilis:** 12 Januari 2026
+
+### ✨ New Features: Enhanced Tab Monitoring
+
+**1. Sticky Bar dengan Live Counters:**
+- ✅ Check All button selalu accessible (sticky position)
+- ✅ Live counters: Online 🟢, DNS Only 🟡, Offline 🔴
+- ✅ Persentase online ditampilkan
+- ✅ Last sync indicator
+- ✅ Backdrop blur dengan z-index 10
+- ✅ Mobile responsive
+
+**2. Last Checked Timestamp per Domain:**
+- ✅ Menampilkan "Last checked: X ago" di setiap card
+- ✅ Format: just now, Xm ago, Xh ago, Xd ago
+- ✅ Icon Clock untuk visual clarity
+- ✅ Hanya muncul jika sudah pernah di-check
+
+**Why:**
+- 🎯 Tab monitoring tidak lagi terasa kosong saat initial load
+- 📊 User langsung dapat overview status domain
+- 🕐 Transparansi data freshness per domain
+- ⚡ Quick action selalu accessible
+
+**Reference:**
+- Implementasi dari UI-IMPROVEMENT-PLAN.md
+- Inspired by Uptime Kuma dan monitoring tools modern
+
+---
+
 ## Version 3.9.4 - Icon & Layout Fix
 **Tanggal Rilis:** 12 Januari 2026
 

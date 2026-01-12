@@ -2167,6 +2167,71 @@ function App() {
                 </div>
               </div>
             ) : (
+              <>
+                {/* Sticky Bar with Live Counters */}
+                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b mb-4">
+                  <div className="flex items-center justify-between gap-4 py-3 px-4">
+                    {/* Left: Check All Button */}
+                    <Button
+                      onClick={handleManualRefresh}
+                      disabled={isRefreshing}
+                      size="sm"
+                      className="shrink-0"
+                    >
+                      <ArrowClockwise 
+                        size={16} 
+                        className={isRefreshing ? 'animate-spin' : ''} 
+                      />
+                      {isRefreshing ? 'Checking...' : `Check All (${totalCount})`}
+                    </Button>
+
+                    {/* Center: Live Counters */}
+                    {hasChecked && (
+                      <div className="flex items-center gap-2 flex-wrap justify-center">
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-500/10 text-green-600 dark:text-green-400">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <span className="text-xs font-medium">{onlineCount}</span>
+                          <span className="text-xs hidden md:inline">({onlinePercentage}%)</span>
+                        </div>
+                        {dnsOnlyCount > 0 && (
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                            <span className="text-xs font-medium">{dnsOnlyCount}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 text-red-600 dark:text-red-400">
+                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                          <span className="text-xs font-medium">{offlineCount}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Right: Last Sync Time (placeholder for now) */}
+                    {hasChecked && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+                        <Clock size={14} />
+                        <span className="hidden md:inline">Just now</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <ScrollArea className="flex-1 min-h-0">
+                  <div className="md:pr-4">
+                    <OptimizedDomainList
+                      domains={sortedDomains}
+                      statuses={statuses}
+                      groups={groups}
+                      tags={tags}
+                      onToggleMonitoring={handleToggleDomainMonitoring}
+                      onTogglePin={handleTogglePin}
+                      showCheckbox={false}
+                      simpleMode={false}
+                    />
+                  </div>
+                </ScrollArea>
+              </>
+            ) : (
               <ScrollArea className="flex-1 min-h-0">
                 <div className="md:pr-4">
                   <OptimizedDomainList
