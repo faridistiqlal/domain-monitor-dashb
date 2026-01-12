@@ -165,14 +165,18 @@ function App() {
         setTags(loadedTags)
         console.log('[Tags] ✅ Loaded', loadedTags.length, 'tags from Firebase')
         
-        // Try to load domains and groups from cache for faster UI
-        const cachedDomains = localStorage.getItem('domains-cache')
-        const cachedGroups = localStorage.getItem('groups-cache')
+        // Load groups from Firebase (small critical data - always fresh)
+        const loadedGroups = await loadGroups()
+        trackFirebaseRead(1)
+        setGroups(loadedGroups)
+        console.log('[Groups] ✅ Loaded', loadedGroups.length, 'groups from Firebase')
         
-        if (cachedDomains && cachedGroups) {
+        // Try to load domains from cache for faster UI
+        const cachedDomains = localStorage.getItem('domains-cache')
+        
+        if (cachedDomains) {
           // Use cached data for instant app load
           const parsedDomains = JSON.parse(cachedDomains)
-          const parsedGroups = JSON.parse(cachedGroups)
           
           // Reset enabled field from cache - individual monitoring is not persistent
           const domainsWithResetEnabled = parsedDomains.map((domain: Domain) => ({
@@ -181,17 +185,13 @@ function App() {
           }))
           
           setDomains(domainsWithResetEnabled)
-          setGroups(parsedGroups)
           
           console.log('Loaded from cache:', parsedDomains.length, 'domains (enabled fields reset)')
           
           // Refresh from Firebase after 30 seconds (same as auto-check delay)
           setTimeout(async () => {
             try {
-              const [loadedDomains, loadedGroups] = await Promise.all([
-                loadDomains(),
-                loadGroups()
-              ])
+              const loadedDomains = await loadDomains()
               
               // Merge with current state to preserve recent local changes (e.g., pin/unpin)
               setDomains(currentDomains => {
@@ -238,10 +238,12 @@ function App() {
                 return mergedDomains
               })
               
-              setGroups(loadedGroups)
+              // Reload groups from Firebase to get latest data
+              const refreshedGroups = await loadGroups()
+              setGroups(refreshedGroups)
               
-              // Update cache for groups only (tags already loaded from Firebase at start)
-              localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
+              // Update cache (tags and groups from Firebase, domains merged)
+              localStorage.setItem('groups-cache', JSON.stringify(refreshedGroups))
               
               console.log('[Background Refresh] ✅ Completed - Firebase pin state synced to all devices')
             } catch (error: any) {
@@ -250,15 +252,12 @@ function App() {
             }
           }, 30000)
         } else {
-          // No cache, load domains and groups from Firebase (tags already loaded above)
+          // No cache, load domains from Firebase (tags and groups already loaded above)
           try {
-            const [loadedDomains, loadedGroups] = await Promise.all([
-              loadDomains(),
-              loadGroups()
-            ])
+            const loadedDomains = await loadDomains()
             
-            // Track Firebase reads (2 collections - tags already loaded)
-            trackFirebaseRead(2)
+            // Track Firebase reads (1 collection - tags and groups already loaded)
+            trackFirebaseRead(1)
             
             // Assign batch to domains that don't have one (old domains)
             // RESET enabled field on page load - individual monitoring is not persistent across refresh
@@ -280,7 +279,7 @@ function App() {
             })
         
             setDomains(domainsWithBatch)
-            setGroups(loadedGroups)
+            // Groups already loaded from Firebase at the start
             
             // Save to cache for future loads
             localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
@@ -349,9 +348,9 @@ function App() {
           })
           
           setDomains(domainsWithBatch)
-          setGroups(loadedGroups)
+          // Groups already loaded from Firebase at the start
           
-          // Save to cache for future loads (tags already in Firebase and state)
+          // Save to cache for future loads (tags and groups already in Firebase and state)
           localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
           localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
           
@@ -2173,6 +2172,7 @@ function App() {
                   <OptimizedDomainList
                     domains={sortedDomains}
                     statuses={statuses}
+                    groups={groups}
                     tags={tags}
                     onToggleMonitoring={handleToggleDomainMonitoring}
                     onTogglePin={handleTogglePin}

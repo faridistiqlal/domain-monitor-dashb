@@ -1,5 +1,27 @@
 # Changelog
 
+## Version 3.9.3 - Groups Bug Fix
+**Tanggal Rilis:** 12 Januari 2026
+
+### 🐛 Bug Fix: Groups Persistence & Display
+
+**Problems Fixed:**
+- ❌ Domain group assignments hilang setelah refresh
+- ❌ Groups tidak muncul di card list tab monitoring
+
+**Solutions:**
+- ✅ Groups sekarang load langsung dari Firebase (seperti tags)
+- ✅ Tidak lagi bergantung pada localStorage cache
+- ✅ Groups prop ditambahkan ke OptimizedDomainList di tab monitoring
+- ✅ Group badge sekarang muncul di semua domain yang ter-assign
+
+**Why:**
+- 🎯 Data kecil & kritis harus selalu fresh dari Firebase
+- 💾 Cache hanya untuk backup, bukan primary source
+- 🔄 Konsisten dengan strategi tags loading
+
+---
+
 ## Version 3.9.2 - Dropdown Menu for Tag Cards
 **Tanggal Rilis:** 12 Januari 2026
 
