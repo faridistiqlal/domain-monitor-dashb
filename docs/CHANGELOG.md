@@ -1,5 +1,64 @@
 # Changelog
 
+## Version 3.8.9 - Tag Sync Bug Fix
+**Tanggal Rilis:** 12 Januari 2026
+
+### 🐛 Critical Bug Fix: Tag Hilang Setelah Refresh
+
+**Problem:**
+- ❌ User tambah tag baru → tag hilang setelah refresh page
+- ❌ Tag hanya bertahan kalau user tidak refresh selama 30 detik
+- ❌ User kehilangan data yang baru dibuat
+
+**Root Cause:**
+```javascript
+// localStorage key mismatch:
+// SAVE (useEffect tags):
+localStorage.setItem('domain-tags', JSON.stringify(tags)) // ❌ Gunakan key ini
+
+// LOAD (initial load):
+const cachedTags = localStorage.getItem('tags-cache') // ❌ Tapi load dari key ini!
+```
+
+**Analisis:**
+1. User tambah tag → `setTags()` dipanggil
+2. useEffect sync ke Firebase (2s delay) ✅
+3. useEffect save ke localStorage `domain-tags` ✅
+4. User refresh page → App load dari `tags-cache` (EMPTY!) ❌
+5. Background refresh (30s) baru update `tags-cache` → Terlambat!
+
+**Fixes Applied:**
+```javascript
+// AFTER (Fixed - Update both keys):
+useEffect(() => {
+  if (!isLoadingData) {
+    localStorage.setItem('domain-tags', JSON.stringify(tags))
+    localStorage.setItem('tags-cache', JSON.stringify(tags)) // ✅ Update both!
+    
+    setTimeout(() => {
+      syncTagsToFirestore(tags) // Sync to Firebase
+    }, 2000)
+  }
+}, [tags, isLoadingData])
+```
+
+**Changes:**
+- ✅ Update both `domain-tags` dan `tags-cache` saat tags berubah
+- ✅ Background refresh juga update both keys (consistency)
+- ✅ Console.log added untuk debug tracking
+- ✅ Test script created: `scripts/test-tag-sync.mjs`
+
+**Impact:**
+- ✅ Tag baru langsung persist setelah 2 detik
+- ✅ Refresh page → Tag masih ada (loaded dari cache)
+- ✅ No data loss untuk user
+
+**Testing:**
+- Created `test-tag-sync.mjs` untuk verify Firebase sync
+- Tested manual: Add tag → Wait 2s → Refresh → Tag persist ✅
+
+---
+
 ## Version 3.8.8 - Pin Sync Fix Across Devices
 **Tanggal Rilis:** 12 Januari 2026
 

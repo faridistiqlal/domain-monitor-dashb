@@ -169,6 +169,7 @@ function App() {
           const parsedDomains = JSON.parse(cachedDomains)
           const parsedGroups = JSON.parse(cachedGroups)
           const parsedTags = JSON.parse(cachedTags)
+          console.log('[Cache Load] Loaded tags from cache:', parsedTags.length, 'tags')
           
           // Reset enabled field from cache - individual monitoring is not persistent
           const domainsWithResetEnabled = parsedDomains.map((domain: Domain) => ({
@@ -242,6 +243,10 @@ function App() {
               // Update cache for groups and tags
               localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
               localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
+              localStorage.setItem('domain-tags', JSON.stringify(loadedTags)) // Also update domain-tags for consistency
+              console.log('[Background Refresh] Tags updated from Firebase:', loadedTags.length, 'tags')
+              localStorage.setItem('domain-tags', JSON.stringify(loadedTags)) // Also update domain-tags for consistency
+              console.log('[Background Refresh] Tags updated:', loadedTags.length, 'tags')
               
               console.log('✅ Background refresh completed - Firebase pin state synced to all devices')
             } catch (error: any) {
@@ -410,10 +415,14 @@ function App() {
   }, [groups, isLoadingData])
 
   useEffect(() => {
-    if (!isLoadingData && tags.length >= 0) {
+    if (!isLoadingData) {
+      console.log('[Tags Sync] Syncing tags to Firebase:', tags.length, 'tags')
       localStorage.setItem('domain-tags', JSON.stringify(tags))
+      localStorage.setItem('tags-cache', JSON.stringify(tags)) // Update both keys
       const timeoutId = setTimeout(() => {
-        syncTagsToFirestore(tags).catch(console.error)
+        syncTagsToFirestore(tags)
+          .then(() => console.log('[Tags Sync] Successfully synced to Firebase'))
+          .catch(err => console.error('[Tags Sync] Error:', err))
       }, 2000)
       return () => clearTimeout(timeoutId)
     }
