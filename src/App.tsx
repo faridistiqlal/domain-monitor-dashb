@@ -1361,10 +1361,11 @@ function App() {
     console.log('[Assign Domains] Updating', domainIds.length, 'domains to group:', groupId)
     setDomains(updatedDomains)
     
-    // Immediate save to cache
+    // Immediate save to cache AND Firebase
     localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
-    console.log('[Assign Domains] ✅ Immediately saved to cache')
-    // useEffect will sync to Firebase after 2s
+    syncDomainsToFirestore(updatedDomains)
+      .then(() => console.log('[Assign Domains] ✅ Synced to Firebase'))
+      .catch(err => console.error('[Assign Domains] ❌ Firebase error:', err))
     
     toast.success('Domain berhasil diatur grupnya')
   }
