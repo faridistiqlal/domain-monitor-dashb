@@ -189,8 +189,9 @@ function App() {
           
           console.log('Loaded from cache:', parsedDomains.length, 'domains (enabled fields reset)')
           
-          // Refresh from Firebase after 30 seconds (same as auto-check delay)
-          setTimeout(async () => {
+          // Immediately refresh from Firebase to get latest groupId and other data
+          // Cache is only for instant UI, Firebase is source of truth
+          (async () => {
             try {
               const loadedDomains = await loadDomains()
               
@@ -199,7 +200,7 @@ function App() {
                 // Create a map of current domains for quick lookup
                 const currentDomainsMap = new Map(currentDomains.map(d => [d.id, d]))
                 
-                // Merge: Use Firebase data but preserve pin state and enabled from local
+                // Merge: Use Firebase data as source of truth for groupId and pin state
                 const mergedDomains = loadedDomains.map((firebaseDomain, index) => {
                   const localDomain = currentDomainsMap.get(firebaseDomain.id)
                   
@@ -211,29 +212,22 @@ function App() {
                     consecutiveFailures: firebaseDomain.consecutiveFailures || 0,
                   } : firebaseDomain
                   
-                  // Use Firebase pin state (source of truth), only preserve enabled from local
-                  if (localDomain) {
-                    return {
-                      ...domainWithBatch,
-                      pinned: firebaseDomain.pinned || false, // Use Firebase pin state
-                      enabled: false // Always reset enabled (monitoring is not persistent)
-                    }
-                  }
-                  
-                  // New domain from Firebase
+                  // Use Firebase as source of truth for groupId and pinned state
                   return {
                     ...domainWithBatch,
+                    groupId: firebaseDomain.groupId, // ALWAYS use Firebase groupId
                     pinned: firebaseDomain.pinned || false, // Use Firebase pin state
-                    enabled: false
+                    enabled: false // Always reset enabled (monitoring is not persistent)
                   }
                 })
                 
                 // Debug log
                 const pinnedCount = mergedDomains.filter(d => d.pinned).length
                 const enabledCount = mergedDomains.filter(d => d.enabled).length
-                console.log(`[Background Refresh] Merged ${mergedDomains.length} domains (${pinnedCount} pinned from Firebase, ${enabledCount} enabled)`)
+                const groupedCount = mergedDomains.filter(d => d.groupId).length
+                console.log(`[Background Refresh] Merged ${mergedDomains.length} domains (${pinnedCount} pinned, ${groupedCount} in groups from Firebase, ${enabledCount} enabled)`)
                 
-                // Update cache with merged data (including Firebase pin state)
+                // Update cache with merged data (including Firebase groupId)
                 localStorage.setItem('domains-cache', JSON.stringify(mergedDomains))
                 
                 return mergedDomains
@@ -248,7 +242,7 @@ function App() {
               console.warn('Background refresh skipped - Firebase quota exceeded or error:', error)
               // Silently fail background refresh, keep using cache
             }
-          }, 30000)
+          })()
         } else {
           // No cache, load domains from Firebase (tags and groups already loaded above)
           try {
