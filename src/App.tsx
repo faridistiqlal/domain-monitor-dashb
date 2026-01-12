@@ -2111,12 +2111,24 @@ function App() {
                   <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
                     <ArrowClockwise size={48} weight="duotone" className="text-primary" />
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <h3 className="text-xl font-semibold text-foreground">Mode Manual Check</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Klik tombol <strong className="text-foreground">Check</strong> di atas untuk memeriksa status semua domain.<br />
+                      Klik tombol di bawah untuk memeriksa status semua domain.<br />
                       Setelah selesai, Anda dapat langsung export hasilnya.
                     </p>
+                    <Button
+                      onClick={handleManualRefresh}
+                      disabled={isRefreshing}
+                      size="lg"
+                      className="mt-4"
+                    >
+                      <ArrowClockwise 
+                        size={20} 
+                        className={isRefreshing ? 'animate-spin mr-2' : 'mr-2'} 
+                      />
+                      {isRefreshing ? 'Checking...' : `Check All Domains (${totalCount})`}
+                    </Button>
                   </div>
                 </div>
               </div>
