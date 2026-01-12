@@ -2108,8 +2108,8 @@ function App() {
             ) : (
               <>
                 {/* Sticky Bar - Always show if domains exist */}
-                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b mb-4">
-                  <div className="flex items-center justify-between gap-4 py-3 px-4">
+                <div className="sticky top-0 z-10 bg-card border-b mb-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-4 py-2.5 px-4">
                     {/* Left: Check All Button */}
                     <Button
                       onClick={handleManualRefresh}
@@ -2124,26 +2124,24 @@ function App() {
                       {isRefreshing ? 'Checking...' : `Check All (${totalCount})`}
                     </Button>
 
-                    {/* Center: Live Counters */}
-                    {hasChecked && (
-                      <div className="flex items-center gap-2 flex-wrap justify-center">
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-500/10 text-green-600 dark:text-green-400">
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <span className="text-xs font-medium">{onlineCount}</span>
-                          <span className="text-xs hidden md:inline">({onlinePercentage}%)</span>
-                        </div>
-                        {dnsOnlyCount > 0 && (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                            <span className="text-xs font-medium">{dnsOnlyCount}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 text-red-600 dark:text-red-400">
-                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                          <span className="text-xs font-medium">{offlineCount}</span>
-                        </div>
+                    {/* Center: Live Counters - Always show */}
+                    <div className="flex items-center gap-2 flex-wrap justify-center">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="text-xs font-medium">{onlineCount}</span>
+                        {hasChecked && <span className="text-xs hidden md:inline">({onlinePercentage}%)</span>}
                       </div>
-                    )}
+                      {dnsOnlyCount > 0 && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                          <span className="text-xs font-medium">{dnsOnlyCount}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                        <span className="text-xs font-medium">{offlineCount}</span>
+                      </div>
+                    </div>
 
                     {/* Right: Last Sync Time */}
                     {hasChecked && (

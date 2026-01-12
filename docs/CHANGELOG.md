@@ -1,5 +1,24 @@
 # Changelog
 
+## Version 3.10.1 - Sticky Bar Styling Fix
+**Tanggal Rilis:** 12 Januari 2026
+
+### 🎨 UI Improvement: Better Sticky Bar Design
+
+**What's Fixed:**
+- ✅ Background diubah dari bg-background/95 → bg-card (lebih terang)
+- ✅ Counters sekarang selalu visible (tidak perlu check dulu)
+- ✅ Border pada badge untuk clarity
+- ✅ Shadow untuk depth
+- ✅ Padding lebih compact (py-2.5)
+
+**Why:**
+- 🎯 Tidak lagi "hitam dan aneh"
+- 📊 User langsung lihat counter meski belum check
+- 💎 Lebih sesuai dengan design system
+
+---
+
 ## Version 3.10.0 - Sticky Bar & Last Checked Timestamp
 **Tanggal Rilis:** 12 Januari 2026
 
