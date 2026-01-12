@@ -1404,15 +1404,22 @@ function App() {
   }
 
   const handleAssignTags = (domainIds: string[], tagIds: string[]) => {
-    setDomains(current =>
-      (current || []).map(d => {
-        if (!domainIds.includes(d.id)) return d
-        
-        const existingTags = d.tags || []
-        const newTags = [...new Set([...existingTags, ...tagIds])]
-        return { ...d, tags: newTags }
-      })
-    )
+    const updatedDomains = (domains || []).map(d => {
+      if (!domainIds.includes(d.id)) return d
+      
+      const existingTags = d.tags || []
+      const newTags = [...new Set([...existingTags, ...tagIds])]
+      return { ...d, tags: newTags }
+    })
+    
+    console.log('[Assign Tags] Updating', domainIds.length, 'domains with', tagIds.length, 'tags')
+    setDomains(updatedDomains)
+    
+    // Immediate save to cache (don't wait for useEffect)
+    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    console.log('[Assign Tags] ✅ Immediately saved to cache')
+    // useEffect will sync to Firebase after 2s
+    
     toast.success(`Tag berhasil ditambahkan ke ${domainIds.length} domain`)
   }
 
