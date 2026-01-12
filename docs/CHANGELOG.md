@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 3.9.4 - Icon & Layout Fix
+**Tanggal Rilis:** 12 Januari 2026
+
+### 🎨 UI Improvement: Correct Icons & Better Layout
+
+**What's Fixed:**
+- ✅ Group icon diubah dari Tag → Folder (sesuai semantik)
+- ✅ Tags sekarang ada icon Tag (sebelumnya tidak ada icon)
+- ✅ Group dan Tags sekarang dalam satu baris (di samping URL)
+- ✅ Konsisten antara simple mode dan normal mode
+
+**Visual:**
+- Group: 📁 Folder icon + nama
+- Tags: 🏷️ Tag icon + nama
+- Semua badge dengan icon + warna yang konsisten
+
+---
+
 ## Version 3.9.3 - Groups Bug Fix
 **Tanggal Rilis:** 12 Januari 2026
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning, Play, Pause, ChartLine, MapPin, X as XIcon, DotsThree } from '@phosphor-icons/react'
+import { Trash, Warning, Globe, Copy, Tag, Bell, BellSlash, LockKey, LockKeyOpen, ShieldWarning, Lightning, Play, Pause, ChartLine, MapPin, X as XIcon, DotsThree, Folder } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -172,25 +172,25 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                     className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] shrink-0"
                     style={{ backgroundColor: `${group.color}20`, color: group.color }}
                   >
-                    <Tag size={9} weight="fill" />
+                    <Folder size={9} weight="fill" />
                     <span className="font-medium">{group.name}</span>
                   </div>
                 )}
                 {domainTags && domainTags.length > 0 && (
                   <>
                     {domainTags.map(tag => (
-                      <Badge
+                      <div
                         key={tag.id}
-                        variant="secondary"
-                        className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                        className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] shrink-0"
                         style={{
                           backgroundColor: `${tag.color}20`,
                           color: tag.color,
                           borderColor: `${tag.color}40`,
                         }}
                       >
-                        {tag.name}
-                      </Badge>
+                        <Tag size={9} weight="fill" />
+                        <span className="font-medium">{tag.name}</span>
+                      </div>
                     ))}
                   </>
                 )}
@@ -295,7 +295,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                       className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
                       style={{ backgroundColor: `${group.color}20`, color: group.color }}
                     >
-                      <Tag size={10} weight="fill" />
+                      <Folder size={10} weight="fill" />
                       <span className="font-medium">{group.name}</span>
                     </div>
                   </TooltipTrigger>
@@ -305,27 +305,26 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   </TooltipContent>
                 </Tooltip>
               )}
+              
+              {domainTags && domainTags.length > 0 && (
+                <>
+                  {domainTags.map(tag => (
+                    <div
+                      key={tag.id}
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs shrink-0"
+                      style={{
+                        backgroundColor: `${tag.color}20`,
+                        color: tag.color,
+                        borderColor: `${tag.color}40`,
+                      }}
+                    >
+                      <Tag size={10} weight="fill" />
+                      <span className="font-medium">{tag.name}</span>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
-            
-            {/* Tags */}
-            {domainTags && domainTags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {domainTags.map(tag => (
-                  <Badge
-                    key={tag.id}
-                    variant="secondary"
-                    className="text-[10px] px-1.5 py-0 h-4 font-medium"
-                    style={{
-                      backgroundColor: `${tag.color}20`,
-                      color: tag.color,
-                      borderColor: `${tag.color}40`,
-                    }}
-                  >
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
-            )}
             
             {/* Quick info with Protocol & Batch badges */}
             <div className="flex items-center gap-2 mt-1 text-xs flex-wrap">
