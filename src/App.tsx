@@ -2705,6 +2705,7 @@ function App() {
                         key={tag.id}
                         tag={tag}
                         domainCount={domainCount}
+                        domains={domains}
                         onEdit={canEdit ? (t) => setEditingTag(t) : undefined}
                         onDelete={canEdit ? handleDeleteTag : undefined}
                       />
