@@ -159,17 +159,20 @@ function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Try to load from localStorage first (instant, no Firebase reads)
+        // ALWAYS load tags from Firebase first (for data consistency)
+        console.log('[Tags] Loading tags directly from Firebase...')
+        const loadedTags = await loadTags()
+        setTags(loadedTags)
+        console.log('[Tags] ✅ Loaded', loadedTags.length, 'tags from Firebase')
+        
+        // Try to load domains and groups from cache for faster UI
         const cachedDomains = localStorage.getItem('domains-cache')
         const cachedGroups = localStorage.getItem('groups-cache')
-        const cachedTags = localStorage.getItem('tags-cache')
         
-        if (cachedDomains && cachedGroups && cachedTags) {
+        if (cachedDomains && cachedGroups) {
           // Use cached data for instant app load
           const parsedDomains = JSON.parse(cachedDomains)
           const parsedGroups = JSON.parse(cachedGroups)
-          const parsedTags = JSON.parse(cachedTags)
-          console.log('[Cache Load] Loaded tags from cache:', parsedTags.length, 'tags')
           
           // Reset enabled field from cache - individual monitoring is not persistent
           const domainsWithResetEnabled = parsedDomains.map((domain: Domain) => ({
@@ -179,17 +182,15 @@ function App() {
           
           setDomains(domainsWithResetEnabled)
           setGroups(parsedGroups)
-          setTags(parsedTags)
           
           console.log('Loaded from cache:', parsedDomains.length, 'domains (enabled fields reset)')
           
           // Refresh from Firebase after 30 seconds (same as auto-check delay)
           setTimeout(async () => {
             try {
-              const [loadedDomains, loadedGroups, loadedTags] = await Promise.all([
+              const [loadedDomains, loadedGroups] = await Promise.all([
                 loadDomains(),
-                loadGroups(),
-                loadTags()
+                loadGroups()
               ])
               
               // Merge with current state to preserve recent local changes (e.g., pin/unpin)
@@ -238,33 +239,26 @@ function App() {
               })
               
               setGroups(loadedGroups)
-              setTags(loadedTags)
               
-              // Update cache for groups and tags
+              // Update cache for groups only (tags already loaded from Firebase at start)
               localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
-              localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
-              localStorage.setItem('domain-tags', JSON.stringify(loadedTags)) // Also update domain-tags for consistency
-              console.log('[Background Refresh] Tags updated from Firebase:', loadedTags.length, 'tags')
-              localStorage.setItem('domain-tags', JSON.stringify(loadedTags)) // Also update domain-tags for consistency
-              console.log('[Background Refresh] Tags updated:', loadedTags.length, 'tags')
               
-              console.log('✅ Background refresh completed - Firebase pin state synced to all devices')
+              console.log('[Background Refresh] ✅ Completed - Firebase pin state synced to all devices')
             } catch (error: any) {
               console.warn('Background refresh skipped - Firebase quota exceeded or error:', error)
               // Silently fail background refresh, keep using cache
             }
           }, 30000)
         } else {
-          // No cache, load from Firebase immediately (first time only)
+          // No cache, load domains and groups from Firebase (tags already loaded above)
           try {
-            const [loadedDomains, loadedGroups, loadedTags] = await Promise.all([
+            const [loadedDomains, loadedGroups] = await Promise.all([
               loadDomains(),
-              loadGroups(),
-              loadTags()
+              loadGroups()
             ])
             
-            // Track Firebase reads
-            trackFirebaseRead(3) // 3 collection reads
+            // Track Firebase reads (2 collections - tags already loaded)
+            trackFirebaseRead(2)
             
             // Assign batch to domains that don't have one (old domains)
             // RESET enabled field on page load - individual monitoring is not persistent across refresh
@@ -287,12 +281,10 @@ function App() {
         
             setDomains(domainsWithBatch)
             setGroups(loadedGroups)
-            setTags(loadedTags)
             
             // Save to cache for future loads
             localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
             localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
-            localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
           } catch (error: any) {
             console.error('Firebase quota exceeded or error loading data:', error)
             // If quota exceeded, show user message and use empty data temporarily
@@ -336,11 +328,10 @@ function App() {
           // Update version
           localStorage.setItem('app-version', APP_VERSION)
           
-          // Force immediate Firebase load (no cache)
-          const [loadedDomains, loadedGroups, loadedTags] = await Promise.all([
+          // Force immediate Firebase load (no cache) - tags already loaded at start
+          const [loadedDomains, loadedGroups] = await Promise.all([
             loadDomains(),
-            loadGroups(),
-            loadTags()
+            loadGroups()
           ])
           
           // Assign batch and reset enabled field
@@ -359,12 +350,10 @@ function App() {
           
           setDomains(domainsWithBatch)
           setGroups(loadedGroups)
-          setTags(loadedTags)
           
-          // Save to cache for future loads
+          // Save to cache for future loads (tags already in Firebase and state)
           localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
           localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
-          localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
           
           console.log('✅ Fresh data loaded from Firebase after version update')
         }
@@ -416,13 +405,12 @@ function App() {
 
   useEffect(() => {
     if (!isLoadingData) {
-      console.log('[Tags Sync] Syncing tags to Firebase:', tags.length, 'tags')
-      localStorage.setItem('domain-tags', JSON.stringify(tags))
-      localStorage.setItem('tags-cache', JSON.stringify(tags)) // Update both keys
+      console.log('[Tags Sync] Syncing', tags.length, 'tags to Firebase')
+      // Sync to Firebase only (no localStorage - always load from Firebase)
       const timeoutId = setTimeout(() => {
         syncTagsToFirestore(tags)
-          .then(() => console.log('[Tags Sync] Successfully synced to Firebase'))
-          .catch(err => console.error('[Tags Sync] Error:', err))
+          .then(() => console.log('[Tags Sync] ✅ Synced to Firebase'))
+          .catch(err => console.error('[Tags Sync] ❌ Error:', err))
       }, 2000)
       return () => clearTimeout(timeoutId)
     }
@@ -1374,11 +1362,7 @@ function App() {
     const updatedTags = [...(tags || []), newTag]
     console.log('[Create Tag] Adding new tag:', newTag.name, '- Total tags:', updatedTags.length)
     setTags(updatedTags)
-    
-    // Immediate save to localStorage (don't wait for useEffect)
-    localStorage.setItem('domain-tags', JSON.stringify(updatedTags))
-    localStorage.setItem('tags-cache', JSON.stringify(updatedTags))
-    console.log('[Create Tag] ✅ Immediately saved to localStorage')
+    // useEffect will sync to Firebase after 2s
     
     toast.success('Tag berhasil dibuat')
   }
@@ -1393,11 +1377,7 @@ function App() {
     )
     console.log('[Edit Tag] Updating tag:', editingTag.name, '- Total tags:', updatedTags.length)
     setTags(updatedTags)
-    
-    // Immediate save to localStorage
-    localStorage.setItem('domain-tags', JSON.stringify(updatedTags))
-    localStorage.setItem('tags-cache', JSON.stringify(updatedTags))
-    console.log('[Edit Tag] ✅ Immediately saved to localStorage')
+    // useEffect will sync to Firebase after 2s
     
     toast.success('Tag berhasil diperbarui')
     setEditingTag(null)
@@ -1412,11 +1392,7 @@ function App() {
     const updatedTags = (tags || []).filter(t => t.id !== tagId)
     console.log('[Delete Tag] Deleting tag:', tagId, '- Remaining tags:', updatedTags.length)
     setTags(updatedTags)
-    
-    // Immediate save to localStorage
-    localStorage.setItem('domain-tags', JSON.stringify(updatedTags))
-    localStorage.setItem('tags-cache', JSON.stringify(updatedTags))
-    console.log('[Delete Tag] ✅ Immediately saved to localStorage')
+    // useEffect will sync to Firebase after 2s
     
     setDomains(current =>
       (current || []).map(d => ({
