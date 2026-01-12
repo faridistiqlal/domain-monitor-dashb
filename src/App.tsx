@@ -243,9 +243,6 @@ function App() {
               const refreshedGroups = await loadGroups()
               setGroups(refreshedGroups)
               
-              // Update cache (tags and groups from Firebase, domains merged)
-              localStorage.setItem('groups-cache', JSON.stringify(refreshedGroups))
-              
               console.log('[Background Refresh] ✅ Completed - Firebase pin state synced to all devices')
             } catch (error: any) {
               console.warn('Background refresh skipped - Firebase quota exceeded or error:', error)
@@ -284,7 +281,6 @@ function App() {
             
             // Save to cache for future loads
             localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
-            localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
           } catch (error: any) {
             console.error('Firebase quota exceeded or error loading data:', error)
             // If quota exceeded, show user message and use empty data temporarily
@@ -321,7 +317,6 @@ function App() {
           
           // Clear all caches to force reload from Firebase
           localStorage.removeItem('domains-cache')
-          localStorage.removeItem('groups-cache')
           localStorage.removeItem('tags-cache')
           localStorage.removeItem('domain-last-statuses')
           
@@ -351,9 +346,8 @@ function App() {
           setDomains(domainsWithBatch)
           // Groups already loaded from Firebase at the start
           
-          // Save to cache for future loads (tags and groups already in Firebase and state)
+          // Save to cache for future loads (groups always from Firebase, no cache)
           localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
-          localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
           
           console.log('✅ Fresh data loaded from Firebase after version update')
         }
@@ -393,16 +387,8 @@ function App() {
     }
   }, [domains, isLoadingData])
 
-  useEffect(() => {
-    if (!isLoadingData && groups.length >= 0) {
-      localStorage.setItem('domain-groups', JSON.stringify(groups))
-      const timeoutId = setTimeout(() => {
-        syncGroupsToFirestore(groups).catch(console.error)
-      }, 2000)
-      return () => clearTimeout(timeoutId)
-    }
-  }, [groups, isLoadingData])
-
+  // Groups sync removed - now syncs immediately in handlers (create/edit/delete)
+  
   useEffect(() => {
     if (!isLoadingData) {
       console.log('[Tags Sync] Syncing', tags.length, 'tags to Firebase')
@@ -1311,10 +1297,10 @@ function App() {
     console.log('[Create Group] Adding new group:', newGroup.name)
     setGroups(updatedGroups)
     
-    // Immediate save to cache
-    localStorage.setItem('groups-cache', JSON.stringify(updatedGroups))
-    console.log('[Create Group] ✅ Immediately saved to cache')
-    // useEffect will sync to Firebase after 2s
+    // ALWAYS sync to Firebase immediately (no cache for groups)
+    syncGroupsToFirestore(updatedGroups)
+      .then(() => console.log('[Create Group] ✅ Synced to Firebase'))
+      .catch(err => console.error('[Create Group] ❌ Firebase error:', err))
     
     toast.success('Grup berhasil dibuat')
   }
@@ -1330,10 +1316,10 @@ function App() {
     console.log('[Edit Group] Updating group:', editingGroup.name)
     setGroups(updatedGroups)
     
-    // Immediate save to cache
-    localStorage.setItem('groups-cache', JSON.stringify(updatedGroups))
-    console.log('[Edit Group] ✅ Immediately saved to cache')
-    // useEffect will sync to Firebase after 2s
+    // ALWAYS sync to Firebase immediately (no cache for groups)
+    syncGroupsToFirestore(updatedGroups)
+      .then(() => console.log('[Edit Group] ✅ Synced to Firebase'))
+      .catch(err => console.error('[Edit Group] ❌ Firebase error:', err))
     
     toast.success('Grup berhasil diperbarui')
     setEditingGroup(null)
@@ -1349,10 +1335,10 @@ function App() {
     console.log('[Delete Group] Deleting group:', groupId)
     setGroups(updatedGroups)
     
-    // Immediate save to cache
-    localStorage.setItem('groups-cache', JSON.stringify(updatedGroups))
-    console.log('[Delete Group] ✅ Immediately saved to cache')
-    // useEffect will sync to Firebase after 2s
+    // ALWAYS sync to Firebase immediately (no cache for groups)
+    syncGroupsToFirestore(updatedGroups)
+      .then(() => console.log('[Delete Group] ✅ Synced to Firebase'))
+      .catch(err => console.error('[Delete Group] ❌ Firebase error:', err))
     
     const updatedDomains = (domains || []).map(d =>
       d.groupId === groupId ? { ...d, groupId: undefined } : d
