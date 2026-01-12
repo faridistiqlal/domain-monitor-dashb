@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 3.9.1 - UI Consistency for Pinned Cards
+**Tanggal Rilis:** 12 Januari 2026
+
+### 🎨 UI Improvement: Dropdown Menu di Pinned Domain Card
+
+**What's Changed:**
+- ✅ Tombol edit dan hapus sekarang di dalam dropdown menu (...)
+- ✅ Konsisten dengan UI GroupCard
+- ✅ Lebih rapi dan hemat space
+- ✅ Menu: "Buka di tab baru" dan "Unpin domain"
+
+**Why:**
+- 🎯 Konsistensi UI pattern di semua card
+- 👍 UX lebih clean dan organized
+
+---
+
 ## Version 3.9.0 - Search in Assign Domains Dialog
 **Tanggal Rilis:** 12 Januari 2026
 

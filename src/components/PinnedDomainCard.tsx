@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Globe, X as XIcon, Clock } from '@phosphor-icons/react'
+import { Globe, DotsThree, Trash, Clock } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,10 +8,11 @@ import { UptimeBar } from './UptimeBar'
 import { DomainStatisticsDialog } from './DomainStatisticsDialog'
 import { Domain, DomainStatus } from '@/lib/types'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface PinnedDomainCardProps {
   domain: Domain
@@ -21,6 +22,12 @@ interface PinnedDomainCardProps {
 
 export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardProps) {
   const [showStats, setShowStats] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleUnpin = () => {
+    setIsDeleting(true)
+    onUnpin(domain.id)
+  }
 
   const getStatusText = () => {
     if (status.status === 'online') return 'Online'
@@ -81,38 +88,27 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-0.5 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
-                  className="h-7 w-7 text-muted-foreground hover:text-accent hover:bg-accent/10"
-                >
-                  <Globe size={14} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Buka di tab baru</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onUnpin(domain.id)}
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                >
-                  <XIcon size={14} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Unpin domain</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <DotsThree size={16} weight="bold" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}>
+                <Globe size={14} className="mr-2" />
+                Buka di tab baru
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleUnpin}
+                disabled={isDeleting}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash size={14} className="mr-2" />
+                Unpin domain
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       <CardContent className="pt-0 pb-3 space-y-2">
