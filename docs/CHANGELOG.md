@@ -1,6 +1,62 @@
 # Changelog
 
-## Version 3.10.1 - Sticky Bar Styling Fix
+## Version 3.9.5 - Groups Persistence Final Fix
+**Tanggal Rilis:** 12 Januari 2026
+
+### 🐛 Critical Bug Fix: Groups Finally Work!
+
+**Root Cause Identified:**
+- Firebase error: `"Unsupported field value: undefined"`
+- Optional field `description?` was being sent as `undefined` to Firebase
+- Firebase CANNOT accept undefined values, causing **silent save failures**
+- Groups appeared to save but actually **never reached Firebase**
+
+**Fixes Applied:**
+
+1. **Clean Undefined Fields:**
+   - ✅ Remove undefined fields before saving to Firebase
+   - ✅ Only include `description` if it has a value
+   - ✅ Apply to all group operations (create/edit/delete)
+
+2. **Immediate Firebase Sync:**
+   - ✅ Groups sync instantly on create/edit/delete (no useEffect delay)
+   - ✅ Domain assignments sync instantly to Firebase
+   - ✅ No more 2-second delay causing data loss on quick refresh
+
+3. **Cache Optimization:**
+   - ✅ Firebase data loads immediately after cache (removed 30s setTimeout)
+   - ✅ Groups always load from Firebase (never cached)
+   - ✅ Domains merge with Firebase as source of truth for groupId
+
+4. **Auto-check on Tab Open:**
+   - ✅ Monitoring tab auto-checks all domains on first open
+   - ✅ No more empty screen waiting for user action
+   - ✅ Works on page load and tab switch
+
+5. **Last Check Time Display:**
+   - ✅ Added timestamp at top of monitoring tab
+   - ✅ Format: "Last checked at: HH:MM:SS"
+   - ✅ Updates after each check
+
+6. **UI Fixes:**
+   - ✅ Fixed extra margin in DomainCard (mt-2 removed)
+   - ✅ Action buttons back on same row as IP address
+   - ✅ Clock icon import added
+
+**Testing:**
+- ✅ Create group → Save successful (no Firebase error)
+- ✅ Assign domains to group → Instantly synced
+- ✅ Refresh page → Groups persist correctly
+- ✅ Domain assignments persist correctly
+
+**Migration Notes:**
+- Groups created before v3.9.5 may have failed to save
+- Recommend re-creating groups and re-assigning domains
+- Check console for `[Groups] Loaded from Firebase: X groups` to verify
+
+---
+
+## Version 3.9.4 - Icon Corrections & Layout
 **Tanggal Rilis:** 12 Januari 2026
 
 ### 🎨 UI Improvement: Better Sticky Bar Design

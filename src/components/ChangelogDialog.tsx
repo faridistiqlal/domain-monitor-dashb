@@ -49,12 +49,43 @@ export function ChangelogDialog({ triggerText, showIcon = true }: ChangelogDialo
         <ScrollArea className="px-6 pb-6 max-h-[calc(85vh-120px)]">
           <div className="space-y-6 pr-4">
             
+            {/* Version 3.9.5 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.5</h3>
+                  <p className="text-xs text-muted-foreground">Current Release • 12 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-green-500 to-emerald-500">Critical Fix</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-green-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Groups Persistence Fixed (Final)</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Firebase Undefined Error:</strong> Fixed groups failing to save due to undefined description field</li>
+                    <li><strong>Auto-check on Load:</strong> Monitoring tab now auto-checks domains on first open</li>
+                    <li><strong>Last Check Display:</strong> Added timestamp showing when domains were last checked</li>
+                    <li><strong>Immediate Firebase Sync:</strong> Groups and domain assignments now sync instantly (no delay)</li>
+                    <li><strong>Cache Optimization:</strong> Firebase data loads immediately after cache (no 30s wait)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+            
             {/* Version 3.9.4 */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">Version 3.9.4</h3>
-                  <p className="text-xs text-muted-foreground">Current Release • 12 Januari 2026</p>
+                  <p className="text-xs text-muted-foreground">12 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
                   <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500">UI Polish</Badge>
