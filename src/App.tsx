@@ -543,6 +543,14 @@ function App() {
     }
   }
 
+  // Auto-check all domains when monitoring tab is opened/loaded
+  useEffect(() => {
+    if (activeTab === 'domains' && !isLoadingData && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
+      console.log('[Monitoring Tab] Auto-checking all domains on initial load...')
+      handleManualRefresh()
+    }
+  }, [activeTab, isLoadingData, autoRefreshEnabled, hasChecked, isRefreshing, domains.length])
+
   // Auto-check pinned domains when Pin tab is opened
   useEffect(() => {
     if (activeTab === 'pinned' && !isLoadingData) {
