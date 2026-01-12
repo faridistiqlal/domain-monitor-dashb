@@ -2,7 +2,7 @@
 
 **App:** Domain Monitor Dashboard - Kabupaten Kendal  
 **URL:** https://kendal-uptime.vercel.app (Live on Vercel)  
-**Version:** 2.2.0  
+**Version:** 3.8.8  
 **Deployment:** Vercel Production (Auto-deploy from Git)
 
 ---
@@ -213,7 +213,37 @@ https://domain.kendalkab.go.id,online,103.X.X.X,245ms,HTTPS,2026-01-07 10:30:15
 
 ---
 
-### 5. Search & Filter
+### 5. Pin Domains (Quick Access)
+
+#### Pin a Domain
+1. **From Tab Monitoring:**
+   - Klik icon **MapPin** (📌) di domain card
+   - Domain langsung ter-pin dan tersimpan ke Firebase
+   
+2. **From Tab Kelola Data:**
+   - Klik icon **MapPin** (📌) di action buttons
+   - Atau dropdown → "Pin Domain"
+
+#### View Pinned Domains
+1. Buka tab **"Pin"**
+2. Semua pinned domains tampil dalam grid layout
+3. Quick actions: Unpin, Open URL, Copy URL
+4. Statistics quick view untuk setiap pinned domain
+
+#### Cross-Device Sync (v3.8.8)
+- **Pin di laptop** → Otomatis muncul di PC/tablet lain
+- **Pin state tersimpan di Firebase** (cloud sync)
+- **Sinkronisasi otomatis** setiap 30 detik (background refresh)
+- **100% konsisten** antar semua device yang login
+
+#### Tips:
+- Pin domain yang sering Anda monitor
+- Maximum recommended: 10-15 pinned domains
+- Tab Pin akan auto-check pinned domains saat dibuka
+
+---
+
+### 6. Search & Filter
 
 #### Search
 - Ketik nama domain di search box
@@ -235,7 +265,7 @@ https://domain.kendalkab.go.id,online,103.X.X.X,245ms,HTTPS,2026-01-07 10:30:15
 
 ---
 
-### 6. Statistics View
+### 7. Statistics View
 
 Buka tab **"Statistik"** untuk melihat:
 - Total domains
@@ -246,7 +276,7 @@ Buka tab **"Statistik"** untuk melihat:
 
 ---
 
-### 7. Authentication & Security
+### 8. Authentication & Security
 
 #### Login
 1. Saat buka app, dialog login muncul
