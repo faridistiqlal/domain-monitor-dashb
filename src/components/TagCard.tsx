@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pencil, Trash, Tag as TagIcon, CaretRight } from '@phosphor-icons/react'
+import { Pencil, Trash, Tag as TagIcon, CaretRight, Globe } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -142,33 +142,28 @@ export function TagCard({ tag, domainCount, domains, onEdit, onDelete }: TagCard
                 taggedDomains.map((domain) => (
                   <div
                     key={domain.id}
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        domain.status === 'online' ? 'bg-green-500' :
-                        domain.status === 'dns-only' ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-mono text-sm break-all sm:truncate">{domain.url}</p>
-                        {domain.group && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Group: {domain.group}
-                          </p>
-                        )}
-                      </div>
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      domain.status === 'online' ? 'bg-green-500' :
+                      domain.status === 'dns-only' ? 'bg-yellow-500' :
+                      'bg-red-500'
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-sm break-all sm:truncate">{domain.url}</p>
+                      {domain.group && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Group: {domain.group}
+                        </p>
+                      )}
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto flex-shrink-0"
-                      onClick={() => {
-                        window.open(`https://${domain.url}`, '_blank')
-                      }}
+                    <button
+                      onClick={() => window.open(`https://${domain.url}`, '_blank')}
+                      className="flex-shrink-0 p-2 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
+                      title="Buka domain"
                     >
-                      Buka
-                    </Button>
+                      <Globe size={18} weight="duotone" />
+                    </button>
                   </div>
                 ))
               )}
