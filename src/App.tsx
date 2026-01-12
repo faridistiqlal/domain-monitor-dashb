@@ -2105,70 +2105,9 @@ function App() {
 
             {!domains || domains.length === 0 ? (
               <EmptyState />
-            ) : !hasChecked && !autoRefreshEnabled ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center space-y-6 max-w-md mx-auto">
-                  <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
-                    <ArrowClockwise size={48} weight="duotone" className="text-primary" />
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-semibold text-foreground">Mode Manual Check</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Klik tombol <strong className="text-foreground">Check</strong> untuk memeriksa status semua domain.<br />
-                      Setelah selesai, Anda dapat langsung export hasilnya.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={handleManualRefresh}
-                    disabled={isRefreshing}
-                    size="lg"
-                    className="mt-2"
-                  >
-                    <ArrowClockwise 
-                      size={18} 
-                      className={isRefreshing ? 'animate-spin' : ''} 
-                    />
-                    {isRefreshing ? 'Memeriksa...' : `Check ${totalCount} Domain`}
-                  </Button>
-                </div>
-              </div>
-            ) : filteredDomains.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    {searchQuery 
-                      ? `Tidak ada domain yang cocok dengan "${searchQuery}"` 
-                      : viewMode === 'group-detail'
-                        ? 'Tidak ada domain dalam grup ini'
-                        : 'Tidak ada domain dengan status ini'}
-                  </p>
-                  <div className="flex gap-2 justify-center">
-                    {searchQuery && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSearchQuery('')}
-                        className="text-xs"
-                      >
-                        Hapus Pencarian
-                      </Button>
-                    )}
-                    {filter !== 'all' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setFilter('all')}
-                        className="text-xs"
-                      >
-                        Tampilkan Semua
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
             ) : (
               <>
-                {/* Sticky Bar with Live Counters */}
+                {/* Sticky Bar - Always show if domains exist */}
                 <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b mb-4">
                   <div className="flex items-center justify-between gap-4 py-3 px-4">
                     {/* Left: Check All Button */}
@@ -2206,7 +2145,7 @@ function App() {
                       </div>
                     )}
 
-                    {/* Right: Last Sync Time (placeholder for now) */}
+                    {/* Right: Last Sync Time */}
                     {hasChecked && (
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
                         <Clock size={14} />
@@ -2216,20 +2155,71 @@ function App() {
                   </div>
                 </div>
 
-                <ScrollArea className="flex-1 min-h-0">
-                  <div className="md:pr-4">
-                    <OptimizedDomainList
-                      domains={sortedDomains}
-                      statuses={statuses}
-                      groups={groups}
-                      tags={tags}
-                      onToggleMonitoring={handleToggleDomainMonitoring}
-                      onTogglePin={handleTogglePin}
-                      showCheckbox={false}
-                      simpleMode={false}
-                    />
+                {!hasChecked && !autoRefreshEnabled ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center space-y-6 max-w-md mx-auto">
+                      <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
+                        <ArrowClockwise size={48} weight="duotone" className="text-primary" />
+                      </div>
+                      <div className="space-y-3">
+                        <h3 className="text-xl font-semibold text-foreground">Mode Manual Check</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Klik tombol <strong className="text-foreground">Check</strong> di atas untuk memeriksa status semua domain.<br />
+                          Setelah selesai, Anda dapat langsung export hasilnya.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </ScrollArea>
+                ) : filteredDomains.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        {searchQuery 
+                          ? `Tidak ada domain yang cocok dengan "${searchQuery}"` 
+                          : viewMode === 'group-detail'
+                            ? 'Tidak ada domain dalam grup ini'
+                            : 'Tidak ada domain dengan status ini'}
+                      </p>
+                      <div className="flex gap-2 justify-center">
+                        {searchQuery && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSearchQuery('')}
+                            className="text-xs"
+                          >
+                            Hapus Pencarian
+                          </Button>
+                        )}
+                        {filter !== 'all' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFilter('all')}
+                            className="text-xs"
+                          >
+                            Tampilkan Semua
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <ScrollArea className="flex-1 min-h-0">
+                    <div className="md:pr-4">
+                      <OptimizedDomainList
+                        domains={sortedDomains}
+                        statuses={statuses}
+                        groups={groups}
+                        tags={tags}
+                        onToggleMonitoring={handleToggleDomainMonitoring}
+                        onTogglePin={handleTogglePin}
+                        showCheckbox={false}
+                        simpleMode={false}
+                      />
+                    </div>
+                  </ScrollArea>
+                )}
               </>
             )}
           </TabsContent>
