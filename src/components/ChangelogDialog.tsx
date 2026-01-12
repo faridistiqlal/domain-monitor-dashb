@@ -49,12 +49,130 @@ export function ChangelogDialog({ triggerText, showIcon = true }: ChangelogDialo
         <ScrollArea className="px-6 pb-6 max-h-[calc(85vh-120px)]">
           <div className="space-y-6 pr-4">
             
+            {/* Version 3.9.2 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.2</h3>
+                  <p className="text-xs text-muted-foreground">Current Release • 12 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-purple-500 to-pink-500">UI Consistency</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Palette size={16} className="text-purple-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Dropdown Menu di Tag Card</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Consistent UI:</strong> Tombol Edit dan Hapus sekarang dalam dropdown menu (...)</li>
+                    <li><strong>Cleaner Design:</strong> Konsisten dengan GroupCard dan PinnedDomainCard</li>
+                    <li><strong>Better UX:</strong> Lebih rapi dan hemat space di card</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Version 3.9.1 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.1</h3>
+                  <p className="text-xs text-muted-foreground">12 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-blue-500 to-purple-500">UI Polish</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Palette size={16} className="text-blue-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Dropdown Menu di Pinned Card</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Unified UI:</strong> Tombol di dalam dropdown menu seperti GroupCard</li>
+                    <li><strong>Menu Items:</strong> "Buka di tab baru" dan "Unpin domain"</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Version 3.9.0 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.0</h3>
+                  <p className="text-xs text-muted-foreground">12 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-green-500 to-blue-500">New Feature</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkle size={16} className="text-green-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Search di Assign Domains Dialog</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Search Box:</strong> Real-time filtering saat mengetik</li>
+                    <li><strong>Smart Counter:</strong> Update sesuai hasil filter</li>
+                    <li><strong>Select All:</strong> Bekerja dengan filtered domains</li>
+                    <li><strong>Empty State:</strong> Pesan "Tidak ada domain yang cocok"</li>
+                    <li><strong>Why:</strong> Mengelola 300+ domain jadi jauh lebih mudah</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Version 3.8.9 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.8.9</h3>
+                  <p className="text-xs text-muted-foreground">12 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-red-500 to-orange-500">Critical Fix</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-red-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Tag Persistence Bug Fix</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Problem:</strong> Tags hilang setelah refresh page</li>
+                    <li><strong>Root Cause:</strong> localStorage key mismatch (save: domain-tags, load: tags-cache)</li>
+                    <li><strong>Solution:</strong> Always load tags from Firebase first, immediate cache saves</li>
+                    <li><strong>Also Fixed:</strong> Tag assignments, groups, group assignments persistence</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Version 3.5.1 */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">Version 3.5.1</h3>
-                  <p className="text-xs text-muted-foreground">Current Release • 8 Januari 2026</p>
+                  <p className="text-xs text-muted-foreground">8 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
                   <Badge className="text-xs bg-gradient-to-r from-blue-500 to-purple-500">Mobile Polish</Badge>

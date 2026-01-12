@@ -1,7 +1,7 @@
 # 📊 PROJECT STATUS - Domain Monitor Kendal
 
 **Last Updated:** 12 Januari 2026  
-**Version:** 3.8.8  
+**Version:** 3.9.2  
 **Status:** ✅ Production Ready & Live  
 **Live URL:** https://kendal-uptime.vercel.app  
 **Deployment:** Vercel (Auto-deploy from Git)
@@ -182,7 +182,16 @@ src/
 
 ---
 
-## 🔄 Recent Updates (v3.8.8 - 12 Jan 2026)
+## 🔄 Recent Updates (v3.9.2 - 12 Jan 2026)
+
+**Latest Changes:**
+1. ✅ Search field in assign domains dialog (v3.9.0)
+2. ✅ Dropdown menu for pinned cards (v3.9.1)
+3. ✅ Dropdown menu for tag cards (v3.9.2)
+4. ✅ Tag persistence bug fix (v3.8.9)
+5. ✅ UI consistency improvements across all cards
+
+**Previous Updates (v3.8.8):**
 
 ### Fixed
 - **Pin Cross-Device Sync** - Pin state sekarang menggunakan Firebase sebagai source of truth

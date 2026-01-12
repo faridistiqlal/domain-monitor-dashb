@@ -175,7 +175,7 @@ export function TermsOfServiceDialog({ triggerText = 'Syarat & Ketentuan' }: Ter
 
             <div className="pt-4 border-t border-border">
               <p className="text-xs text-muted-foreground">
-                Terakhir diperbarui: Januari 2024
+                Terakhir diperbarui: 12 Januari 2026
               </p>
             </div>
           </div>
