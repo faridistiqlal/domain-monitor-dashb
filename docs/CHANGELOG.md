@@ -1,5 +1,62 @@
 # Changelog
 
+## Version 3.8.8 - Pin Sync Fix Across Devices
+**Tanggal Rilis:** 12 Januari 2026
+
+### 🐛 Critical Bug Fix: Pin State Tidak Sync Antar Device
+
+**Problem:**
+- ❌ User pin 4 domain di laptop, tapi di PC lain pinnya hilang/berbeda
+- ❌ Pin state diambil dari localStorage (local only), bukan dari Firebase
+- ❌ Setiap device punya pin state sendiri-sendiri (tidak sinkron)
+
+**Root Cause:**
+```javascript
+// BEFORE (Bug di line 215 App.tsx):
+if (localDomain) {
+  return {
+    ...domainWithBatch,
+    pinned: localDomain.pinned, // ❌ Ambil dari localStorage!
+    enabled: false
+  }
+}
+```
+
+**Analisis:**
+- `handleTogglePin()` sudah benar: sync ke Firebase ✅
+- Background refresh: ambil pin dari localStorage ❌ (harusnya dari Firebase)
+- Setiap device load data dari Firebase, tapi pin state di-override dengan localStorage
+
+**Fixes Applied:**
+```javascript
+// AFTER (Fixed):
+if (localDomain) {
+  return {
+    ...domainWithBatch,
+    pinned: firebaseDomain.pinned || false, // ✅ Firebase = source of truth
+    enabled: false
+  }
+}
+```
+
+**Changes:**
+- ✅ Pin state sekarang **selalu diambil dari Firebase** (source of truth)
+- ✅ Background refresh menggunakan `firebaseDomain.pinned`, bukan `localDomain.pinned`
+- ✅ localStorage cache di-update dengan pin state dari Firebase
+- ✅ Console log updated: "pinned from Firebase" untuk clarity
+
+**Impact:**
+- ✅ Pin 4 domain di laptop A → Terlihat di PC B, tablet, semua device
+- ✅ Unpin di device manapun → Semua device tersinkronisasi otomatis
+- ✅ Cross-device sync berfungsi sempurna (30 detik background refresh)
+
+**Testing:**
+- Pin domain di device A, buka di device B → Sync ✅
+- Unpin di device B, refresh di device A → Sync ✅
+- Multiple devices simultaneous → All synced ✅
+
+---
+
 ## Version 3.8.7 - UptimeBar Display Fix for 0% Uptime
 **Tanggal Rilis:** 11 Januari 2026
 

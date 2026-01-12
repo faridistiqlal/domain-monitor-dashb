@@ -208,11 +208,11 @@ function App() {
                     consecutiveFailures: firebaseDomain.consecutiveFailures || 0,
                   } : firebaseDomain
                   
-                  // If domain exists locally, preserve pin and enabled state
+                  // Use Firebase pin state (source of truth), only preserve enabled from local
                   if (localDomain) {
                     return {
                       ...domainWithBatch,
-                      pinned: localDomain.pinned, // Preserve local pin state
+                      pinned: firebaseDomain.pinned || false, // Use Firebase pin state
                       enabled: false // Always reset enabled (monitoring is not persistent)
                     }
                   }
@@ -220,6 +220,7 @@ function App() {
                   // New domain from Firebase
                   return {
                     ...domainWithBatch,
+                    pinned: firebaseDomain.pinned || false, // Use Firebase pin state
                     enabled: false
                   }
                 })
@@ -227,9 +228,9 @@ function App() {
                 // Debug log
                 const pinnedCount = mergedDomains.filter(d => d.pinned).length
                 const enabledCount = mergedDomains.filter(d => d.enabled).length
-                console.log(`[Background Refresh] Merged ${mergedDomains.length} domains (${pinnedCount} pinned, ${enabledCount} enabled)`)
+                console.log(`[Background Refresh] Merged ${mergedDomains.length} domains (${pinnedCount} pinned from Firebase, ${enabledCount} enabled)`)
                 
-                // Update cache with merged data
+                // Update cache with merged data (including Firebase pin state)
                 localStorage.setItem('domains-cache', JSON.stringify(mergedDomains))
                 
                 return mergedDomains
@@ -242,7 +243,7 @@ function App() {
               localStorage.setItem('groups-cache', JSON.stringify(loadedGroups))
               localStorage.setItem('tags-cache', JSON.stringify(loadedTags))
               
-              console.log('✅ Background refresh completed with local state preserved')
+              console.log('✅ Background refresh completed - Firebase pin state synced to all devices')
             } catch (error: any) {
               console.warn('Background refresh skipped - Firebase quota exceeded or error:', error)
               // Silently fail background refresh, keep using cache
