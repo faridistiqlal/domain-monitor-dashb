@@ -1298,20 +1298,34 @@ function App() {
       id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: Date.now(),
     }
-    setGroups(current => [...(current || []), newGroup])
+    const updatedGroups = [...(groups || []), newGroup]
+    console.log('[Create Group] Adding new group:', newGroup.name)
+    setGroups(updatedGroups)
+    
+    // Immediate save to cache
+    localStorage.setItem('groups-cache', JSON.stringify(updatedGroups))
+    console.log('[Create Group] ✅ Immediately saved to cache')
+    // useEffect will sync to Firebase after 2s
+    
     toast.success('Grup berhasil dibuat')
   }
 
   const handleEditGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
     if (!editingGroup) return
     
-    setGroups(current =>
-      (current || []).map(g =>
-        g.id === editingGroup.id
-          ? { ...g, ...groupData }
-          : g
-      )
+    const updatedGroups = (groups || []).map(g =>
+      g.id === editingGroup.id
+        ? { ...g, ...groupData }
+        : g
     )
+    console.log('[Edit Group] Updating group:', editingGroup.name)
+    setGroups(updatedGroups)
+    
+    // Immediate save to cache
+    localStorage.setItem('groups-cache', JSON.stringify(updatedGroups))
+    console.log('[Edit Group] ✅ Immediately saved to cache')
+    // useEffect will sync to Firebase after 2s
+    
     toast.success('Grup berhasil diperbarui')
     setEditingGroup(null)
   }
@@ -1322,23 +1336,41 @@ function App() {
       return
     }
 
-    setGroups(current => (current || []).filter(g => g.id !== groupId))
-    setDomains(current =>
-      (current || []).map(d =>
-        d.groupId === groupId ? { ...d, groupId: undefined } : d
-      )
+    const updatedGroups = (groups || []).filter(g => g.id !== groupId)
+    console.log('[Delete Group] Deleting group:', groupId)
+    setGroups(updatedGroups)
+    
+    // Immediate save to cache
+    localStorage.setItem('groups-cache', JSON.stringify(updatedGroups))
+    console.log('[Delete Group] ✅ Immediately saved to cache')
+    // useEffect will sync to Firebase after 2s
+    
+    const updatedDomains = (domains || []).map(d =>
+      d.groupId === groupId ? { ...d, groupId: undefined } : d
     )
+    setDomains(updatedDomains)
+    
+    // Also update domains cache
+    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    
     toast.success('Grup berhasil dihapus')
   }
 
   const handleAssignDomains = (domainIds: string[], groupId: string | null) => {
-    setDomains(current =>
-      (current || []).map(d =>
-        domainIds.includes(d.id)
-          ? { ...d, groupId: groupId || undefined }
-          : d
-      )
+    const updatedDomains = (domains || []).map(d =>
+      domainIds.includes(d.id)
+        ? { ...d, groupId: groupId || undefined }
+        : d
     )
+    
+    console.log('[Assign Domains] Updating', domainIds.length, 'domains to group:', groupId)
+    setDomains(updatedDomains)
+    
+    // Immediate save to cache
+    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    console.log('[Assign Domains] ✅ Immediately saved to cache')
+    // useEffect will sync to Firebase after 2s
+    
     toast.success('Domain berhasil diatur grupnya')
   }
 
