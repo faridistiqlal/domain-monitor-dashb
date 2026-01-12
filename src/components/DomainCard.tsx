@@ -326,76 +326,76 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
               )}
             </div>
             
-            {/* Quick info with Protocol & Batch badges */}
-            <div className="flex items-center gap-2 mt-1 text-xs flex-wrap">
-              {status.ipAddress && (
-                <span className="font-mono text-muted-foreground">{status.ipAddress}</span>
-              )}
-              
-              {/* Protocol Badge */}
-              {getProtocolInfo() && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className={`shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      getProtocolInfo()?.isHttps 
-                        ? 'bg-success/15 text-success' 
-                        : getProtocolInfo()?.hasSSLIssue
-                        ? 'bg-destructive/15 text-destructive'
-                        : 'bg-warning/15 text-warning'
-                    }`}>
-                      {getProtocolInfo()?.isHttps ? (
-                        <LockKey size={10} weight="fill" />
-                      ) : getProtocolInfo()?.hasSSLIssue ? (
-                        <ShieldWarning size={10} weight="fill" />
-                      ) : (
-                        <LockKeyOpen size={10} weight="fill" />
+            {/* Quick info with Protocol & Batch badges + Action Buttons */}
+            <div className="flex items-center justify-between gap-2 mt-1 text-xs flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                {status.ipAddress && (
+                  <span className="font-mono text-muted-foreground">{status.ipAddress}</span>
+                )}
+                
+                {/* Protocol Badge */}
+                {getProtocolInfo() && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        getProtocolInfo()?.isHttps 
+                          ? 'bg-success/15 text-success' 
+                          : getProtocolInfo()?.hasSSLIssue
+                          ? 'bg-destructive/15 text-destructive'
+                          : 'bg-warning/15 text-warning'
+                      }`}>
+                        {getProtocolInfo()?.isHttps ? (
+                          <LockKey size={10} weight="fill" />
+                        ) : getProtocolInfo()?.hasSSLIssue ? (
+                          <ShieldWarning size={10} weight="fill" />
+                        ) : (
+                          <LockKeyOpen size={10} weight="fill" />
+                        )}
+                        <span>{status.protocol?.toUpperCase()}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs max-w-[200px]">
+                      {getProtocolInfo()?.isHttps && (
+                        <p>🔒 Koneksi HTTPS aman (terenkripsi)</p>
                       )}
-                      <span>{status.protocol?.toUpperCase()}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs max-w-[200px]">
-                    {getProtocolInfo()?.isHttps && (
-                      <p>🔒 Koneksi HTTPS aman (terenkripsi)</p>
+                      {getProtocolInfo()?.hasSSLIssue && (
+                        <p>⚠️ SSL Issue: {status.error}</p>
+                      )}
+                      {getProtocolInfo()?.isHttpOnly && (
+                        <p>⚠️ HTTP saja (tidak terenkripsi) - Pertimbangkan aktifkan HTTPS</p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                
+                {/* Batch Indicator */}
+                {domain.checkBatch && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="shrink-0 flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">
+                        <span>B{domain.checkBatch}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">
+                      <p>Batch {domain.checkBatch} - Auto check setiap 20 menit</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                
+                {status.responseTime !== undefined && (
+                  <span className="flex items-center gap-1">
+                    {status.responseTime < 2000 && (
+                      <Lightning size={12} weight="fill" className="text-success" />
                     )}
-                    {getProtocolInfo()?.hasSSLIssue && (
-                      <p>⚠️ SSL Issue: {status.error}</p>
-                    )}
-                    {getProtocolInfo()?.isHttpOnly && (
-                      <p>⚠️ HTTP saja (tidak terenkripsi) - Pertimbangkan aktifkan HTTPS</p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
-              {/* Batch Indicator */}
-              {domain.checkBatch && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="shrink-0 flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">
-                      <span>B{domain.checkBatch}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">
-                    <p>Batch {domain.checkBatch} - Auto check setiap 20 menit</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
-              {status.responseTime !== undefined && (
-                <span className="flex items-center gap-1">
-                  {status.responseTime < 2000 && (
-                    <Lightning size={12} weight="fill" className="text-success" />
-                  )}
-                  <span className={`font-mono ${getResponseTimeColor(status.responseTime)}`}>
-                    {status.responseTime}ms
+                    <span className={`font-mono ${getResponseTimeColor(status.responseTime)}`}>
+                      {status.responseTime}ms
+                    </span>
                   </span>
-                </span>
-              )}
-            </div>
-            
-            {/* Action Buttons Row */}
-            <div className="flex items-center gap-1">
-              <div className="flex items-center gap-1 ml-auto">
+                )}
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
