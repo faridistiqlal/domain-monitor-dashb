@@ -80,8 +80,23 @@ export const syncGroupsToFirestore = async (groups: DomainGroup[]) => {
   const userDocRef = doc(db, COLLECTIONS.GROUPS, userId)
   
   try {
+    // Clean undefined fields from groups (Firebase doesn't accept undefined)
+    const cleanedGroups = groups.map(group => {
+      const cleaned: any = {
+        id: group.id,
+        name: group.name,
+        color: group.color,
+        createdAt: group.createdAt
+      }
+      // Only add description if it's defined
+      if (group.description !== undefined && group.description !== null) {
+        cleaned.description = group.description
+      }
+      return cleaned
+    })
+    
     await setDoc(userDocRef, {
-      groups: groups,
+      groups: cleanedGroups,
       updatedAt: Date.now()
     }, { merge: true })
     return true
