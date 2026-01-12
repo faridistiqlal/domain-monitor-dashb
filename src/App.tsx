@@ -175,125 +175,55 @@ function App() {
         setGroups(loadedGroups)
         console.log('[Groups] ✅ Set to state:', loadedGroups.length, 'groups')
         
-        // Try to load domains from cache for faster UI
-        const cachedDomains = localStorage.getItem('domains-cache')
+        // ALWAYS load domains from Firebase (no cache for pin/group state sync)
+        // Cache is removed to ensure pin and group states sync across devices
+        console.log('[Domains] Loading domains from Firebase (no cache)...')
         
-        if (cachedDomains) {
-          // Use cached data for instant app load
-          const parsedDomains = JSON.parse(cachedDomains)
-          
-          // Reset enabled field from cache - individual monitoring is not persistent
-          const domainsWithResetEnabled = parsedDomains.map((domain: Domain) => ({
-            ...domain,
-            enabled: false // Reset on load from cache
-          }))
-          
-          setDomains(domainsWithResetEnabled)
-          
-          console.log('Loaded from cache:', parsedDomains.length, 'domains (enabled fields reset)')
-          
-          // Immediately refresh from Firebase to get latest groupId and other data
-          // Cache is only for instant UI, Firebase is source of truth
-          (async () => {
-            try {
-              const loadedDomains = await loadDomains()
+        try {
+          const loadedDomains = await loadDomains()
               
-              // Merge with current state to preserve recent local changes (e.g., pin/unpin)
-              setDomains(currentDomains => {
-                // Create a map of current domains for quick lookup
-                const currentDomainsMap = new Map(currentDomains.map(d => [d.id, d]))
-                
-                // Merge: Use Firebase data as source of truth for groupId and pin state
-                const mergedDomains = loadedDomains.map((firebaseDomain, index) => {
-                  const localDomain = currentDomainsMap.get(firebaseDomain.id)
-                  
-                  // Assign batch if not exists
-                  const domainWithBatch = !firebaseDomain.checkBatch ? {
-                    ...firebaseDomain,
-                    checkBatch: assignCheckBatch(index, loadedDomains.length),
-                    lastStatusChange: firebaseDomain.lastStatusChange || Date.now(),
-                    consecutiveFailures: firebaseDomain.consecutiveFailures || 0,
-                  } : firebaseDomain
-                  
-                  // Use Firebase as source of truth for groupId and pinned state
-                  return {
-                    ...domainWithBatch,
-                    groupId: firebaseDomain.groupId, // ALWAYS use Firebase groupId
-                    pinned: firebaseDomain.pinned || false, // Use Firebase pin state
-                    enabled: false // Always reset enabled (monitoring is not persistent)
-                  }
-                })
-                
-                // Debug log
-                const pinnedCount = mergedDomains.filter(d => d.pinned).length
-                const enabledCount = mergedDomains.filter(d => d.enabled).length
-                const groupedCount = mergedDomains.filter(d => d.groupId).length
-                console.log(`[Background Refresh] Merged ${mergedDomains.length} domains (${pinnedCount} pinned, ${groupedCount} in groups from Firebase, ${enabledCount} enabled)`)
-                
-                // Update cache with merged data (including Firebase groupId)
-                localStorage.setItem('domains-cache', JSON.stringify(mergedDomains))
-                
-                return mergedDomains
-              })
-              
-              // Reload groups from Firebase to get latest data
-              console.log('[Background Refresh] Reloading groups from Firebase...')
-              const refreshedGroups = await loadGroups()
-              console.log('[Background Refresh] Loaded groups:', refreshedGroups.length, 'groups')
-              console.log('[Background Refresh] Groups data:', refreshedGroups.map(g => ({ id: g.id, name: g.name })))
-              setGroups(refreshedGroups)
-              console.log('[Background Refresh] ✅ Groups set to state')
-              
-              console.log('[Background Refresh] ✅ Completed - Firebase pin state synced to all devices')
-            } catch (error: any) {
-              console.warn('Background refresh skipped - Firebase quota exceeded or error:', error)
-              // Silently fail background refresh, keep using cache
-            }
-          })()
-        } else {
-          // No cache, load domains from Firebase (tags and groups already loaded above)
-          try {
-            const loadedDomains = await loadDomains()
+          
+          // Track Firebase reads (1 collection - tags and groups already loaded)
+          trackFirebaseRead(1)
             
-            // Track Firebase reads (1 collection - tags and groups already loaded)
-            trackFirebaseRead(1)
-            
-            // Assign batch to domains that don't have one (old domains)
-            // RESET enabled field on page load - individual monitoring is not persistent across refresh
-            const domainsWithBatch = loadedDomains.map((domain, index) => {
-              if (!domain.checkBatch) {
-                return {
-                  ...domain,
-                  checkBatch: assignCheckBatch(index, loadedDomains.length),
-                  lastStatusChange: domain.lastStatusChange || Date.now(),
-                  consecutiveFailures: domain.consecutiveFailures || 0,
-                  enabled: false // Reset on page load - user must manually start monitoring
-                }
-              }
-              // Reset enabled field on page load for all domains
+          // Assign batch to domains that don't have one (old domains)
+          // RESET enabled field on page load - individual monitoring is not persistent across refresh
+          const domainsWithBatch = loadedDomains.map((domain, index) => {
+            if (!domain.checkBatch) {
               return {
                 ...domain,
-                enabled: false // Individual monitoring is not persistent across refresh
+                checkBatch: assignCheckBatch(index, loadedDomains.length),
+                lastStatusChange: domain.lastStatusChange || Date.now(),
+                consecutiveFailures: domain.consecutiveFailures || 0,
+                enabled: false // Reset on page load - user must manually start monitoring
               }
-            })
-        
-            setDomains(domainsWithBatch)
-            // Groups already loaded from Firebase at the start
-            
-            // Save to cache for future loads
-            localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
-          } catch (error: any) {
-            console.error('Firebase quota exceeded or error loading data:', error)
-            // If quota exceeded, show user message and use empty data temporarily
-            if (error?.code === 'resource-exhausted') {
-              alert('Firebase quota exceeded. App akan menggunakan data cache. Refresh halaman nanti untuk load data terbaru.')
-              // Set empty arrays as fallback
-              setDomains([])
-              setGroups([])
-              setTags([])
-            } else {
-              throw error // Re-throw non-quota errors
             }
+            // Reset enabled field on page load for all domains
+            return {
+              ...domain,
+              enabled: false // Individual monitoring is not persistent across refresh
+            }
+          })
+      
+          setDomains(domainsWithBatch)
+          // Groups already loaded from Firebase at the start
+          
+          // No localStorage cache - always load fresh from Firebase for pin/group sync
+          console.log('[Domains] ✅ Loaded', domainsWithBatch.length, 'domains from Firebase')
+          const pinnedCount = domainsWithBatch.filter(d => d.pinned).length
+          const groupedCount = domainsWithBatch.filter(d => d.groupId).length
+          console.log(`[Domains] ${pinnedCount} pinned, ${groupedCount} in groups`)
+        } catch (error: any) {
+          console.error('Firebase quota exceeded or error loading data:', error)
+          // If quota exceeded, show user message and use empty data temporarily
+          if (error?.code === 'resource-exhausted') {
+            alert('Firebase quota exceeded. Refresh halaman nanti untuk load data terbaru.')
+            // Set empty arrays as fallback
+            setDomains([])
+            setGroups([])
+            setTags([])
+          } else {
+            throw error // Re-throw non-quota errors
           }
         }
         
@@ -347,9 +277,7 @@ function App() {
           setDomains(domainsWithBatch)
           // Groups already loaded from Firebase at the start
           
-          // Save to cache for future loads (groups always from Firebase, no cache)
-          localStorage.setItem('domains-cache', JSON.stringify(domainsWithBatch))
-          
+          // No localStorage cache - always use Firebase as source of truth for pin/group sync
           console.log('✅ Fresh data loaded from Firebase after version update')
         }
         
@@ -379,16 +307,32 @@ function App() {
   // Sync to Firebase with debouncing (reduce writes)
   useEffect(() => {
     if (!isLoadingData && domains.length >= 0) {
-      localStorage.setItem('monitoring-domains', JSON.stringify(domains))
+      // No localStorage cache - always use Firebase as source of truth
       // Debounce Firebase sync to reduce writes
       const timeoutId = setTimeout(() => {
-        syncDomainsToFirestore(domains).catch(console.error)
+        syncDomainsToFirestore(domains)
+          .then(() => console.log('[Domains Sync] ✅ Auto-synced to Firebase'))
+          .catch(err => console.error('[Domains Sync] ❌ Error:', err))
       }, 2000) // Wait 2s before syncing
       return () => clearTimeout(timeoutId)
     }
   }, [domains, isLoadingData])
 
-  // Groups sync removed - now syncs immediately in handlers (create/edit/delete)
+  // Auto-sync groups to Firebase (same pattern as tags and domains)
+  useEffect(() => {
+    if (!isLoadingData && groups.length >= 0) {
+      console.log('[Groups Sync] Auto-syncing', groups.length, 'groups to Firebase')
+      const timeoutId = setTimeout(() => {
+        syncGroupsToFirestore(groups)
+          .then(() => console.log('[Groups Sync] ✅ Synced to Firebase'))
+          .catch(err => {
+            console.error('[Groups Sync] ❌ Error:', err)
+            toast.error('Gagal sync groups ke Firebase')
+          })
+      }, 2000) // Wait 2s before syncing
+      return () => clearTimeout(timeoutId)
+    }
+  }, [groups, isLoadingData])
   
   useEffect(() => {
     if (!isLoadingData) {
@@ -905,24 +849,23 @@ function App() {
     
     setDomains(updatedDomains)
     
-    // Immediately update localStorage cache (prevent data loss on refresh)
-    localStorage.setItem('monitoring-domains', JSON.stringify(updatedDomains))
-    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
-    
-    // Immediately sync to Firebase
+    // No localStorage cache - useEffect will sync to Firebase after 2s debounce
+    // Immediate sync for critical pin state
     try {
       await syncDomainsToFirestore(updatedDomains)
-      console.log(`[Pin Sync] Domain ${domain?.url} pinned state synced to Firebase: ${newPinnedState}`)
+      console.log(`[Pin Sync] ✅ Domain ${domain?.url} pinned=${newPinnedState} synced to Firebase`)
+      
+      if (newPinnedState) {
+        toast.success('Domain di-pin dan disinkronkan ke semua device')
+      } else {
+        toast.success('Domain di-unpin dan disinkronkan ke semua device')
+      }
     } catch (error) {
-      console.error('[Pin Sync] Failed to sync to Firebase:', error)
+      console.error('[Pin Sync] ❌ Failed to sync to Firebase:', error)
       toast.error('Gagal sync ke Firebase. Coba lagi.')
+      // Revert state on error
+      setDomains(domains)
       return
-    }
-    
-    if (newPinnedState) {
-      toast.success('Domain di-pin dan disinkronkan')
-    } else {
-      toast.success('Domain di-unpin dan disinkronkan')
     }
   }
 
@@ -1283,7 +1226,7 @@ function App() {
     }
   }
 
-  const handleCreateGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
+  const handleCreateGroup = async (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
     if (!canEdit) {
       toast.error('Anda tidak memiliki akses untuk membuat grup')
       return
@@ -1300,16 +1243,19 @@ function App() {
     console.log('[Create Group] All groups:', updatedGroups.map(g => ({ id: g.id, name: g.name })))
     setGroups(updatedGroups)
     
-    // ALWAYS sync to Firebase immediately (no cache for groups)
+    // useEffect will auto-sync after 2s, but also sync immediately for critical operation
     console.log('[Create Group] Syncing to Firebase...')
-    syncGroupsToFirestore(updatedGroups)
-      .then(() => console.log('[Create Group] ✅ Synced to Firebase'))
-      .catch(err => console.error('[Create Group] ❌ Firebase error:', err))
-    
-    toast.success('Grup berhasil dibuat')
+    try {
+      await syncGroupsToFirestore(updatedGroups)
+      console.log('[Create Group] ✅ Synced to Firebase')
+      toast.success('Grup berhasil dibuat dan disinkronkan ke semua device')
+    } catch (err) {
+      console.error('[Create Group] ❌ Firebase error:', err)
+      toast.error('Grup dibuat tapi gagal sync ke Firebase. Cek koneksi internet.')
+    }
   }
 
-  const handleEditGroup = (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
+  const handleEditGroup = async (groupData: Omit<DomainGroup, 'id' | 'createdAt'>) => {
     if (!editingGroup) return
     
     const updatedGroups = (groups || []).map(g =>
@@ -1320,16 +1266,20 @@ function App() {
     console.log('[Edit Group] Updating group:', editingGroup.name)
     setGroups(updatedGroups)
     
-    // ALWAYS sync to Firebase immediately (no cache for groups)
-    syncGroupsToFirestore(updatedGroups)
-      .then(() => console.log('[Edit Group] ✅ Synced to Firebase'))
-      .catch(err => console.error('[Edit Group] ❌ Firebase error:', err))
+    // useEffect will auto-sync after 2s, but also sync immediately for critical operation
+    try {
+      await syncGroupsToFirestore(updatedGroups)
+      console.log('[Edit Group] ✅ Synced to Firebase')
+      toast.success('Grup berhasil diperbarui dan disinkronkan ke semua device')
+    } catch (err) {
+      console.error('[Edit Group] ❌ Firebase error:', err)
+      toast.error('Grup diperbarui tapi gagal sync ke Firebase. Cek koneksi internet.')
+    }
     
-    toast.success('Grup berhasil diperbarui')
     setEditingGroup(null)
   }
 
-  const handleDeleteGroup = (groupId: string) => {
+  const handleDeleteGroup = async (groupId: string) => {
     if (!canEdit) {
       toast.error('Anda tidak memiliki akses untuk menghapus grup')
       return
@@ -1339,20 +1289,22 @@ function App() {
     console.log('[Delete Group] Deleting group:', groupId)
     setGroups(updatedGroups)
     
-    // ALWAYS sync to Firebase immediately (no cache for groups)
-    syncGroupsToFirestore(updatedGroups)
-      .then(() => console.log('[Delete Group] ✅ Synced to Firebase'))
-      .catch(err => console.error('[Delete Group] ❌ Firebase error:', err))
+    // useEffect will auto-sync after 2s, but also sync immediately for critical operation
+    try {
+      await syncGroupsToFirestore(updatedGroups)
+      console.log('[Delete Group] ✅ Synced to Firebase')
+    } catch (err) {
+      console.error('[Delete Group] ❌ Firebase error:', err)
+      toast.error('Grup dihapus tapi gagal sync ke Firebase. Cek koneksi internet.')
+    }
     
     const updatedDomains = (domains || []).map(d =>
       d.groupId === groupId ? { ...d, groupId: undefined } : d
     )
     setDomains(updatedDomains)
     
-    // Also update domains cache
-    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
-    
-    toast.success('Grup berhasil dihapus')
+    // No localStorage cache - useEffect will sync domains to Firebase
+    toast.success('Grup berhasil dihapus dan disinkronkan ke semua device')
   }
 
   const handleAssignDomains = (domainIds: string[], groupId: string | null) => {
