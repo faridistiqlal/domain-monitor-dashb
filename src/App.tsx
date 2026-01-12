@@ -1791,6 +1791,10 @@ function App() {
             setViewMode('all')
             setSelectedGroupId(null)
           }
+          // Auto-check domains when opening monitoring tab for the first time
+          if (val === 'domains' && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
+            handleManualRefresh()
+          }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
           <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-8 md:mb-6 gap-1 md:gap-0 h-10 p-1 mt-2">
             <TabsTrigger value="domains" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
