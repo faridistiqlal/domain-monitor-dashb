@@ -89,6 +89,7 @@ function App() {
   const [isPaused, setIsPaused] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
+  const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null)
   const [individualMonitorIntervals, setIndividualMonitorIntervals] = useState<Record<string, NodeJS.Timeout>>({})
   const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'pinned'>('domains')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
@@ -1123,6 +1124,7 @@ function App() {
     }
     await checkAllDomains(true, false, false) // Manual check: local only, no Firebase
     setIsRefreshing(false)
+    setLastCheckTime(new Date())
   }
 
   const handleTogglePause = () => {
@@ -2179,20 +2181,36 @@ function App() {
                 </div>
               </div>
             ) : (
-              <ScrollArea className="flex-1 min-h-0">
-                <div className="md:pr-4">
-                  <OptimizedDomainList
-                    domains={sortedDomains}
-                    statuses={statuses}
-                    groups={groups}
-                    tags={tags}
-                    onToggleMonitoring={handleToggleDomainMonitoring}
-                    onTogglePin={handleTogglePin}
-                    showCheckbox={false}
-                    simpleMode={false}
-                  />
-                </div>
-              </ScrollArea>
+              <>
+                {/* Last Check Time Info */}
+                {lastCheckTime && (
+                  <div className="flex items-center justify-center gap-2 py-2 px-4 bg-muted/50 rounded-lg mb-3">
+                    <Clock size={14} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      Last checked at: {lastCheckTime.toLocaleTimeString('id-ID', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                )}
+                
+                <ScrollArea className="flex-1 min-h-0">
+                  <div className="md:pr-4">
+                    <OptimizedDomainList
+                      domains={sortedDomains}
+                      statuses={statuses}
+                      groups={groups}
+                      tags={tags}
+                      onToggleMonitoring={handleToggleDomainMonitoring}
+                      onTogglePin={handleTogglePin}
+                      showCheckbox={false}
+                      simpleMode={false}
+                    />
+                  </div>
+                </ScrollArea>
+              </>
             )}
           </TabsContent>
 
