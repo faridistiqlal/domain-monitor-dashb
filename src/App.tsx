@@ -167,10 +167,13 @@ function App() {
         console.log('[Tags] ✅ Loaded', loadedTags.length, 'tags from Firebase')
         
         // Load groups from Firebase (small critical data - always fresh)
+        console.log('[Groups] Loading groups from Firebase...')
         const loadedGroups = await loadGroups()
         trackFirebaseRead(1)
+        console.log('[Groups] Loaded from Firebase:', loadedGroups.length, 'groups')
+        console.log('[Groups] Data:', loadedGroups.map(g => ({ id: g.id, name: g.name })))
         setGroups(loadedGroups)
-        console.log('[Groups] ✅ Loaded', loadedGroups.length, 'groups from Firebase')
+        console.log('[Groups] ✅ Set to state:', loadedGroups.length, 'groups')
         
         // Try to load domains from cache for faster UI
         const cachedDomains = localStorage.getItem('domains-cache')
@@ -234,8 +237,12 @@ function App() {
               })
               
               // Reload groups from Firebase to get latest data
+              console.log('[Background Refresh] Reloading groups from Firebase...')
               const refreshedGroups = await loadGroups()
+              console.log('[Background Refresh] Loaded groups:', refreshedGroups.length, 'groups')
+              console.log('[Background Refresh] Groups data:', refreshedGroups.map(g => ({ id: g.id, name: g.name })))
               setGroups(refreshedGroups)
+              console.log('[Background Refresh] ✅ Groups set to state')
               
               console.log('[Background Refresh] ✅ Completed - Firebase pin state synced to all devices')
             } catch (error: any) {
@@ -1289,9 +1296,12 @@ function App() {
     }
     const updatedGroups = [...(groups || []), newGroup]
     console.log('[Create Group] Adding new group:', newGroup.name)
+    console.log('[Create Group] Total groups after add:', updatedGroups.length)
+    console.log('[Create Group] All groups:', updatedGroups.map(g => ({ id: g.id, name: g.name })))
     setGroups(updatedGroups)
     
     // ALWAYS sync to Firebase immediately (no cache for groups)
+    console.log('[Create Group] Syncing to Firebase...')
     syncGroupsToFirestore(updatedGroups)
       .then(() => console.log('[Create Group] ✅ Synced to Firebase'))
       .catch(err => console.error('[Create Group] ❌ Firebase error:', err))
