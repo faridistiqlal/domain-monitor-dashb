@@ -394,7 +394,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
             </div>
             
             {/* Action Buttons Row */}
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1">
               <div className="flex items-center gap-1 ml-auto">
                 <Button
                   variant="ghost"
