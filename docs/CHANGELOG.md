@@ -1,5 +1,24 @@
 # Changelog
 
+## Version 3.9.0 - Search in Assign Domains Dialog
+**Tanggal Rilis:** 12 Januari 2026
+
+### ✨ New Feature: Pencarian Domain
+
+**What's New:**
+- ✅ Search box di dialog atur grup domain
+- ✅ Real-time filtering saat mengetik
+- ✅ Counter update sesuai hasil filter
+- ✅ "Pilih Semua" bekerja dengan filtered domains
+- ✅ Empty state: "Tidak ada domain yang cocok"
+
+**Why:**
+- 🎯 Mengelola 300+ domain jadi lebih mudah
+- ⚡ Cepat menemukan domain spesifik
+- 👍 UX lebih baik untuk assignment
+
+---
+
 ## Version 3.8.9 - Tag Sync Bug Fix
 **Tanggal Rilis:** 12 Januari 2026
 

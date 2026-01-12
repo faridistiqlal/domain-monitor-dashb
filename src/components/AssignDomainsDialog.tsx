@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderOpen, Tag } from '@phosphor-icons/react'
+import { FolderOpen, Tag, MagnifyingGlass } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -37,6 +38,12 @@ export function AssignDomainsDialog({
 }: AssignDomainsDialogProps) {
   const [selectedDomains, setSelectedDomains] = useState<string[]>([])
   const [selectedGroup, setSelectedGroup] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Filter domains based on search
+  const filteredDomains = domains.filter(domain =>
+    domain.url.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const handleToggleDomain = (domainId: string) => {
     setSelectedDomains(prev =>
@@ -47,10 +54,10 @@ export function AssignDomainsDialog({
   }
 
   const handleSelectAll = () => {
-    if (selectedDomains.length === domains.length) {
+    if (selectedDomains.length === filteredDomains.length) {
       setSelectedDomains([])
     } else {
-      setSelectedDomains(domains.map(d => d.id))
+      setSelectedDomains(filteredDomains.map((d) => d.id))
     }
   }
 
@@ -64,6 +71,7 @@ export function AssignDomainsDialog({
     )
     setSelectedDomains([])
     setSelectedGroup('')
+    setSearchQuery('')
     onOpenChange(false)
   }
 
@@ -71,6 +79,7 @@ export function AssignDomainsDialog({
     if (!newOpen) {
       setSelectedDomains([])
       setSelectedGroup('')
+      setSearchQuery('')
     }
     onOpenChange(newOpen)
   }
@@ -86,8 +95,22 @@ export function AssignDomainsDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label>Cari Domain</Label>
+            <div className="relative">
+              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Cari domain..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Pilih Domain ({selectedDomains.length}/{domains.length})</Label>
+              <Label>Pilih Domain ({selectedDomains.length}/{filteredDomains.length})</Label>
               <Button
                 type="button"
                 variant="ghost"
@@ -95,29 +118,35 @@ export function AssignDomainsDialog({
                 onClick={handleSelectAll}
                 className="h-7 text-xs"
               >
-                {selectedDomains.length === domains.length ? 'Batal Semua' : 'Pilih Semua'}
+                {selectedDomains.length === filteredDomains.length && filteredDomains.length > 0 ? 'Batal Semua' : 'Pilih Semua'}
               </Button>
             </div>
             <ScrollArea className="h-[200px] border rounded-md p-3">
               <div className="space-y-2">
-                {domains.map(domain => (
-                  <div key={domain.id} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`domain-${domain.id}`}
-                      checked={selectedDomains.includes(domain.id)}
-                      onCheckedChange={() => handleToggleDomain(domain.id)}
-                    />
-                    <label
-                      htmlFor={`domain-${domain.id}`}
-                      className="text-xs flex-1 cursor-pointer font-mono"
-                    >
-                      {domain.url}
-                    </label>
-                    {domain.groupId && (
-                      <Tag size={12} className="text-muted-foreground" />
-                    )}
+                {filteredDomains.length === 0 ? (
+                  <div className="text-sm text-muted-foreground text-center py-4">
+                    {searchQuery ? 'Tidak ada domain yang cocok' : 'Tidak ada domain'}
                   </div>
-                ))}
+                ) : (
+                  filteredDomains.map(domain => (
+                    <div key={domain.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`domain-${domain.id}`}
+                        checked={selectedDomains.includes(domain.id)}
+                        onCheckedChange={() => handleToggleDomain(domain.id)}
+                      />
+                      <label
+                        htmlFor={`domain-${domain.id}`}
+                        className="text-xs flex-1 cursor-pointer font-mono"
+                      >
+                        {domain.url}
+                      </label>
+                      {domain.groupId && (
+                        <Tag size={12} className="text-muted-foreground" />
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </ScrollArea>
           </div>
