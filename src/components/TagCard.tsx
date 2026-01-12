@@ -1,18 +1,13 @@
 import { useState } from 'react'
-import { Pencil, Trash, Tag as TagIcon, CaretRight, Globe } from '@phosphor-icons/react'
+import { DotsThree, Trash, Tag as TagIcon, CaretRight, Globe, PencilSimple } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Dialog,
   DialogContent,
@@ -32,9 +27,15 @@ interface TagCardProps {
 
 export function TagCard({ tag, domainCount, domains, onEdit, onDelete }: TagCardProps) {
   const [showDomainsDialog, setShowDomainsDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   
   // Filter domains that have this tag
   const taggedDomains = domains.filter(d => d.tags?.includes(tag.id))
+  
+  const handleDelete = () => {
+    setIsDeleting(true)
+    onDelete?.(tag.id)
+  }
   
   return (
     <>
@@ -61,52 +62,37 @@ export function TagCard({ tag, domainCount, domains, onEdit, onDelete }: TagCard
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <DotsThree size={16} weight="bold" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               {onEdit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEdit(tag)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Pencil size={14} />
-                </Button>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(tag)
+                }}>
+                  <PencilSimple size={14} className="mr-2" />
+                  Edit Tag
+                </DropdownMenuItem>
               )}
               {onDelete && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash size={14} />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Hapus Tag</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Yakin ingin menghapus tag "{tag.name}"? Tag akan dihapus dari {domainCount} domain.
-                        Aksi ini tidak dapat dibatalkan.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Batal</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => onDelete(tag.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Hapus
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDelete()
+                  }}
+                  disabled={isDeleting}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash size={14} className="mr-2" />
+                  Hapus Tag
+                </DropdownMenuItem>
               )}
-            </div>
-            <CaretRight size={18} className="text-muted-foreground/50" weight="bold" />
-          </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </Card>
 

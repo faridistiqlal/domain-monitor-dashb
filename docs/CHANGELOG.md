@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 3.9.2 - Dropdown Menu for Tag Cards
+**Tanggal Rilis:** 12 Januari 2026
+
+### 🎨 UI Improvement: Dropdown Menu di Tag Card
+
+**What's Changed:**
+- ✅ Tombol Edit dan Hapus di TagCard sekarang dalam dropdown menu (...)
+- ✅ Konsisten dengan UI GroupCard dan PinnedDomainCard
+- ✅ Menghapus AlertDialog, langsung hapus dari dropdown
+- ✅ Lebih rapi dan efisien
+
+**Why:**
+- 🎯 Konsistensi UI pattern di semua card types
+- 👍 UX lebih streamlined
+
+---
+
 ## Version 3.9.1 - UI Consistency for Pinned Cards
 **Tanggal Rilis:** 12 Januari 2026
 
