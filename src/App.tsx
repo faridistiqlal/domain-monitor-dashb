@@ -1371,20 +1371,34 @@ function App() {
       id: `tag-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: Date.now(),
     }
-    setTags(current => [...(current || []), newTag])
+    const updatedTags = [...(tags || []), newTag]
+    console.log('[Create Tag] Adding new tag:', newTag.name, '- Total tags:', updatedTags.length)
+    setTags(updatedTags)
+    
+    // Immediate save to localStorage (don't wait for useEffect)
+    localStorage.setItem('domain-tags', JSON.stringify(updatedTags))
+    localStorage.setItem('tags-cache', JSON.stringify(updatedTags))
+    console.log('[Create Tag] ✅ Immediately saved to localStorage')
+    
     toast.success('Tag berhasil dibuat')
   }
 
   const handleEditTag = (tagData: Omit<DomainTag, 'id' | 'createdAt'>) => {
     if (!editingTag) return
     
-    setTags(current =>
-      (current || []).map(t =>
-        t.id === editingTag.id
-          ? { ...t, ...tagData }
-          : t
-      )
+    const updatedTags = (tags || []).map(t =>
+      t.id === editingTag.id
+        ? { ...t, ...tagData }
+        : t
     )
+    console.log('[Edit Tag] Updating tag:', editingTag.name, '- Total tags:', updatedTags.length)
+    setTags(updatedTags)
+    
+    // Immediate save to localStorage
+    localStorage.setItem('domain-tags', JSON.stringify(updatedTags))
+    localStorage.setItem('tags-cache', JSON.stringify(updatedTags))
+    console.log('[Edit Tag] ✅ Immediately saved to localStorage')
+    
     toast.success('Tag berhasil diperbarui')
     setEditingTag(null)
   }
@@ -1395,7 +1409,15 @@ function App() {
       return
     }
 
-    setTags(current => (current || []).filter(t => t.id !== tagId))
+    const updatedTags = (tags || []).filter(t => t.id !== tagId)
+    console.log('[Delete Tag] Deleting tag:', tagId, '- Remaining tags:', updatedTags.length)
+    setTags(updatedTags)
+    
+    // Immediate save to localStorage
+    localStorage.setItem('domain-tags', JSON.stringify(updatedTags))
+    localStorage.setItem('tags-cache', JSON.stringify(updatedTags))
+    console.log('[Delete Tag] ✅ Immediately saved to localStorage')
+    
     setDomains(current =>
       (current || []).map(d => ({
         ...d,

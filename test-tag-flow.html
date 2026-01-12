@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Tag Flow</title>
+</head>
+<body>
+  <h1>Test Tag LocalStorage Flow</h1>
+  <button onclick="addTag()">Add Tag</button>
+  <button onclick="checkStorage()">Check Storage</button>
+  <button onclick="clearStorage()">Clear Storage</button>
+  <button onclick="location.reload()">Refresh</button>
+  <pre id="output"></pre>
+
+  <script>
+    function log(msg) {
+      document.getElementById('output').textContent += msg + '\n';
+    }
+
+    function addTag() {
+      const tags = JSON.parse(localStorage.getItem('tags-cache') || '[]');
+      const newTag = {
+        id: 'tag-' + Date.now(),
+        name: 'Test Tag ' + new Date().toLocaleTimeString(),
+        color: 'red',
+        createdAt: Date.now()
+      };
+      
+      tags.push(newTag);
+      
+      // Save to both keys
+      localStorage.setItem('domain-tags', JSON.stringify(tags));
+      localStorage.setItem('tags-cache', JSON.stringify(tags));
+      
+      log('✅ Added tag: ' + newTag.name);
+      log('✅ Saved to both domain-tags and tags-cache');
+      checkStorage();
+    }
+
+    function checkStorage() {
+      const domainTags = localStorage.getItem('domain-tags');
+      const tagsCache = localStorage.getItem('tags-cache');
+      
+      log('\n--- Storage Check ---');
+      log('domain-tags: ' + (domainTags ? JSON.parse(domainTags).length + ' tags' : 'NULL'));
+      log('tags-cache: ' + (tagsCache ? JSON.parse(tagsCache).length + ' tags' : 'NULL'));
+      
+      if (domainTags) {
+        log('domain-tags content: ' + JSON.parse(domainTags).map(t => t.name).join(', '));
+      }
+      if (tagsCache) {
+        log('tags-cache content: ' + JSON.parse(tagsCache).map(t => t.name).join(', '));
+      }
+    }
+
+    function clearStorage() {
+      localStorage.removeItem('domain-tags');
+      localStorage.removeItem('tags-cache');
+      log('🗑️ Cleared storage');
+      checkStorage();
+    }
+
+    // On page load
+    window.onload = () => {
+      log('🔄 Page loaded');
+      checkStorage();
+    };
+  </script>
+</body>
+</html>
