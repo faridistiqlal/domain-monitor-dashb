@@ -392,27 +392,6 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 </span>
               )}
             </div>
-
-            {/* Last Checked Timestamp */}
-            {status.lastChecked && (
-              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
-                <Clock size={12} weight="regular" />
-                <span>
-                  Last checked: {(() => {
-                    const now = Date.now()
-                    const diff = now - status.lastChecked
-                    const minutes = Math.floor(diff / 60000)
-                    const hours = Math.floor(diff / 3600000)
-                    const days = Math.floor(diff / 86400000)
-
-                    if (minutes < 1) return 'just now'
-                    if (minutes < 60) return `${minutes}m ago`
-                    if (hours < 24) return `${hours}h ago`
-                    return `${days}d ago`
-                  })()}
-                </span>
-              </div>
-            )}
             
             {/* Action Buttons Row */}
             <div className="flex items-center gap-1 mt-2">

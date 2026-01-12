@@ -2105,120 +2105,70 @@ function App() {
 
             {!domains || domains.length === 0 ? (
               <EmptyState />
-            ) : (
-              <>
-                {/* Sticky Bar - Always show if domains exist */}
-                <div className="sticky top-0 z-10 bg-card border-b mb-4 shadow-sm">
-                  <div className="flex items-center justify-between gap-4 py-2.5 px-4">
-                    {/* Left: Check All Button */}
-                    <Button
-                      onClick={handleManualRefresh}
-                      disabled={isRefreshing}
-                      size="sm"
-                      className="shrink-0"
-                    >
-                      <ArrowClockwise 
-                        size={16} 
-                        className={isRefreshing ? 'animate-spin' : ''} 
-                      />
-                      {isRefreshing ? 'Checking...' : `Check All (${totalCount})`}
-                    </Button>
-
-                    {/* Center: Live Counters - Always show */}
-                    <div className="flex items-center gap-2 flex-wrap justify-center">
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span className="text-xs font-medium">{onlineCount}</span>
-                        {hasChecked && <span className="text-xs hidden md:inline">({onlinePercentage}%)</span>}
-                      </div>
-                      {dnsOnlyCount > 0 && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                          <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                          <span className="text-xs font-medium">{dnsOnlyCount}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
-                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                        <span className="text-xs font-medium">{offlineCount}</span>
-                      </div>
-                    </div>
-
-                    {/* Right: Last Sync Time */}
-                    {hasChecked && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-                        <Clock size={14} />
-                        <span className="hidden md:inline">Just now</span>
-                      </div>
+            ) : !hasChecked && !autoRefreshEnabled ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center space-y-6 max-w-md mx-auto">
+                  <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
+                    <ArrowClockwise size={48} weight="duotone" className="text-primary" />
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="text-xl font-semibold text-foreground">Mode Manual Check</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Klik tombol <strong className="text-foreground">Check</strong> di atas untuk memeriksa status semua domain.<br />
+                      Setelah selesai, Anda dapat langsung export hasilnya.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : filteredDomains.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {searchQuery 
+                      ? `Tidak ada domain yang cocok dengan "${searchQuery}"` 
+                      : viewMode === 'group-detail'
+                        ? 'Tidak ada domain dalam grup ini'
+                        : 'Tidak ada domain dengan status ini'}
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    {searchQuery && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSearchQuery('')}
+                        className="text-xs"
+                      >
+                        Hapus Pencarian
+                      </Button>
+                    )}
+                    {filter !== 'all' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFilter('all')}
+                        className="text-xs"
+                      >
+                        Tampilkan Semua
+                      </Button>
                     )}
                   </div>
                 </div>
-
-                {!hasChecked && !autoRefreshEnabled ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center space-y-6 max-w-md mx-auto">
-                      <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
-                        <ArrowClockwise size={48} weight="duotone" className="text-primary" />
-                      </div>
-                      <div className="space-y-3">
-                        <h3 className="text-xl font-semibold text-foreground">Mode Manual Check</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          Klik tombol <strong className="text-foreground">Check</strong> di atas untuk memeriksa status semua domain.<br />
-                          Setelah selesai, Anda dapat langsung export hasilnya.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : filteredDomains.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        {searchQuery 
-                          ? `Tidak ada domain yang cocok dengan "${searchQuery}"` 
-                          : viewMode === 'group-detail'
-                            ? 'Tidak ada domain dalam grup ini'
-                            : 'Tidak ada domain dengan status ini'}
-                      </p>
-                      <div className="flex gap-2 justify-center">
-                        {searchQuery && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSearchQuery('')}
-                            className="text-xs"
-                          >
-                            Hapus Pencarian
-                          </Button>
-                        )}
-                        {filter !== 'all' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setFilter('all')}
-                            className="text-xs"
-                          >
-                            Tampilkan Semua
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <ScrollArea className="flex-1 min-h-0">
-                    <div className="md:pr-4">
-                      <OptimizedDomainList
-                        domains={sortedDomains}
-                        statuses={statuses}
-                        groups={groups}
-                        tags={tags}
-                        onToggleMonitoring={handleToggleDomainMonitoring}
-                        onTogglePin={handleTogglePin}
-                        showCheckbox={false}
-                        simpleMode={false}
-                      />
-                    </div>
-                  </ScrollArea>
-                )}
-              </>
+              </div>
+            ) : (
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="md:pr-4">
+                  <OptimizedDomainList
+                    domains={sortedDomains}
+                    statuses={statuses}
+                    groups={groups}
+                    tags={tags}
+                    onToggleMonitoring={handleToggleDomainMonitoring}
+                    onTogglePin={handleTogglePin}
+                    showCheckbox={false}
+                    simpleMode={false}
+                  />
+                </div>
+              </ScrollArea>
             )}
           </TabsContent>
 

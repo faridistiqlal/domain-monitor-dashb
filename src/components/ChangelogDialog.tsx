@@ -49,12 +49,71 @@ export function ChangelogDialog({ triggerText, showIcon = true }: ChangelogDialo
         <ScrollArea className="px-6 pb-6 max-h-[calc(85vh-120px)]">
           <div className="space-y-6 pr-4">
             
+            {/* Version 3.9.4 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.4</h3>
+                  <p className="text-xs text-muted-foreground">Current Release • 12 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500">UI Polish</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Palette size={16} className="text-amber-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Icon Corrections & Layout</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Folder Icon for Groups:</strong> Groups now use Folder icon instead of Tag</li>
+                    <li><strong>Tag Icon for Tags:</strong> Tags correctly use Tag icon</li>
+                    <li><strong>Inline Layout:</strong> Groups and tags displayed on same line as URL</li>
+                    <li><strong>Visual Clarity:</strong> Easier to distinguish between groups and tags</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Version 3.9.3 */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.3</h3>
+                  <p className="text-xs text-muted-foreground">12 Januari 2026</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="text-xs bg-gradient-to-r from-red-500 to-orange-500">Critical Fix</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={16} className="text-red-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Groups Persistence Fix</h4>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+                    <li><strong>Firebase First:</strong> Groups now always load from Firebase (not cache)</li>
+                    <li><strong>Consistent Data:</strong> Domains in groups persist correctly after refresh</li>
+                    <li><strong>Monitoring Tab Fix:</strong> Groups now display correctly in monitoring tab</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Version 3.9.2 */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">Version 3.9.2</h3>
-                  <p className="text-xs text-muted-foreground">Current Release • 12 Januari 2026</p>
+                  <p className="text-xs text-muted-foreground">12 Januari 2026</p>
                 </div>
                 <div className="flex gap-2">
                   <Badge className="text-xs bg-gradient-to-r from-purple-500 to-pink-500">UI Consistency</Badge>
