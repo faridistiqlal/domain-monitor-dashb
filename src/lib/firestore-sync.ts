@@ -304,19 +304,27 @@ export const getNotificationSettingsFromFirestore = async (): Promise<any | null
 }
 
 export const loadNotificationSettings = async (): Promise<any | null> => {
+  console.log('[loadNotificationSettings] Starting...')
   try {
     const firebaseSettings = await getNotificationSettingsFromFirestore()
+    console.log('[loadNotificationSettings] Firebase result:', firebaseSettings)
     if (firebaseSettings) {
       // Sync to localStorage for offline access
       localStorage.setItem('notification-settings', JSON.stringify(firebaseSettings))
       console.log('✅ Loaded notification settings from Firebase')
       return firebaseSettings
+    } else {
+      console.log('[loadNotificationSettings] No settings in Firebase')
     }
   } catch (error) {
-    console.log('Firebase not available, using localStorage')
+    console.error('[loadNotificationSettings] Firebase error:', error)
   }
   
   // Fallback to localStorage
+  console.log('[loadNotificationSettings] Checking localStorage...')
   const saved = localStorage.getItem('notification-settings')
-  return saved ? JSON.parse(saved) : null
+  console.log('[loadNotificationSettings] localStorage value:', saved)
+  const result = saved ? JSON.parse(saved) : null
+  console.log('[loadNotificationSettings] Returning:', result)
+  return result
 }

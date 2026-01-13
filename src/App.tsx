@@ -296,11 +296,12 @@ function App() {
         // Load notification settings from Firebase
         console.log('[Notification Settings] Loading from Firebase...')
         const loadedNotificationSettings = await loadNotificationSettings()
+        console.log('[Notification Settings] Result:', loadedNotificationSettings)
         if (loadedNotificationSettings) {
           setNotificationSettings(loadedNotificationSettings)
-          console.log('[Notification Settings] ✅ Loaded from Firebase')
+          console.log('[Notification Settings] ✅ Loaded from Firebase:', loadedNotificationSettings)
         } else {
-          console.log('[Notification Settings] Using default settings')
+          console.log('[Notification Settings] ⚠️ No settings found, using default')
         }
       } catch (error) {
         console.error('Error loading data:', error)
@@ -469,11 +470,14 @@ function App() {
   }
 
   const handleNotificationSettingsSave = async (settings: NotificationSettings) => {
+    console.log('[Save Notification Settings] Saving:', settings)
     setNotificationSettings(settings)
     localStorage.setItem('notification-settings', JSON.stringify(settings))
+    console.log('[Save Notification Settings] ✅ Saved to localStorage')
     
     // Sync to Firebase
     const synced = await syncNotificationSettingsToFirestore(settings)
+    console.log('[Save Notification Settings] Firebase sync result:', synced)
     if (synced) {
       toast.success('Notification settings saved successfully')
     } else {
