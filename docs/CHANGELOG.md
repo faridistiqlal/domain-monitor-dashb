@@ -1,5 +1,48 @@
 # Changelog
 
+## Version 3.9.6 - Notification Settings Firebase Sync
+**Tanggal Rilis:** 13 Januari 2026
+
+### ✨ New Features: Cloud-Synced Notification Settings
+
+**Problem Solved:**
+- ❌ Notification settings (webhook URL, rules) hanya tersimpan di localStorage
+- ❌ Settings hilang saat clear cache atau buka di device/browser lain
+- ❌ Tidak sync antar device
+
+**Solution Implemented:**
+
+1. **Firebase Sync for Notification Settings:**
+   - ✅ Webhook URL tersimpan di Firebase (collection: `users/{userId}`)
+   - ✅ Notification rules (notifyOnDown, notifyOnRecovery, notifyOnSlow) sync ke cloud
+   - ✅ Cooldown settings dan slow threshold juga tersimpan
+   - ✅ Auto-load dari Firebase saat app init
+
+2. **New Functions in firestore-sync.ts:**
+   ```typescript
+   - syncNotificationSettingsToFirestore() // Save settings to Firebase
+   - getNotificationSettingsFromFirestore() // Get settings from Firebase
+   - loadNotificationSettings() // Load with Firebase priority, localStorage fallback
+   ```
+
+3. **Enhanced User Experience:**
+   - ✅ Settings sync instantly ke Firebase setelah save
+   - ✅ Toast notification: "Notification settings saved successfully"
+   - ✅ Warning toast jika sync gagal: "Settings saved locally, but failed to sync to Firebase"
+   - ✅ Settings tetap tersedia di semua device yang login
+
+4. **Data Flow:**
+   ```
+   Save Settings → localStorage + Firebase
+   Load Settings → Firebase (priority) → localStorage (fallback)
+   ```
+
+**Note:**
+- Per-domain `notificationsEnabled` sudah sync ke Firebase sejak awal (via domains collection)
+- Update ini melengkapi sync untuk global notification settings (webhook + rules)
+
+---
+
 ## Version 3.9.5 - Groups Persistence Final Fix
 **Tanggal Rilis:** 12 Januari 2026
 

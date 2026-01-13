@@ -6,7 +6,7 @@ Real-time monitoring dashboard untuk track availability status dari multiple sub
 📱 **Mobile Ready:** Optimized untuk smartphone & tablet  
 📚 **Dokumentasi:** [docs/](./docs/)  
 🔥 **Firebase:** kendal-monitor project  
-🔧 **Current Version:** 3.9.2  
+🔧 **Current Version:** 3.9.6  
 🤖 **24/7 Monitoring:** GitHub Actions (auto-runs every 20 minutes)
 
 ---
@@ -49,7 +49,7 @@ Real-time monitoring dashboard untuk track availability status dari multiple sub
 **Dokumentasi Lengkap:**
 - [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md) - Current state & metrics
 - [docs/CHECKPOINT.md](docs/CHECKPOINT.md) - Complete implementation history
-- [docs/CHANGELOG.md](docs/CHANGELOG.md) - Version history (NOW: v3.7.3)
+- [docs/CHANGELOG.md](docs/CHANGELOG.md) - Version history (NOW: v3.9.6)
 - [docs/GUIDES.md](docs/GUIDES.md) - User guide
 - [docs/FIREBASE-QUERY-GUIDE.md](docs/FIREBASE-QUERY-GUIDE.md) - Query tools
 
@@ -98,12 +98,14 @@ npm run preview
 - ✅ **Compact UI**: Space-optimized layouts
 - ✅ **Full-width Charts**: UptimeBar dengan flex-1 distribution
 
-### **Notifications (v2.2.x)**
+### **Notifications (v2.2.x - Enhanced v3.9.6)**
 - ✅ **Slack Webhook**: Real-time alerts ke Slack channel
+- ✅ **Firebase Sync**: Webhook settings tersimpan di cloud (v3.9.6)
 - ✅ **Per-Domain Control**: Toggle notifikasi per domain
 - ✅ **Smart Alerts**: Down, Recovery, Slow response
 - ✅ **Cooldown System**: Anti-spam 5 menit
 - ✅ **Notification History**: View past alerts
+- ✅ **Cross-Device Sync**: Settings sync otomatis antar device (v3.9.6)
 
 ### **Data Management**
 - ✅ **Group Management**: Create, edit, assign domains ke groups

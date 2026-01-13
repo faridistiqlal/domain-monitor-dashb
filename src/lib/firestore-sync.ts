@@ -267,3 +267,56 @@ export const loadPassword = async (): Promise<string> => {
   // Fallback to localStorage
   return localStorage.getItem('app-password') || 'admin123'
 }
+
+// === NOTIFICATION SETTINGS ===
+
+export const syncNotificationSettingsToFirestore = async (settings: any) => {
+  const userId = getUserId()
+  const userDocRef = doc(db, COLLECTIONS.USERS, userId)
+  
+  try {
+    await setDoc(userDocRef, {
+      notificationSettings: settings,
+      updatedAt: Date.now()
+    }, { merge: true })
+    console.log('✅ Notification settings synced to Firebase')
+    return true
+  } catch (error) {
+    console.error('❌ Error syncing notification settings:', error)
+    return false
+  }
+}
+
+export const getNotificationSettingsFromFirestore = async (): Promise<any | null> => {
+  const userId = getUserId()
+  const userDocRef = doc(db, COLLECTIONS.USERS, userId)
+  
+  try {
+    const docSnap = await getDoc(userDocRef)
+    if (docSnap.exists() && docSnap.data().notificationSettings) {
+      return docSnap.data().notificationSettings
+    }
+    return null
+  } catch (error) {
+    console.error('❌ Error getting notification settings:', error)
+    return null
+  }
+}
+
+export const loadNotificationSettings = async (): Promise<any | null> => {
+  try {
+    const firebaseSettings = await getNotificationSettingsFromFirestore()
+    if (firebaseSettings) {
+      // Sync to localStorage for offline access
+      localStorage.setItem('notification-settings', JSON.stringify(firebaseSettings))
+      console.log('✅ Loaded notification settings from Firebase')
+      return firebaseSettings
+    }
+  } catch (error) {
+    console.log('Firebase not available, using localStorage')
+  }
+  
+  // Fallback to localStorage
+  const saved = localStorage.getItem('notification-settings')
+  return saved ? JSON.parse(saved) : null
+}

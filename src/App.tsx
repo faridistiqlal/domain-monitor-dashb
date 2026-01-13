@@ -47,7 +47,9 @@ import {
   syncGroupsToFirestore,
   syncTagsToFirestore,
   loadPassword,
-  syncPasswordToFirestore
+  syncPasswordToFirestore,
+  loadNotificationSettings,
+  syncNotificationSettingsToFirestore
 } from '@/lib/firestore-sync'
 import { 
   updateDailyStats, 
@@ -138,17 +140,14 @@ function App() {
   }
 
   // Notification States
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() => {
-    const saved = localStorage.getItem('notification-settings')
-    return saved ? JSON.parse(saved) : {
-      enabled: false,
-      webhookUrl: '',
-      notifyOnDown: true,
-      notifyOnRecovery: true,
-      notifyOnSlow: false,
-      slowThreshold: 5,
-      cooldownMinutes: 5
-    }
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    enabled: false,
+    webhookUrl: '',
+    notifyOnDown: true,
+    notifyOnRecovery: true,
+    notifyOnSlow: false,
+    slowThreshold: 5,
+    cooldownMinutes: 5
   })
   const [notificationService] = useState(() => new NotificationService())
   
@@ -293,6 +292,16 @@ function App() {
         // User must enable auto-refresh to get Firebase data persistence
         
         // Password already synced to localStorage by loadPassword()
+        
+        // Load notification settings from Firebase
+        console.log('[Notification Settings] Loading from Firebase...')
+        const loadedNotificationSettings = await loadNotificationSettings()
+        if (loadedNotificationSettings) {
+          setNotificationSettings(loadedNotificationSettings)
+          console.log('[Notification Settings] ✅ Loaded from Firebase')
+        } else {
+          console.log('[Notification Settings] Using default settings')
+        }
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -459,10 +468,17 @@ function App() {
     return true
   }
 
-  const handleNotificationSettingsSave = (settings: NotificationSettings) => {
+  const handleNotificationSettingsSave = async (settings: NotificationSettings) => {
     setNotificationSettings(settings)
     localStorage.setItem('notification-settings', JSON.stringify(settings))
-    toast.success('Notification settings saved successfully')
+    
+    // Sync to Firebase
+    const synced = await syncNotificationSettingsToFirestore(settings)
+    if (synced) {
+      toast.success('Notification settings saved successfully')
+    } else {
+      toast.warning('Settings saved locally, but failed to sync to Firebase')
+    }
   }
 
   const handleTestNotification = async () => {

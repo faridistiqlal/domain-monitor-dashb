@@ -49,11 +49,13 @@
    - Set cooldown: 5 minutes (default)
    - Click **"Send Test"** untuk test webhook
    - Click **"Save Settings"**
+   - ✅ Settings **otomatis tersimpan di Firebase** (sync antar device)
 
 3. **Enable Per-Domain:**
    - Tab "Kelola Data" → Click icon **Pencil (✏️)** di domain
    - Toggle **"Enable Notifications"** → ON (warna biru)
    - Click "Simpan"
+   - ✅ Settings domain **otomatis sync ke Firebase**
    - Icon **Bell 🔔** (biru) = notifikasi aktif
    - Icon **BellSlash 🔕** (abu) = notifikasi nonaktif
 
@@ -71,6 +73,9 @@ Setiap notifikasi Slack include:
 - Dashboard link
 
 ### Tips:
+- ✅ **Semua settings tersimpan di Firebase** - aman dan sync antar device
+- ✅ Webhook URL dan notification rules sync otomatis ke cloud
+- ✅ Per-domain notification settings juga tersimpan di Firebase
 - Default semua domain notification OFF - harus manual enable
 - Cooldown mencegah spam untuk domain yang sama
 - Notifikasi hanya kirim saat **perubahan status**, bukan setiap check
