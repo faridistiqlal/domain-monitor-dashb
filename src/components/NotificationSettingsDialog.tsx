@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,12 @@ export function NotificationSettingsDialog({
 }: NotificationSettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<NotificationSettings>(settings);
   const [testSent, setTestSent] = useState(false);
+
+  // Sync localSettings with settings prop when it changes (e.g., after Firebase load)
+  useEffect(() => {
+    console.log('[NotificationSettingsDialog] Props settings changed:', settings)
+    setLocalSettings(settings);
+  }, [settings]);
 
   const handleSave = () => {
     onSave(localSettings);
