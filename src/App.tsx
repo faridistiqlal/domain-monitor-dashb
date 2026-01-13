@@ -396,9 +396,17 @@ function App() {
 
   // Authentication Handlers
   const handleLogin = async (password: string) => {
-    const storedPassword = localStorage.getItem('app-password') || 'admin123'
+    // Load password from Firebase first (for multi-device consistency)
+    let correctPassword = 'admin123' // default fallback
+    try {
+      const firebasePassword = await loadPassword()
+      correctPassword = firebasePassword
+      console.log('[Login] Using password from Firebase/localStorage')
+    } catch (error) {
+      console.warn('[Login] Could not load password, using default')
+    }
     
-    if (password === storedPassword) {
+    if (password === correctPassword) {
       setIsAuthenticated(true)
       localStorage.setItem('app-authenticated', 'true')
       localStorage.setItem('app-last-activity', Date.now().toString())
@@ -433,9 +441,16 @@ function App() {
   }
 
   const handlePasswordChange = async (oldPassword: string, newPassword: string): Promise<boolean> => {
-    const storedPassword = localStorage.getItem('app-password') || 'admin123'
+    // Load current password from Firebase first
+    let currentPassword = 'admin123'
+    try {
+      const firebasePassword = await loadPassword()
+      currentPassword = firebasePassword
+    } catch (error) {
+      console.warn('[Change Password] Could not load password from Firebase')
+    }
     
-    if (oldPassword !== storedPassword) {
+    if (oldPassword !== currentPassword) {
       return false
     }
     
