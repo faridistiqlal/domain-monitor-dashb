@@ -292,17 +292,6 @@ function App() {
         // User must enable auto-refresh to get Firebase data persistence
         
         // Password already synced to localStorage by loadPassword()
-        
-        // Load notification settings from Firebase
-        console.log('[Notification Settings] Loading from Firebase...')
-        const loadedNotificationSettings = await loadNotificationSettings()
-        console.log('[Notification Settings] Result:', loadedNotificationSettings)
-        if (loadedNotificationSettings) {
-          setNotificationSettings(loadedNotificationSettings)
-          console.log('[Notification Settings] ✅ Loaded from Firebase:', loadedNotificationSettings)
-        } else {
-          console.log('[Notification Settings] ⚠️ No settings found, using default')
-        }
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -354,6 +343,30 @@ function App() {
       return () => clearTimeout(timeoutId)
     }
   }, [tags, isLoadingData])
+
+  // Load notification settings from Firebase (separate useEffect for reliability)
+  useEffect(() => {
+    const loadNotificationSettingsFromFirebase = async () => {
+      console.log('[Notification Settings] Starting separate load...')
+      try {
+        const loadedNotificationSettings = await loadNotificationSettings()
+        console.log('[Notification Settings] Result:', loadedNotificationSettings)
+        if (loadedNotificationSettings) {
+          setNotificationSettings(loadedNotificationSettings)
+          console.log('[Notification Settings] ✅ Loaded from Firebase:', loadedNotificationSettings)
+        } else {
+          console.log('[Notification Settings] ⚠️ No settings found, using default')
+        }
+      } catch (error) {
+        console.error('[Notification Settings] ❌ Error loading:', error)
+      }
+    }
+    
+    // Load after initial data loading is done
+    if (!isLoadingData) {
+      loadNotificationSettingsFromFirebase()
+    }
+  }, [isLoadingData])
 
   // DEBUG: Monitor notification settings changes
   useEffect(() => {
