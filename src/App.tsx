@@ -91,7 +91,7 @@ function App() {
   const [hasChecked, setHasChecked] = useState(false)
   const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null)
   const [individualMonitorIntervals, setIndividualMonitorIntervals] = useState<Record<string, NodeJS.Timeout>>({})
-  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'pinned'>('domains')
+  const [activeTab, setActiveTab] = useState<'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'pinned'>('pinned')
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
@@ -218,10 +218,8 @@ function App() {
           // If quota exceeded, show user message and use empty data temporarily
           if (error?.code === 'resource-exhausted') {
             alert('Firebase quota exceeded. Refresh halaman nanti untuk load data terbaru.')
-            // Set empty arrays as fallback
+            // Only set empty domains - groups and tags were already loaded successfully
             setDomains([])
-            setGroups([])
-            setTags([])
           } else {
             throw error // Re-throw non-quota errors
           }
@@ -397,7 +395,7 @@ function App() {
   }, [isAuthenticated, individualMonitorIntervals])
 
   // Authentication Handlers
-  const handleLogin = (password: string) => {
+  const handleLogin = async (password: string) => {
     const storedPassword = localStorage.getItem('app-password') || 'admin123'
     
     if (password === storedPassword) {
@@ -407,6 +405,20 @@ function App() {
       setLastActivityTime(Date.now())
       setShowLoginDialog(false)
       toast.success('Login berhasil! Selamat datang')
+      
+      // Re-load groups and tags after login to ensure fresh data
+      try {
+        console.log('[Login] Re-loading groups and tags from Firebase...')
+        const [freshGroups, freshTags] = await Promise.all([
+          loadGroups(),
+          loadTags()
+        ])
+        setGroups(freshGroups)
+        setTags(freshTags)
+        console.log('[Login] ✅ Reloaded:', freshGroups.length, 'groups and', freshTags.length, 'tags')
+      } catch (error) {
+        console.error('[Login] Error reloading groups/tags:', error)
+      }
     } else {
       toast.error('Password salah! Silakan coba lagi')
     }
@@ -1735,13 +1747,13 @@ function App() {
           }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
           <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-8 md:mb-6 gap-1 md:gap-0 h-10 p-1 mt-2">
-            <TabsTrigger value="domains" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
-              <Monitor size={18} className="md:size-4" />
-              <span className="hidden md:inline">Monitoring</span>
-            </TabsTrigger>
             <TabsTrigger value="pinned" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
               <MapPin size={18} weight="fill" className="md:size-4" />
               <span className="hidden md:inline">Pin</span>
+            </TabsTrigger>
+            <TabsTrigger value="domains" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+              <Monitor size={18} className="md:size-4" />
+              <span className="hidden md:inline">Monitoring</span>
             </TabsTrigger>
             <TabsTrigger value="statistics" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
               <ChartBar size={18} className="md:size-4" />

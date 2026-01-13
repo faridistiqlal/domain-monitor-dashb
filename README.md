@@ -145,7 +145,8 @@ npm run preview
 
 ### **Mobile Features (v3.5.0+)** 📱
 - ✅ **Hamburger Menu** - Sheet drawer navigation dengan touch-friendly spacing
-- ✅ **Responsive Tabs** - 3-column mobile grid layout (Monitoring, Pin, Statistik / Grup, Tag, Kelola)
+- ✅ **Responsive Tabs** - 3-column mobile grid layout (Pin, Monitoring, Statistik / Grup, Tag, Kelola)
+- ✅ **Optimized Load** - Default tab Pin untuk faster initial load (hanya pinned domains)
 - ✅ **Touch Targets** - 40px minimum untuk iOS/Android compliance
 - ✅ **Dropdown Actions** - Three-dot menu untuk Copy, Open, Pin, Stats, Delete
 - ✅ **Compact UI** - Optimized space usage, minimalist design

@@ -192,31 +192,29 @@ export const loadDomains = async (): Promise<Domain[]> => {
 export const loadGroups = async (): Promise<DomainGroup[]> => {
   try {
     const firebaseGroups = await getGroupsFromFirestore()
-    if (firebaseGroups.length > 0) {
-      return firebaseGroups
-    }
+    console.log('[loadGroups] Got from Firebase:', firebaseGroups.length, 'groups')
+    // Always return Firebase data (even empty array) - it's the source of truth
+    return firebaseGroups
   } catch (error) {
-    console.log('Firebase not available, using localStorage')
+    console.log('[loadGroups] Firebase error, using localStorage fallback:', error)
+    // Only fallback to localStorage if Firebase completely fails
+    const saved = localStorage.getItem('domain-groups')
+    return saved ? JSON.parse(saved) : []
   }
-  
-  // Fallback to localStorage
-  const saved = localStorage.getItem('domain-groups')
-  return saved ? JSON.parse(saved) : []
 }
 
 export const loadTags = async (): Promise<DomainTag[]> => {
   try {
     const firebaseTags = await getTagsFromFirestore()
-    if (firebaseTags.length > 0) {
-      return firebaseTags
-    }
+    console.log('[loadTags] Got from Firebase:', firebaseTags.length, 'tags')
+    // Always return Firebase data (even empty array) - it's the source of truth
+    return firebaseTags
   } catch (error) {
-    console.log('Firebase not available, using localStorage')
+    console.log('[loadTags] Firebase error, using localStorage fallback:', error)
+    // Only fallback to localStorage if Firebase completely fails
+    const saved = localStorage.getItem('domain-tags')
+    return saved ? JSON.parse(saved) : []
   }
-  
-  // Fallback to localStorage
-  const saved = localStorage.getItem('domain-tags')
-  return saved ? JSON.parse(saved) : []
 }
 
 // === USER SETTINGS (Password) ===
