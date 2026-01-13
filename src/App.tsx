@@ -782,10 +782,7 @@ function App() {
     const updatedDomains = [...(domains || []), newDomain]
     setDomains(updatedDomains)
     
-    // Immediately update localStorage to persist the new domain
-    localStorage.setItem('monitoring-domains', JSON.stringify(updatedDomains))
-    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
-    
+    // No localStorage cache - useEffect will auto-sync to Firebase after 2s
     toast.success(`Domain berhasil ditambahkan (Batch ${batch})`)
   }
 
@@ -798,9 +795,7 @@ function App() {
     const updatedDomains = (domains || []).filter(d => d.id !== id)
     setDomains(updatedDomains)
     
-    // Immediately update localStorage to persist the deletion
-    localStorage.setItem('monitoring-domains', JSON.stringify(updatedDomains))
-    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    // No localStorage cache - useEffect will auto-sync to Firebase after 2s
     
     setStatuses(current => {
       const newStatuses = { ...current }
@@ -827,9 +822,7 @@ function App() {
     
     setDomains(updatedDomains)
     
-    // Immediately update localStorage cache (prevent data loss on refresh)
-    localStorage.setItem('monitoring-domains', JSON.stringify(updatedDomains))
-    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
+    // No localStorage cache - useEffect will auto-sync to Firebase after 2s
     
     setStatuses(current => {
       const newStatuses = { ...current }
@@ -1317,12 +1310,7 @@ function App() {
     console.log('[Assign Domains] Updating', domainIds.length, 'domains to group:', groupId)
     setDomains(updatedDomains)
     
-    // Immediate save to cache AND Firebase
-    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
-    syncDomainsToFirestore(updatedDomains)
-      .then(() => console.log('[Assign Domains] ✅ Synced to Firebase'))
-      .catch(err => console.error('[Assign Domains] ❌ Firebase error:', err))
-    
+    // No localStorage cache - useEffect will auto-sync to Firebase after 2s
     toast.success('Domain berhasil diatur grupnya')
   }
 
@@ -1399,10 +1387,7 @@ function App() {
     console.log('[Assign Tags] Updating', domainIds.length, 'domains with', tagIds.length, 'tags')
     setDomains(updatedDomains)
     
-    // Immediate save to cache (don't wait for useEffect)
-    localStorage.setItem('domains-cache', JSON.stringify(updatedDomains))
-    console.log('[Assign Tags] ✅ Immediately saved to cache')
-    // useEffect will sync to Firebase after 2s
+    // No localStorage cache - useEffect will auto-sync to Firebase after 2s
     
     toast.success(`Tag berhasil ditambahkan ke ${domainIds.length} domain`)
   }
@@ -2492,8 +2477,8 @@ function App() {
                 </div>
               </div>
             ) : (
-              <ScrollArea className="flex-1 h-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20 md:pb-4 md:pr-4">
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20 md:pb-4 pr-4">
                   {domains.filter(d => d.pinned).map(domain => {
                     const domainStatus = statuses[domain.id] || { 
                       id: domain.id, 

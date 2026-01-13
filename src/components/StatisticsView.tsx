@@ -139,8 +139,8 @@ export function StatisticsView({
     Object.values(statuses).some(s => s.lastChecked !== undefined)
 
   return (
-    <ScrollArea className="h-[calc(100vh-240px)]">
-      <div className="space-y-4 pr-4">
+    <ScrollArea className="flex-1 min-h-0">
+      <div className="space-y-2 pr-4 pb-20 md:pb-4">
         {/* Tabs untuk Manual vs Firebase */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
           <TabsList className="grid w-full max-w-2xl grid-cols-3 h-auto p-1">
@@ -190,182 +190,123 @@ export function StatisticsView({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* 5 Compact Cards in a Row */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {/* Total Card */}
               <Card className="border-border">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Total Domain</CardTitle>
-                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <CardContent className="p-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1">
                       <Globe size={16} weight="duotone" className="text-primary" />
+                      <span className="text-xs text-muted-foreground">Total</span>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-foreground">{stats.total}</div>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                    <FolderOpen size={12} />
-                    <span>{stats.groupedDomains} dalam grup</span>
+                    <div className="text-2xl font-bold">{stats.total}</div>
+                    <p className="text-[10px] text-muted-foreground">{stats.groupedDomains} grup</p>
                   </div>
                 </CardContent>
               </Card>
 
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Online</CardTitle>
-                <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
-                  <CheckCircle size={16} weight="duotone" className="text-success" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold" style={{ color: 'oklch(0.70 0.22 145)' }}>
-                {stats.online}
-              </div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="h-full bg-success"
-                    style={{ width: `${stats.onlinePercentage}%` }}
-                  />
-                </div>
-                <span className="font-semibold" style={{ color: 'oklch(0.70 0.22 145)' }}>
-                  {stats.onlinePercentage}%
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+              {/* Online Card */}
+              <Card className="border-border">
+                <CardContent className="p-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1">
+                      <CheckCircle size={16} weight="duotone" className="text-success" />
+                      <span className="text-xs text-muted-foreground">Online</span>
+                    </div>
+                    <div className="text-2xl font-bold" style={{ color: 'oklch(0.70 0.22 145)' }}>{stats.online}</div>
+                    <div className="flex items-center gap-0.5">
+                      <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-success" style={{ width: `${stats.onlinePercentage}%` }} />
+                      </div>
+                      <span className="text-[10px] font-semibold" style={{ color: 'oklch(0.70 0.22 145)' }}>{stats.onlinePercentage}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">DNS Only</CardTitle>
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                  <Clock size={16} weight="duotone" className="text-amber-500" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold" style={{ color: 'rgb(245, 158, 11)' }}>
-                {stats.dnsOnly}
-              </div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="h-full bg-amber-500"
-                    style={{ width: `${stats.dnsOnlyPercentage}%` }}
-                  />
-                </div>
-                <span className="font-semibold" style={{ color: 'rgb(245, 158, 11)' }}>
-                  {stats.dnsOnlyPercentage}%
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+              {/* DNS Only Card */}
+              <Card className="border-border">
+                <CardContent className="p-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1">
+                      <Clock size={16} weight="duotone" className="text-amber-500" />
+                      <span className="text-xs text-muted-foreground">DNS Only</span>
+                    </div>
+                    <div className="text-2xl font-bold" style={{ color: 'rgb(245, 158, 11)' }}>{stats.dnsOnly}</div>
+                    <div className="flex items-center gap-0.5">
+                      <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500" style={{ width: `${stats.dnsOnlyPercentage}%` }} />
+                      </div>
+                      <span className="text-[10px] font-semibold" style={{ color: 'rgb(245, 158, 11)' }}>{stats.dnsOnlyPercentage}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Offline</CardTitle>
-                <div className="w-8 h-8 rounded-lg bg-destructive/20 flex items-center justify-center">
-                  <XCircle size={16} weight="duotone" className="text-destructive" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-destructive">{stats.offline}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="h-full bg-destructive"
-                    style={{ width: `${stats.offlinePercentage}%` }}
-                  />
-                </div>
-                <span className="font-semibold text-destructive">
-                  {stats.offlinePercentage}%
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              {/* Offline Card */}
+              <Card className="border-border">
+                <CardContent className="p-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1">
+                      <XCircle size={16} weight="duotone" className="text-destructive" />
+                      <span className="text-xs text-muted-foreground">Offline</span>
+                    </div>
+                    <div className="text-2xl font-bold text-destructive">{stats.offline}</div>
+                    <div className="flex items-center gap-0.5">
+                      <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-destructive" style={{ width: `${stats.offlinePercentage}%` }} />
+                      </div>
+                      <span className="text-[10px] font-semibold text-destructive">{stats.offlinePercentage}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Response Time Rata-rata</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                {stats.avgResponseTime > 0 ? `${stats.avgResponseTime}ms` : '-'}
-              </div>
-              {stats.avgResponseTime > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Min: {stats.minResponseTime}ms • Max: {stats.maxResponseTime}ms
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              {/* Info Card - Avg, Grup, Tag */}
+              <Card className="border-border">
+                <CardContent className="p-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1">
+                      <Gauge size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Avg Response</span>
+                    </div>
+                    <div className="text-2xl font-bold">{stats.avgResponseTime > 0 ? `${stats.avgResponseTime}ms` : '-'}</div>
+                    {stats.avgResponseTime > 0 && (
+                      <p className="text-[10px] text-muted-foreground">{stats.minResponseTime}-{stats.maxResponseTime}ms</p>
+                    )}
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div className="flex items-center gap-0.5">
+                        <FolderOpen size={12} className="text-muted-foreground" />
+                        <span className="text-[10px]"><span className="font-semibold">{groups.length}</span> <span className="text-muted-foreground">grup</span></span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        <Tag size={12} className="text-muted-foreground" />
+                        <span className="text-[10px]"><span className="font-semibold">{tags.length}</span> <span className="text-muted-foreground">tag</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           <Card className="border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Grup Domain</CardTitle>
+            <CardHeader className="pb-0.5 pt-2 px-2">
+              <CardTitle className="text-sm md:text-base font-semibold">Distribusi Status</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{groups.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.ungroupedDomains} domain tanpa grup
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Tag Domain</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{tags.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.taggedDomains} domain dengan tag
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Distribusi Status</CardTitle>
-              <CardDescription>Persentase status domain keseluruhan</CardDescription>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="px-2 pb-1.5">
               {statusDistribution.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-1">
                   {statusDistribution.map((item, index) => (
-                    <div key={index} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded"
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className="text-foreground font-medium">{item.label}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">{item.value}</span>
-                          <span className="font-semibold text-foreground w-12 text-right">
-                            {item.percentage}%
-                          </span>
-                        </div>
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-xs text-foreground font-medium min-w-[50px]">{item.label}</span>
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full transition-all" style={{ width: `${item.percentage}%`, backgroundColor: item.color }} />
                       </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full transition-all duration-500"
-                          style={{
-                            width: `${item.percentage}%`,
-                            backgroundColor: item.color,
-                          }}
-                        />
-                      </div>
+                      <span className="text-xs text-muted-foreground w-8">{item.value}</span>
+                      <span className="text-xs font-semibold w-10 text-right">{item.percentage}%</span>
                     </div>
                   ))}
                 </div>
@@ -378,41 +319,25 @@ export function StatisticsView({
           </Card>
 
           <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Status Per Grup</CardTitle>
-              <CardDescription>Ringkasan domain di setiap grup</CardDescription>
+            <CardHeader className="pb-0.5 pt-2 px-2">
+              <CardTitle className="text-sm md:text-base font-semibold">Status Per Grup</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-2 pb-1.5">
               {groupStats.length > 0 ? (
-                <ScrollArea className="h-[220px]">
-                  <div className="space-y-3 pr-3">
+                <ScrollArea className="h-[90px]">
+                  <div className="space-y-1 pr-2">
                     {groupStats.map(({ group, total, online, offline, dnsOnly, onlinePercentage }) => (
-                      <div key={group.id} className="space-y-1.5">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <div
-                              className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
-                              style={{ backgroundColor: `${group.color}20` }}
-                            >
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: group.color }}
-                              />
-                            </div>
-                            <span className="text-foreground font-medium truncate">{group.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs flex-shrink-0">
-                            <span className="text-success">{online}</span>
-                            {dnsOnly > 0 && <span className="text-amber-500">{dnsOnly}</span>}
-                            <span className="text-destructive">{offline}</span>
-                            <span className="text-muted-foreground">/ {total}</span>
-                          </div>
+                      <div key={group.id} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: group.color }} />
+                        <span className="text-xs text-foreground font-medium truncate min-w-[60px] flex-1">{group.name}</span>
+                        <div className="flex items-center gap-1 text-[10px] flex-shrink-0">
+                          <span className="text-success">{online}</span>
+                          {dnsOnly > 0 && <span className="text-amber-500">{dnsOnly}</span>}
+                          <span className="text-destructive">{offline}</span>
+                          <span className="text-muted-foreground">/{total}</span>
                         </div>
-                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-success transition-all duration-500"
-                            style={{ width: `${onlinePercentage}%` }}
-                          />
+                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-success" style={{ width: `${onlinePercentage}%` }} />
                         </div>
                       </div>
                     ))}
@@ -427,30 +352,20 @@ export function StatisticsView({
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Top 10 Domain Tercepat</CardTitle>
-              <CardDescription>Domain dengan response time terendah</CardDescription>
+            <CardHeader className="pb-0.5 pt-2 px-2">
+              <CardTitle className="text-sm md:text-base font-semibold">Top 10 Tercepat</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-2 pb-1.5">
               {topFastestDomains.length > 0 ? (
-                <ScrollArea className="h-[240px]">
-                  <div className="space-y-2 pr-3">
+                <ScrollArea className="h-[110px]">
+                  <div className="space-y-1 pr-2">
                     {topFastestDomains.map(({ domain, responseTime }, index) => (
-                      <div
-                        key={domain.id}
-                        className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0 text-xs flex-shrink-0">
-                            {index + 1}
-                          </Badge>
-                          <span className="text-sm text-foreground truncate font-mono">{domain.url}</span>
-                        </div>
-                        <Badge className="ml-2 font-mono flex-shrink-0" style={{ backgroundColor: 'oklch(0.70 0.22 145)', color: 'white' }}>
-                          {responseTime}ms
-                        </Badge>
+                      <div key={domain.id} className="flex items-center gap-2 text-xs">
+                        <span className="w-4 text-center text-muted-foreground font-mono">{index + 1}</span>
+                        <span className="flex-1 truncate font-mono text-foreground">{domain.url}</span>
+                        <span className="font-semibold font-mono" style={{ color: 'oklch(0.70 0.22 145)' }}>{responseTime}ms</span>
                       </div>
                     ))}
                   </div>
@@ -464,31 +379,18 @@ export function StatisticsView({
           </Card>
 
           <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Top 10 Domain Terlambat</CardTitle>
-              <CardDescription>Domain dengan response time tertinggi</CardDescription>
+            <CardHeader className="pb-0.5 pt-2 px-2">
+              <CardTitle className="text-sm md:text-base font-semibold">Top 10 Terlambat</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-2 pb-1.5">
               {topSlowestDomains.length > 0 ? (
-                <ScrollArea className="h-[240px]">
-                  <div className="space-y-2 pr-3">
+                <ScrollArea className="h-[110px]">
+                  <div className="space-y-1 pr-2">
                     {topSlowestDomains.map(({ domain, responseTime }, index) => (
-                      <div
-                        key={domain.id}
-                        className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0 text-xs flex-shrink-0">
-                            {index + 1}
-                          </Badge>
-                          <span className="text-sm text-foreground truncate font-mono">{domain.url}</span>
-                        </div>
-                        <Badge
-                          className="ml-2 font-mono flex-shrink-0"
-                          variant={responseTime > 3000 ? 'destructive' : 'secondary'}
-                        >
-                          {responseTime}ms
-                        </Badge>
+                      <div key={domain.id} className="flex items-center gap-2 text-xs">
+                        <span className="w-4 text-center text-muted-foreground font-mono">{index + 1}</span>
+                        <span className="flex-1 truncate font-mono text-foreground">{domain.url}</span>
+                        <span className="font-semibold font-mono" style={{ color: responseTime > 3000 ? 'oklch(0.60 0.25 25)' : 'rgb(245, 158, 11)' }}>{responseTime}ms</span>
                       </div>
                     ))}
                   </div>
