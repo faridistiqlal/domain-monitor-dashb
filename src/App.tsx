@@ -355,6 +355,11 @@ function App() {
     }
   }, [tags, isLoadingData])
 
+  // DEBUG: Monitor notification settings changes
+  useEffect(() => {
+    console.log('[notificationSettings State Changed]', notificationSettings)
+  }, [notificationSettings])
+
   // Auto-logout after 30 minutes of inactivity
   useEffect(() => {
     if (!isAuthenticated) return
