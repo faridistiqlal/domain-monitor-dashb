@@ -23,29 +23,32 @@ interface GitHubActionsLog {
   error?: string
 }
 
+interface UsageData {
+  usedSoFar: number
+  projected: number
+  quota: number
+  percentage: number
+  resetDate?: string
+  isManual?: boolean
+}
+
 export function GitHubActionsStatusCard() {
   const [lastRun, setLastRun] = useState<GitHubActionsLog | null>(null)
   const [recentRuns, setRecentRuns] = useState<GitHubActionsLog[]>([])
   const [loading, setLoading] = useState(true)
   const [nextRunIn, setNextRunIn] = useState<string>('')
   
-  // Calculate estimated usage (assuming 72 runs/day × 40s per run)
-  const calculateMonthlyUsage = () => {
-    const now = new Date()
-    const dayOfMonth = now.getDate()
-    const estimatedDailyUsage = 48 // minutes (72 runs × 40s)
-    const usedSoFar = dayOfMonth * estimatedDailyUsage
-    const projectedMonthly = usedSoFar + ((30 - dayOfMonth) * estimatedDailyUsage)
-    
-    return {
-      usedSoFar: Math.round(usedSoFar),
-      projected: Math.round(projectedMonthly),
-      quota: 2000,
-      percentage: Math.round((usedSoFar / 2000) * 100)
-    }
+  // MANUAL UPDATE: Sesuaikan dengan usage real dari GitHub
+  // Last updated: Jan 24, 2026
+  const usage: UsageData = {
+    usedSoFar: 2000,     // Update ini sesuai GitHub Actions billing page
+    projected: 2000,      // Tidak ada tambahan (cron disabled)
+    quota: 2000,
+    percentage: 100,
+    resetDate: 'Feb 1, 2026',
+    isManual: true
   }
   
-  const usage = calculateMonthlyUsage()
   const isCronDisabled = !lastRun || (Date.now() - lastRun.timestamp.getTime()) > 45 * 60 * 1000
 
   useEffect(() => {
@@ -202,8 +205,15 @@ export function GitHubActionsStatusCard() {
                 {usage.percentage}%
               </span>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {usage.usedSoFar}/{usage.quota} min • Est: {usage.projected} min
+            <div className="text-xs text-muted-foreground space-y-0.5">
+              <div>
+                {usage.usedSoFar}/{usage.quota} min • Est: {usage.projected} min
+              </div>
+              {usage.isManual && usage.resetDate && (
+                <div className="text-[10px] text-yellow-600 dark:text-yellow-500">
+                  ⚠️ Manual data • Resets {usage.resetDate}
+                </div>
+              )}
             </div>
           </div>
         </div>
