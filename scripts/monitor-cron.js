@@ -39,15 +39,20 @@ console.log('[Monitor] Firebase Project:', firebaseConfig.projectId)
 console.log('[Monitor] Slack Enabled:', !!SLACK_WEBHOOK_URL)
 
 /**
- * Check single domain
+ * Check single domain with timeout
  */
 async function checkDomain(domain) {
   const url = domain.url.replace(/^https?:\/\//, '')
   const startTime = Date.now()
   
   try {
-    // DNS lookup
-    const ipAddress = await dnsLookup(url)
+    // DNS lookup with timeout
+    const dnsPromise = dnsLookup(url)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('DNS timeout')), 5000)
+    )
+    
+    const ipAddress = await Promise.race([dnsPromise, timeoutPromise])
     const dnsResolved = !!ipAddress.address
     
     if (!dnsResolved) {
@@ -60,14 +65,18 @@ async function checkDomain(domain) {
       }
     }
     
-    // Try HTTPS first
+    // Try HTTPS first with reduced timeout
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      
       const httpsResponse = await fetch(`https://${url}`, {
         method: 'HEAD',
-        timeout: 10000,
+        signal: controller.signal,
         redirect: 'follow'
       })
       
+      clearTimeout(timeoutId)
       const responseTime = Date.now() - startTime
       
       if (httpsResponse.ok) {
@@ -80,14 +89,18 @@ async function checkDomain(domain) {
         }
       }
     } catch (httpsError) {
-      // HTTPS failed, try HTTP
+      // HTTPS failed, try HTTP with timeout
       try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        
         const httpResponse = await fetch(`http://${url}`, {
           method: 'HEAD',
-          timeout: 10000,
+          signal: controller.signal,
           redirect: 'follow'
         })
         
+        clearTimeout(timeoutId)
         const responseTime = Date.now() - startTime
         
         if (httpResponse.ok) {
@@ -106,7 +119,7 @@ async function checkDomain(domain) {
           ipAddress: ipAddress.address,
           responseTime: null,
           protocol: null,
-          error: 'HTTP/HTTPS not accessible (CORS or firewall)'
+          error: 'HTTP/HTTPS not accessible'
         }
       }
     }
@@ -380,21 +393,28 @@ async function runMonitoring() {
           results: {
             online: 0,
             dnsOnly: 0,
-            offline: 0
-          },
-          status: 'success',
-          message: 'No domains in current batch'
-        })
-        console.log('[Monitor] Log written to Firebase (empty batch)')
-      } catch (logError) {
-        console.error('[Monitor] Failed to write log:', logError.message)
-      }
-      
-      return
-    }
+            offline: 0 with concurrency limit
+    const CONCURRENCY_LIMIT = 10
+    const results = []
     
-    // Check all domains in current batch
-    const results = await Promise.all(
+    for (let i = 0; i < domainsToCheck.length; i += CONCURRENCY_LIMIT) {
+      const batch = domainsToCheck.slice(i, i + CONCURRENCY_LIMIT)
+      const batchResults = await Promise.all(
+        batch.map(async domain => {
+          console.log(`[Monitor] Checking: ${domain.url}`)
+          const result = await checkDomain(domain)
+          
+          // Update daily stats
+          await updateDailyStats(domain.id, result)
+          
+          return {
+            domain,
+            result
+          }
+        })
+      )
+      results.push(...batchResults)
+    }onst results = await Promise.all(
       domainsToCheck.map(async domain => {
         console.log(`[Monitor] Checking: ${domain.url}`)
         const result = await checkDomain(domain)

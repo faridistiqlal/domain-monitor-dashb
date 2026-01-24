@@ -12,6 +12,9 @@ jobs:
   monitor:
     runs-on: ubuntu-latest
     
+    # Timeout after 5 minutes to prevent hanging
+    timeout-minutes: 5
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,10 +25,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
       
-      - name: Install dependencies
-        run: npm install
+      - name: Install only monitoring dependencies
+        run: |
+          npm install --no-save firebase node-fetch
       
       - name: Run domain monitoring
+        timeout-minutes: 4
         env:
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
@@ -35,7 +40,7 @@ jobs:
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: npm run monitor
+        run: node scripts/monitor-cron.js
       
       - name: Upload logs (if failed)
         if: failure()

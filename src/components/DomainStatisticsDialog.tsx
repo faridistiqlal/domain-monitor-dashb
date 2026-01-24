@@ -317,7 +317,7 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                       </div>
                       {hourlyBars.length > 0 ? (
                         <>
-                          <div className="flex gap-0.5 flex-wrap items-end h-10">
+                          <div className="flex gap-0.5 flex-wrap items-end min-h-10 mb-6">
                             {hourlyBars.map((bar, i) => (
                               <Tooltip key={i}>
                                 <TooltipTrigger asChild>
@@ -348,8 +348,8 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                               </Tooltip>
                             ))}
                           </div>
-                          <p className="text-xs text-muted-foreground text-center mt-3">
-                            Each bar represents 1 hour with checks • Green = 100% success, Yellow = partial, Red = all failed
+                          <p className="text-xs text-muted-foreground text-center px-2">
+                            1 bar = 1 hour • <span className="text-success">Green</span> = 100%, <span className="text-warning">Yellow</span> = partial, <span className="text-destructive">Red</span> = failed
                           </p>
                         </>
                       ) : (

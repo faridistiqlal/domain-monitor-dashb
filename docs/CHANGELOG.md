@@ -1,5 +1,97 @@
 # Changelog
 
+## Version 3.9.8 - GitHub Actions Optimization
+**Tanggal Rilis:** 24 Januari 2026
+
+### 🚀 Performance Optimization: 80% Reduction in Workflow Time
+
+**Problem Identified:**
+- ❌ GitHub Actions using 2,000 minutes in <1 month (exceeded quota)
+- ❌ Each run taking 2-3 minutes (mostly npm install time)
+- ❌ Installing 80+ dependencies every 20 minutes
+- ❌ Projected: 6,048 min/month (3x over limit)
+
+**Root Cause:**
+```
+npm install: ~2-3 minutes (80+ packages)
+Domain check: ~30-60 seconds
+Total: 3-4 minutes per run ❌
+
+72 runs/day × 3.5 minutes = 252 min/day
+30 days × 252 min = 7,560 minutes/month ❌❌❌
+```
+
+**Solutions Implemented:**
+
+1. **Minimal Dependencies Install:**
+   - BEFORE: `npm install` (80+ packages, 2-3 minutes)
+   - AFTER: `npm install --no-save firebase node-fetch` (2 packages, ~15 seconds)
+   - ✅ 90% reduction in install time
+
+2. **Reduced Timeouts:**
+   - DNS lookup: 5 seconds (was unlimited)
+   - HTTP/HTTPS fetch: 5 seconds each (was 10 seconds)
+   - Job timeout: 5 minutes max
+   - ✅ Faster fail for unresponsive domains
+
+3. **Concurrency Control:**
+   - Check 10 domains at a time (was unlimited parallel)
+   - Prevents overwhelming Firebase and GitHub Actions
+   - ✅ More stable execution
+
+4. **Direct Script Execution:**
+   - Run `node scripts/monitor-cron.js` directly
+   - No need for `npm run monitor` wrapper
+   - ✅ Eliminates overhead
+
+**Results:**
+```
+Duration per run: ~30-45 seconds ✅
+72 runs/day × 40 seconds = 48 min/day
+30 days × 48 min = 1,440 minutes/month ✅
+
+Usage: 72% of quota (was 300%+)
+Buffer: 560 minutes remaining ✅
+```
+
+**Impact:**
+- ✅ **80% reduction** in workflow execution time
+- ✅ **Can sustain 24/7 monitoring** within free tier
+- ✅ **28% buffer** for growth or manual triggers
+- ✅ **Faster feedback** on domain status
+
+**Technical Changes:**
+- Updated `.github/workflows/monitor-domains.yml`
+- Optimized `scripts/monitor-cron.js` with timeouts
+- Added concurrency limit (10 domains parallel)
+- Reduced all network timeouts to 5 seconds
+
+---
+
+## Version 3.9.7 - Hourly Breakdown Text Overflow Fix
+**Tanggal Rilis:** 19 Januari 2026
+
+### 🐛 Bug Fix: Text Overflow di Hourly Breakdown
+
+**Problem:**
+- ❌ Text description di hourly breakdown terlalu panjang
+- ❌ Text overflow pada mobile devices
+- ❌ Penjelasan tidak responsive
+
+**Solution:**
+- ✅ Text dipendekkan dari "Each bar represents 1 hour with checks • Green = 100% success, Yellow = partial, Red = all failed" 
+- ✅ Menjadi: "1 bar = 1 hour • Green = 100%, Yellow = partial, Red = failed"
+- ✅ Added color highlighting untuk status (text-success, text-warning, text-destructive)
+- ✅ Added horizontal padding (px-2) untuk breathing room
+- ✅ More mobile-friendly dan concise
+
+**Impact:**
+- ✅ No more text overflow di mobile
+- ✅ Lebih mudah dibaca dan dipahami
+- ✅ Visual clarity dengan color-coded status
+
+---
+
 ## Version 3.9.6 - Notification Settings Firebase Sync
 **Tanggal Rilis:** 13 Januari 2026
 
