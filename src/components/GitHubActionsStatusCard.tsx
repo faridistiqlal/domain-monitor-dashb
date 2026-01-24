@@ -159,25 +159,25 @@ export function GitHubActionsStatusCard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* Left: Cron Status */}
           {isCronDisabled && (
-            <Alert className="bg-yellow-500/10 border-yellow-500/30">
+            <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-3">
               <div className="flex gap-2">
-                <Pause className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <Pause className="h-4 w-4 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
                 <div className="text-xs space-y-1">
-                  <div className="font-semibold text-yellow-700 dark:text-yellow-400">
+                  <div className="font-semibold text-yellow-800 dark:text-yellow-400">
                     Cron Disabled
                   </div>
-                  <div className="text-muted-foreground">
+                  <div className="text-yellow-700 dark:text-yellow-500/90">
                     Quota exceeded. Resume Feb 1 (1,440 min/mo optimized).
                   </div>
                 </div>
               </div>
-            </Alert>
+            </div>
           )}
 
           {/* Right: Usage Tracker */}
-          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+          <div className="bg-muted/50 dark:bg-muted/30 rounded-lg p-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground font-medium">Monthly Usage</span>
+              <span className="text-foreground/80 font-medium">Monthly Usage</span>
               <a 
                 href="https://github.com/settings/billing" 
                 target="_blank" 
@@ -188,7 +188,7 @@ export function GitHubActionsStatusCard() {
               </a>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+              <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
                 <div 
                   className={`h-full transition-all ${
                     usage.percentage > 100 ? 'bg-red-500' : 
@@ -198,7 +198,7 @@ export function GitHubActionsStatusCard() {
                   style={{ width: `${Math.min(usage.percentage, 100)}%` }}
                 />
               </div>
-              <span className="text-xs font-bold min-w-[45px] text-right">
+              <span className="text-xs font-bold min-w-[45px] text-right text-foreground">
                 {usage.percentage}%
               </span>
             </div>
