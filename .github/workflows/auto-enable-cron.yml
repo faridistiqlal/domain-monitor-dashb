@@ -1,0 +1,30 @@
+name: Auto-Enable Monitoring Cron
+
+on:
+  schedule:
+    # Run once on Feb 1, 2026 at 00:00 UTC
+    - cron: '0 0 1 2 *'
+  workflow_dispatch:
+
+jobs:
+  enable-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Enable monitoring cron
+        run: |
+          # Uncomment schedule lines
+          sed -i 's/  # schedule:/  schedule:/' .github/workflows/monitor-domains.yml
+          sed -i 's/  #   - cron:/    - cron:/' .github/workflows/monitor-domains.yml
+          sed -i '/TEMPORARILY DISABLED/d' .github/workflows/monitor-domains.yml
+      
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/monitor-domains.yml
+          git commit -m "🤖 Auto-enable monitoring cron for February quota"
+          git push
