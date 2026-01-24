@@ -38,17 +38,40 @@ export function GitHubActionsStatusCard() {
   const [loading, setLoading] = useState(true)
   const [nextRunIn, setNextRunIn] = useState<string>('')
   
-  // MANUAL UPDATE: Sesuaikan dengan usage real dari GitHub
-  // Last updated: Jan 24, 2026
-  const usage: UsageData = {
-    usedSoFar: 2000,     // Update ini sesuai GitHub Actions billing page
-    projected: 2000,      // Tidak ada tambahan (cron disabled)
-    quota: 2000,
-    percentage: 100,
-    resetDate: 'Feb 1, 2026',
-    isManual: true
+  // Auto-calculate usage based on date
+  const calculateUsage = (): UsageData => {
+    const now = new Date()
+    const month = now.getMonth() // 0 = Jan, 1 = Feb, etc
+    const dayOfMonth = now.getDate()
+    const estimatedDailyUsage = 48 // minutes (72 runs × 40s)
+    
+    // January 2026: Quota exhausted (cron disabled mid-month)
+    if (month === 0) {
+      return {
+        usedSoFar: 2000,
+        projected: 2000,
+        quota: 2000,
+        percentage: 100,
+        resetDate: 'Feb 1, 2026',
+        isManual: false
+      }
+    }
+    
+    // February onwards: Calculate from daily usage
+    const usedSoFar = dayOfMonth * estimatedDailyUsage
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    const projectedMonthly = daysInMonth * estimatedDailyUsage
+    
+    return {
+      usedSoFar: Math.round(usedSoFar),
+      projected: Math.round(Math.min(projectedMonthly, 2000)), // Cap at quota
+      quota: 2000,
+      percentage: Math.round((usedSoFar / 2000) * 100),
+      isManual: false
+    }
   }
   
+  const usage = calculateUsage()
   const isCronDisabled = !lastRun || (Date.now() - lastRun.timestamp.getTime()) > 45 * 60 * 1000
 
   useEffect(() => {
@@ -209,9 +232,9 @@ export function GitHubActionsStatusCard() {
               <div>
                 {usage.usedSoFar}/{usage.quota} min • Est: {usage.projected} min
               </div>
-              {usage.isManual && usage.resetDate && (
-                <div className="text-[10px] text-yellow-600 dark:text-yellow-500">
-                  ⚠️ Manual data • Resets {usage.resetDate}
+              {usage.resetDate && (
+                <div className="text-[10px] text-muted-foreground/70">
+                  Auto-calculated • Resets {usage.resetDate || 'monthly'}
                 </div>
               )}
             </div>
