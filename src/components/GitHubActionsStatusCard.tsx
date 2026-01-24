@@ -155,63 +155,57 @@ export function GitHubActionsStatusCard() {
         <CardDescription>24/7 Background Monitoring (Every 20 minutes)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Cron Disabled Warning */}
-        {isCronDisabled && (
-          <Alert className="bg-yellow-500/10 border-yellow-500/30">
-            <Pause className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-sm">
-              <span className="font-semibold text-yellow-700 dark:text-yellow-400">
-                Cron Temporarily Disabled
-              </span>
-              <br />
-              <span className="text-muted-foreground">
-                Quota exceeded (2,000 min). Will auto-resume Feb 1, 2026 with optimized settings (1,440 min/month).
-              </span>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Usage Tracker */}
-        <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Estimated Usage (This Month)</span>
-            <a 
-              href="https://github.com/settings/billing" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-xs text-primary hover:underline"
-            >
-              View Actual →
-            </a>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className={`h-full transition-all ${
-                  usage.percentage > 100 ? 'bg-red-500' : 
-                  usage.percentage > 80 ? 'bg-yellow-500' : 
-                  'bg-green-500'
-                }`}
-                style={{ width: `${Math.min(usage.percentage, 100)}%` }}
-              />
-            </div>
-            <span className="text-xs font-semibold min-w-[60px] text-right">
-              {usage.percentage}%
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              ~{usage.usedSoFar} min used / {usage.quota} min quota
-            </span>
-            <span>
-              Projected: ~{usage.projected} min
-            </span>
-          </div>
-          {usage.percentage > 100 && (
-            <div className="text-xs text-red-600 dark:text-red-400 pt-1">
-              ⚠️ Over quota - cron disabled to prevent charges
-            </div>
+        {/* Cron Disabled Warning + Usage Tracker - Compact 2 Column */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Left: Cron Status */}
+          {isCronDisabled && (
+            <Alert className="bg-yellow-500/10 border-yellow-500/30">
+              <div className="flex gap-2">
+                <Pause className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="text-xs space-y-1">
+                  <div className="font-semibold text-yellow-700 dark:text-yellow-400">
+                    Cron Disabled
+                  </div>
+                  <div className="text-muted-foreground">
+                    Quota exceeded. Resume Feb 1 (1,440 min/mo optimized).
+                  </div>
+                </div>
+              </div>
+            </Alert>
           )}
+
+          {/* Right: Usage Tracker */}
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground font-medium">Monthly Usage</span>
+              <a 
+                href="https://github.com/settings/billing" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Actual →
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all ${
+                    usage.percentage > 100 ? 'bg-red-500' : 
+                    usage.percentage > 80 ? 'bg-yellow-500' : 
+                    'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(usage.percentage, 100)}%` }}
+                />
+              </div>
+              <span className="text-xs font-bold min-w-[45px] text-right">
+                {usage.percentage}%
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {usage.usedSoFar}/{usage.quota} min • Est: {usage.projected} min
+            </div>
+          </div>
         </div>
 
         {/* Status Indicator */}
