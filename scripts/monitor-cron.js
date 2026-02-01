@@ -393,7 +393,20 @@ async function runMonitoring() {
           results: {
             online: 0,
             dnsOnly: 0,
-            offline: 0 with concurrency limit
+            offline: 0
+          },
+          duration: null,
+          status: 'success'
+        })
+        console.log('[Monitor] Empty batch log written to Firebase')
+      } catch (logError) {
+        console.error('[Monitor] Failed to write log:', logError.message)
+      }
+      
+      return
+    }
+    
+    // Check domains with concurrency limit
     const CONCURRENCY_LIMIT = 10
     const results = []
     
@@ -414,20 +427,7 @@ async function runMonitoring() {
         })
       )
       results.push(...batchResults)
-    }onst results = await Promise.all(
-      domainsToCheck.map(async domain => {
-        console.log(`[Monitor] Checking: ${domain.url}`)
-        const result = await checkDomain(domain)
-        
-        // Update daily stats
-        await updateDailyStats(domain.id, result)
-        
-        return {
-          domain,
-          result
-        }
-      })
-    )
+    }
     
     // Update domain statuses in batch
     for (const { domain, result } of results) {
