@@ -1,5 +1,43 @@
 # Changelog
 
+## Version 3.9.9 - GitHub Actions Schedule Adjustment
+**Tanggal Rilis:** 1 Februari 2026
+
+### 🔧 Critical Fixes & Schedule Optimization
+
+**Issues Fixed:**
+1. **Syntax Error in monitor-cron.js:**
+   - ❌ Line 396: `offline: 0 with concurrency limit` caused script to fail
+   - ✅ Fixed: Proper object closing and loop structure
+   - ✅ Script now runs successfully
+
+2. **Quota Management:**
+   - **Actual duration per run:** 2.4 minutes (not 40 seconds as expected)
+   - **Problem:** With 20-min interval = 5,190 min/month (259% over quota!)
+   - **Solution:** Changed interval from **20 minutes → 1 hour**
+
+**Schedule Changes:**
+```yaml
+# BEFORE:
+- cron: '*/20 * * * *'  # Every 20 minutes
+# 72 runs/day × 2.4 min = 173 min/day = 5,190 min/month ❌
+
+# AFTER:
+- cron: '0 * * * *'     # Every hour (at minute 0)
+# 24 runs/day × 2.4 min = 57.6 min/day = 1,728 min/month ✅
+```
+
+**New Quota Usage:**
+- Per run: ~2.4 minutes
+- Per day: 24 runs = 57.6 minutes/day
+- Per month: 1,728 minutes/month
+- **Quota usage: 86%** (safe with 272 min buffer)
+- Schedule: Runs at 00:00, 01:00, 02:00, ... 23:00 daily
+
+**Status:** ✅ Schedule enabled and running within quota limits
+
+---
+
 ## Version 3.9.8 - GitHub Actions Optimization
 **Tanggal Rilis:** 24 Januari 2026
 

@@ -1,7 +1,7 @@
 # 📊 GitHub Actions Usage Monitoring
 
-**Version:** 3.9.8  
-**Last Updated:** 24 Januari 2026
+**Version:** 3.9.9  
+**Last Updated:** 1 Februari 2026
 
 ---
 
@@ -12,19 +12,38 @@
 2. Scroll ke "Actions & Packages"
 3. Lihat: "X min used / 2,000 min included"
 
-**Expected Usage (After Optimization v3.9.8):**
+**Current Usage (v3.9.9 - 1 Hour Interval):**
 ```
-Per Day: ~48 minutes
-Per Week: ~336 minutes
-Per Month: ~1,440 minutes
-Buffer: ~560 minutes (28%)
+Schedule: Every 1 hour (0 * * * *)
+Per Run: ~2.4 minutes (actual measured)
+Per Day: ~58 minutes (24 runs)
+Per Week: ~406 minutes
+Per Month: ~1,728 minutes (86% quota)
+Buffer: ~272 minutes (14%)
 ```
 
 ---
 
-## ⚠️ Problem: Usage Exceeded (Fixed in v3.9.8)
+## ⚠️ Problem History & Solutions
 
-### **What Happened:**
+### **v3.9.9 (1 Feb 2026): Schedule Adjustment**
+
+**Problem Found:**
+- ✅ Syntax error fixed in monitor-cron.js
+- ❌ Actual duration: **2.4 minutes per run** (not 40 seconds as expected)
+- ❌ With 20-min interval: 72 runs/day × 2.4 min = 173 min/day = **5,190 min/month** (259% over!)
+
+**Solution:**
+```yaml
+# Changed schedule interval:
+cron: '0 * * * *'  # Every 1 hour (was */20)
+
+# New calculation:
+24 runs/day × 2.4 minutes = 57.6 min/day
+30 days = 1,728 minutes/month ✅ (86% quota)
+```
+
+### **v3.9.8 (24 Jan 2026): Dependency Optimization**
 
 **BEFORE Optimization:**
 - ❌ 2,000 minutes used in <1 month
@@ -118,30 +137,30 @@ jobs:
 
 ---
 
-## 📈 Expected Performance
+## 📈 Current Performance (v3.9.9)
 
-### **After Optimization:**
+### **Actual Measured Performance:**
 
 **Per Run:**
 ```
 Setup Node.js: ~10 seconds
-Install deps: ~15 seconds (was 120-180s)
-Check domains: ~20-30 seconds
-Total: 40-45 seconds ✅
+Install deps: ~15 seconds (firebase + node-fetch)
+Check domains: ~2 minutes (313 domains with concurrency limit)
+Total: ~2.4 minutes (143 seconds)
 
-Reduction: 75-80% faster
+Note: Longer than expected due to large domain count
 ```
 
-**Per Day:**
+**Per Day (1 Hour Interval):**
 ```
-72 runs × 40 seconds = 2,880 seconds = 48 minutes
+24 runs × 2.4 minutes = 57.6 minutes/day
 ```
 
 **Per Month:**
 ```
-30 days × 48 minutes = 1,440 minutes
-Usage: 72% of 2,000 minute quota ✅
-Buffer: 560 minutes (28%)
+30 days × 57.6 minutes = 1,728 minutes
+Usage: 86% of 2,000 minute quota ✅
+Buffer: 272 minutes (14%)
 ```
 
 ---

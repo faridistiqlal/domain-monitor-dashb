@@ -1,7 +1,7 @@
 # 📊 PROJECT STATUS - Domain Monitor Kendal
 
-**Last Updated:** 12 Januari 2026  
-**Version:** 3.9.2  
+**Last Updated:** 1 Februari 2026  
+**Version:** 3.9.9  
 **Status:** ✅ Production Ready & Live  
 **Live URL:** https://kendal-uptime.vercel.app  
 **Deployment:** Vercel (Auto-deploy from Git)
@@ -37,15 +37,15 @@ Aplikasi monitoring real-time untuk melacak status availability dari multiple su
 - ✅ **Virtual Scrolling** - Handle 300+ domains smoothly
 - ✅ **Debounced Search** - 300ms delay, instant results
 
-### 24/7 Automated Monitoring (v3.6.0-3.8.6) 🤖
-- ✅ **GitHub Actions Cron** - Auto-runs every 20 minutes, 24/7
-- ✅ **4 Batch System** - Staggered checking by time (B1: 0,20,40 / B2: 5,25,45 / etc)
+### 24/7 Automated Monitoring (v3.6.0-3.9.9) 🤖
+- ✅ **GitHub Actions Cron** - Auto-runs every 1 hour, 24/7 (v3.9.9)
+- ✅ **Quota Safe** - 1,728 min/month (86% of 2,000 quota, 272 min buffer)
 - ✅ **Full Data Persistence** - Writes to domain-stats-daily, domains, logs
-- ✅ **Uptime Chart Auto-Update** - Chart nambah setiap 20 menit tanpa browser
+- ✅ **Uptime Chart Auto-Update** - Chart nambah setiap jam tanpa browser
 - ✅ **Health Dashboard** - Monitor GitHub Actions status & success rate
 - ✅ **Next Run Countdown** - Live timer kapan check berikutnya
 - ✅ **100% Free** - No credit card, private repo (2000 min/month)
-- ✅ **Smart Duration** - ~30-60 seconds per run
+- ✅ **Measured Duration** - ~2.4 minutes per run (313 domains)
 
 ### Mobile Responsive (v3.5.0+) 📱
 - ✅ **Hamburger Menu** - Sheet drawer navigation
@@ -182,9 +182,16 @@ src/
 
 ---
 
-## 🔄 Recent Updates (v3.9.2 - 12 Jan 2026)
+## 🔄 Recent Updates (v3.9.9 - 1 Feb 2026)
 
 **Latest Changes:**
+1. ✅ **Fixed syntax error** in monitor-cron.js (line 396)
+2. ✅ **Schedule adjustment** - Changed from 20 min to 1 hour interval
+3. ✅ **Quota safe** - Now using 1,728/2,000 min per month (86%)
+4. ✅ **Measured performance** - 2.4 minutes per run (313 domains)
+5. ✅ Documentation updated with actual performance data
+
+**Previous Updates (v3.9.0-3.9.2):**
 1. ✅ Search field in assign domains dialog (v3.9.0)
 2. ✅ Dropdown menu for pinned cards (v3.9.1)
 3. ✅ Dropdown menu for tag cards (v3.9.2)
