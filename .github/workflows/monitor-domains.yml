@@ -1,10 +1,10 @@
 name: Domain Monitoring Cron
 
 on:
-  # TEMPORARILY DISABLED - Waiting for February quota reset
-  # schedule:
-  #   # Runs every 20 minutes
-  #   - cron: '*/20 * * * *'
+  schedule:
+    # Runs every 1 hour (at minute 0)
+    # With 2.4 min per run: 24 runs/day × 2.4 min = 57.6 min/day = 1,728 min/month (86% quota)
+    - cron: '0 * * * *'
   
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
