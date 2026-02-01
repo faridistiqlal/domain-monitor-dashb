@@ -43,7 +43,7 @@ export function GitHubActionsStatusCard() {
     const now = new Date()
     const month = now.getMonth() // 0 = Jan, 1 = Feb, etc
     const dayOfMonth = now.getDate()
-    const estimatedDailyUsage = 48 // minutes (72 runs × 40s)
+    const estimatedDailyUsage = 58 // minutes (24 runs × 2.4 min per run)
     
     // January 2026: Quota exhausted (cron disabled mid-month)
     if (month === 0) {
@@ -72,7 +72,7 @@ export function GitHubActionsStatusCard() {
   }
   
   const usage = calculateUsage()
-  const isCronDisabled = !lastRun || (Date.now() - lastRun.timestamp.getTime()) > 45 * 60 * 1000
+  const isCronDisabled = !lastRun || (Date.now() - lastRun.timestamp.getTime()) > 75 * 60 * 1000
 
   useEffect(() => {
     const logsRef = collection(db, 'github-actions-logs')
@@ -100,7 +100,7 @@ export function GitHubActionsStatusCard() {
     const updateCountdown = () => {
       const now = Date.now()
       const lastRunTime = lastRun.timestamp.getTime()
-      const nextRunTime = lastRunTime + (20 * 60 * 1000) // 20 minutes
+      const nextRunTime = lastRunTime + (60 * 60 * 1000) // 60 minutes (1 hour)
       const timeLeft = nextRunTime - now
 
       if (timeLeft <= 0) {
@@ -126,7 +126,7 @@ export function GitHubActionsStatusCard() {
       : 999
     
     if (lastRun.status === 'error') return 'bg-red-500'
-    if (minutesSinceLastRun > 25) return 'bg-yellow-500' // Should run every 20 min
+    if (minutesSinceLastRun > 75) return 'bg-yellow-500' // Should run every 60 min
     return 'bg-green-500'
   }
 
@@ -138,7 +138,7 @@ export function GitHubActionsStatusCard() {
       : 999
     
     if (lastRun.status === 'error') return 'Last run failed'
-    if (minutesSinceLastRun > 25) return 'Delayed (>25 min)'
+    if (minutesSinceLastRun > 75) return 'Delayed (>75 min)'
     return 'Running normally'
   }
 
@@ -150,7 +150,7 @@ export function GitHubActionsStatusCard() {
       : 999
     
     if (lastRun.status === 'error') return <XCircle className="w-5 h-5" />
-    if (minutesSinceLastRun > 25) return <Warning className="w-5 h-5" />
+    if (minutesSinceLastRun > 75) return <Warning className="w-5 h-5" />
     return <CheckCircle className="w-5 h-5" />
   }
 
@@ -345,7 +345,7 @@ export function GitHubActionsStatusCard() {
           <div className="text-sm text-muted-foreground text-center py-4">
             <Warning className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p>No GitHub Actions runs detected yet.</p>
-            <p className="text-xs mt-1">First run should appear within 20 minutes.</p>
+            <p className="text-xs mt-1">First run should appear within 1 hour.</p>
           </div>
         )}
 
