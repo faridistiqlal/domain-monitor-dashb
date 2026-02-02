@@ -178,7 +178,7 @@ export function GitHubActionsStatusCard() {
           <ChartLine className="w-5 h-5" />
           GitHub Actions Status
         </CardTitle>
-        <CardDescription>24/7 Background Monitoring (Every 20 minutes)</CardDescription>
+        <CardDescription>24/7 Background Monitoring (Every 1 hour)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Cron Disabled Warning + Usage Tracker - Compact 2 Column */}
@@ -193,7 +193,7 @@ export function GitHubActionsStatusCard() {
                     Cron Disabled
                   </div>
                   <div className="text-yellow-700 dark:text-yellow-500/90">
-                    Quota exceeded. Resume Feb 1 (1,440 min/mo optimized).
+                    Quota exceeded. Resume Feb 1 (1,728 min/mo optimized).
                   </div>
                 </div>
               </div>
