@@ -72,7 +72,8 @@ export function GitHubActionsStatusCard() {
   }
   
   const usage = calculateUsage()
-  const isCronDisabled = !lastRun || (Date.now() - lastRun.timestamp.getTime()) > 75 * 60 * 1000
+  // Cron runs every 1 hour, so consider disabled if > 90 minutes without run (1.5x interval)
+  const isCronDisabled = !lastRun || (Date.now() - lastRun.timestamp.getTime()) > 90 * 60 * 1000
 
   useEffect(() => {
     const logsRef = collection(db, 'github-actions-logs')
@@ -126,7 +127,7 @@ export function GitHubActionsStatusCard() {
       : 999
     
     if (lastRun.status === 'error') return 'bg-red-500'
-    if (minutesSinceLastRun > 75) return 'bg-yellow-500' // Should run every 60 min
+    if (minutesSinceLastRun > 90) return 'bg-yellow-500' // Should run every 60 min
     return 'bg-green-500'
   }
 
@@ -138,7 +139,7 @@ export function GitHubActionsStatusCard() {
       : 999
     
     if (lastRun.status === 'error') return 'Last run failed'
-    if (minutesSinceLastRun > 75) return 'Delayed (>75 min)'
+    if (minutesSinceLastRun > 90) return 'Delayed (>90 min)'
     return 'Running normally'
   }
 
@@ -150,7 +151,7 @@ export function GitHubActionsStatusCard() {
       : 999
     
     if (lastRun.status === 'error') return <XCircle className="w-5 h-5" />
-    if (minutesSinceLastRun > 75) return <Warning className="w-5 h-5" />
+    if (minutesSinceLastRun > 90) return <Warning className="w-5 h-5" />
     return <CheckCircle className="w-5 h-5" />
   }
 
@@ -190,10 +191,10 @@ export function GitHubActionsStatusCard() {
                 <Pause className="h-4 w-4 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
                 <div className="text-xs space-y-1">
                   <div className="font-semibold text-yellow-800 dark:text-yellow-400">
-                    Cron Disabled
+                    No Recent Activity
                   </div>
                   <div className="text-yellow-700 dark:text-yellow-500/90">
-                    Quota exceeded. Resume Feb 1 (1,728 min/mo optimized).
+                    No runs detected in last 90 minutes. Check GitHub Actions status.
                   </div>
                 </div>
               </div>
