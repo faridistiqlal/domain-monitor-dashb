@@ -371,23 +371,20 @@ async function runMonitoring() {
     
     console.log(`[Monitor] Found ${allDomains.length} total domains`)
     
-    // Get current batch
-    const currentBatch = getCurrentBatch()
-    console.log(`[Monitor] Current batch: B${currentBatch}`)
-    
-    // Filter domains by batch
-    const domainsToCheck = allDomains.filter(d => d.checkBatch === currentBatch)
-    console.log(`[Monitor] Checking ${domainsToCheck.length} domains in batch B${currentBatch}`)
+    // Check ALL domains every hour (not batch-filtered)
+    // GitHub Actions runs at minute 0 every hour, so checking all domains ensures even coverage
+    const domainsToCheck = allDomains
+    console.log(`[Monitor] Checking all ${domainsToCheck.length} domains`)
     
     if (domainsToCheck.length === 0) {
-      console.log('[Monitor] No domains in current batch')
+      console.log('[Monitor] No domains to check')
       
       // Write log even if no domains checked
       try {
         const logsRef = collection(db, 'github-actions-logs')
         await addDoc(logsRef, {
           timestamp: serverTimestamp(),
-          batch: currentBatch,
+          batch: 0,
           totalDomains: allDomains.length,
           domainsChecked: 0,
           results: {
@@ -442,7 +439,7 @@ async function runMonitoring() {
     console.log(`[Monitor] Results: ${online} online, ${dnsOnly} DNS-only, ${offline} offline`)
     
     // Send summary to Slack
-    const summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
+    const summary = `🔍 Domain Monitor - Check Complete
 ✅ Online: ${online}
 ⚠️ DNS Only: ${dnsOnly}
 ❌ Offline: ${offline}
@@ -456,7 +453,7 @@ Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
       const logsRef = collection(db, 'github-actions-logs')
       await addDoc(logsRef, {
         timestamp: serverTimestamp(),
-        batch: currentBatch,
+        batch: 0, // All domains checked (not batch-specific)
         totalDomains: allDomains.length,
         domainsChecked: domainsToCheck.length,
         results: {

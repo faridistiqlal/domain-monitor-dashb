@@ -270,11 +270,7 @@ export function GitHubActionsStatusCard() {
             )}
 
             {lastRun.status === 'success' && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-                <div className="bg-muted/50 rounded-lg p-2">
-                  <div className="text-xs text-muted-foreground">Batch</div>
-                  <div className="font-semibold">B{lastRun.batch}</div>
-                </div>
+              <div className="grid grid-cols-3 gap-2 text-sm">
                 <div className="bg-green-500/10 rounded-lg p-2">
                   <div className="text-xs text-muted-foreground">Online</div>
                   <div className="font-semibold text-green-600 dark:text-green-400">
@@ -318,9 +314,9 @@ export function GitHubActionsStatusCard() {
                 >
                   <Badge 
                     variant={run.status === 'success' ? 'default' : 'destructive'}
-                    className="w-12"
+                    className="w-16"
                   >
-                    B{run.batch}
+                    {run.status === 'success' ? '✓ Done' : 'Failed'}
                   </Badge>
                   <span className="flex-1">
                     {run.status === 'success' 

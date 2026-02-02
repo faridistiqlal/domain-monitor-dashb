@@ -3,7 +3,8 @@ name: Domain Monitoring Cron
 on:
   schedule:
     # Runs every 1 hour (at minute 0)
-    # With 2.4 min per run: 24 runs/day × 2.4 min = 57.6 min/day = 1,728 min/month (86% quota)
+    # Checks ALL domains (not batch-filtered) every run
+    # With 2.4 min per run: 24 runs/day × 2.4 min = 57.6 min/day = 1,613 min/month (81% quota)
     - cron: '0 * * * *'
   
   # Allow manual trigger from GitHub UI
