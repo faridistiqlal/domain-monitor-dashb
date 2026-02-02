@@ -145,21 +145,21 @@ async function checkDomain(domain) {
 
 /**
  * Get current batch number (1-4) based on current time
+ * For 15-minute interval schedule (*/15 cron)
  */
 function getCurrentBatch() {
   const now = new Date()
   const minutes = now.getMinutes()
   
-  // Batch 1: 0, 20, 40
-  // Batch 2: 5, 25, 45
-  // Batch 3: 10, 30, 50
-  // Batch 4: 15, 35, 55
+  // Batch 1: 0-14 minutes (runs at :00)
+  // Batch 2: 15-29 minutes (runs at :15)
+  // Batch 3: 30-44 minutes (runs at :30)
+  // Batch 4: 45-59 minutes (runs at :45)
   
-  const offset = minutes % 20
-  if (offset >= 0 && offset < 5) return 1
-  if (offset >= 5 && offset < 10) return 2
-  if (offset >= 10 && offset < 15) return 3
-  return 4
+  if (minutes >= 0 && minutes < 15) return 1
+  if (minutes >= 15 && minutes < 30) return 2
+  if (minutes >= 30 && minutes < 45) return 3
+  return 4 // 45-59
 }
 
 /**
