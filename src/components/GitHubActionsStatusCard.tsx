@@ -43,7 +43,7 @@ export function GitHubActionsStatusCard() {
     const now = new Date()
     const month = now.getMonth() // 0 = Jan, 1 = Feb, etc
     const dayOfMonth = now.getDate()
-    const estimatedDailyUsage = 58 // minutes (24 runs × 2.4 min per run)
+    const estimatedDailyUsage = 36 // minutes (24 runs × 1.5 min per run)
     
     // January 2026: Quota exhausted (cron disabled mid-month)
     if (month === 0) {
@@ -101,7 +101,7 @@ export function GitHubActionsStatusCard() {
     const updateCountdown = () => {
       const now = Date.now()
       const lastRunTime = lastRun.timestamp.getTime()
-      const nextRunTime = lastRunTime + (60 * 60 * 1000) // 60 minutes (1 hour)
+      const nextRunTime = lastRunTime + (60 * 60 * 1000) // 1 hour
       const timeLeft = nextRunTime - now
 
       if (timeLeft <= 0) {
@@ -179,7 +179,7 @@ export function GitHubActionsStatusCard() {
           <ChartLine className="w-5 h-5" />
           GitHub Actions Status
         </CardTitle>
-        <CardDescription>24/7 Background Monitoring (Every 15 min • Batch rotation)</CardDescription>
+        <CardDescription>24/7 Background Monitoring (Every 1 hour • Batch rotation)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Cron Disabled Warning + Usage Tracker - Compact 2 Column */}

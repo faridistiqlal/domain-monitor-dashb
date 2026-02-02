@@ -145,21 +145,19 @@ async function checkDomain(domain) {
 
 /**
  * Get current batch number (1-4) based on current time
- * For 15-minute interval schedule (every 15 minutes)
+ * For 1-hour interval schedule - rotates every 4 hours
  */
 function getCurrentBatch() {
   const now = new Date()
-  const minutes = now.getMinutes()
+  const hour = now.getHours()
   
-  // Batch 1: 0-14 minutes (runs at :00)
-  // Batch 2: 15-29 minutes (runs at :15)
-  // Batch 3: 30-44 minutes (runs at :30)
-  // Batch 4: 45-59 minutes (runs at :45)
+  // Batch rotation every 4 hours:
+  // Batch 1: Hours 0, 4, 8, 12, 16, 20 (hour % 4 === 0)
+  // Batch 2: Hours 1, 5, 9, 13, 17, 21 (hour % 4 === 1)
+  // Batch 3: Hours 2, 6, 10, 14, 18, 22 (hour % 4 === 2)
+  // Batch 4: Hours 3, 7, 11, 15, 19, 23 (hour % 4 === 3)
   
-  if (minutes >= 0 && minutes < 15) return 1
-  if (minutes >= 15 && minutes < 30) return 2
-  if (minutes >= 30 && minutes < 45) return 3
-  return 4 // 45-59
+  return (hour % 4) + 1
 }
 
 /**
