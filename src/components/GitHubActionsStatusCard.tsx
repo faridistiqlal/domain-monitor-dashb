@@ -179,7 +179,7 @@ export function GitHubActionsStatusCard() {
           <ChartLine className="w-5 h-5" />
           GitHub Actions Status
         </CardTitle>
-        <CardDescription>24/7 Background Monitoring (Every 1 hour)</CardDescription>
+        <CardDescription>24/7 Background Monitoring (Every 15 min • Batch rotation)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Cron Disabled Warning + Usage Tracker - Compact 2 Column */}
@@ -271,7 +271,11 @@ export function GitHubActionsStatusCard() {
             )}
 
             {lastRun.status === 'success' && (
-              <div className="grid grid-cols-3 gap-2 text-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="text-xs text-muted-foreground">Batch</div>
+                  <div className="font-semibold">B{lastRun.batch}</div>
+                </div>
                 <div className="bg-green-500/10 rounded-lg p-2">
                   <div className="text-xs text-muted-foreground">Online</div>
                   <div className="font-semibold text-green-600 dark:text-green-400">
@@ -315,9 +319,9 @@ export function GitHubActionsStatusCard() {
                 >
                   <Badge 
                     variant={run.status === 'success' ? 'default' : 'destructive'}
-                    className="w-16"
+                    className="w-12"
                   >
-                    {run.status === 'success' ? '✓ Done' : 'Failed'}
+                    B{run.batch}
                   </Badge>
                   <span className="flex-1">
                     {run.status === 'success' 

@@ -371,20 +371,23 @@ async function runMonitoring() {
     
     console.log(`[Monitor] Found ${allDomains.length} total domains`)
     
-    // Check ALL domains every hour (not batch-filtered)
-    // GitHub Actions runs at minute 0 every hour, so checking all domains ensures even coverage
-    const domainsToCheck = allDomains
-    console.log(`[Monitor] Checking all ${domainsToCheck.length} domains`)
+    // Get current batch (B1-B4) based on time
+    const currentBatch = getCurrentBatch()
+    console.log(`[Monitor] Current batch: B${currentBatch}`)
+    
+    // Filter domains by batch for manageable runtime (<1 min per batch)
+    const domainsToCheck = allDomains.filter(d => d.checkBatch === currentBatch)
+    console.log(`[Monitor] Checking ${domainsToCheck.length} domains in batch B${currentBatch}`)
     
     if (domainsToCheck.length === 0) {
-      console.log('[Monitor] No domains to check')
+      console.log('[Monitor] No domains in current batch')
       
       // Write log even if no domains checked
       try {
         const logsRef = collection(db, 'github-actions-logs')
         await addDoc(logsRef, {
           timestamp: serverTimestamp(),
-          batch: 0,
+          batch: currentBatch,
           totalDomains: allDomains.length,
           domainsChecked: 0,
           results: {
@@ -439,7 +442,7 @@ async function runMonitoring() {
     console.log(`[Monitor] Results: ${online} online, ${dnsOnly} DNS-only, ${offline} offline`)
     
     // Send summary to Slack
-    const summary = `🔍 Domain Monitor - Check Complete
+    const summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
 ✅ Online: ${online}
 ⚠️ DNS Only: ${dnsOnly}
 ❌ Offline: ${offline}
@@ -453,7 +456,7 @@ Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
       const logsRef = collection(db, 'github-actions-logs')
       await addDoc(logsRef, {
         timestamp: serverTimestamp(),
-        batch: 0, // All domains checked (not batch-specific)
+        batch: currentBatch,
         totalDomains: allDomains.length,
         domainsChecked: domainsToCheck.length,
         results: {

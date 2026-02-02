@@ -2,10 +2,10 @@ name: Domain Monitoring Cron
 
 on:
   schedule:
-    # Runs every 1 hour (at minute 0)
-    # Checks ALL domains (not batch-filtered) every run
-    # With 2.4 min per run: 24 runs/day × 2.4 min = 57.6 min/day = 1,613 min/month (81% quota)
-    - cron: '0 * * * *'
+    # Runs every 15 minutes for batch rotation (B1-B4)
+    # Batch rotation: 00:00(B1), 00:15(B2), 00:30(B3), 00:45(B4), repeat...
+    # Per run: ~79 domains × 0.46s = 0.6 min | 96 runs/day × 0.6 min = 1,613 min/month (81% quota)
+    - cron: '*/15 * * * *'
   
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
