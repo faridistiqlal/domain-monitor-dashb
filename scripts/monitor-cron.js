@@ -145,7 +145,7 @@ async function checkDomain(domain) {
 
 /**
  * Get current batch number (1-4) based on current time
- * For 15-minute interval schedule (*/15 cron)
+ * For 15-minute interval schedule (every 15 minutes)
  */
 function getCurrentBatch() {
   const now = new Date()
