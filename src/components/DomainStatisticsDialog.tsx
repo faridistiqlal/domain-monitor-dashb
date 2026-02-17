@@ -406,7 +406,6 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
                             dataKey="responseTime"
                             stroke="#3b82f6"
                             strokeWidth={3}
-                            dot={{ fill: '#3b82f6', r: 4 }}
                             activeDot={{ r: 6 }}
                             dot={{ fill: 'hsl(var(--primary))' }}
                             name="Response Time (ms)"
