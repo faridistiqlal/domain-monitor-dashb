@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Bell, MapPin, Clock } from '@phosphor-icons/react'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Bell, MapPin, Clock, UserCircle } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,7 +35,7 @@ import { SettingsDialog } from '@/components/SettingsDialog'
 import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog'
 import { NotificationHistoryDialog } from '@/components/NotificationHistoryDialog'
 import { SettingsMenuDialog } from '@/components/SettingsMenuDialog'
-import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings, ManagedUser, ManagedUserRole, UserPermissions } from '@/lib/types'
 import { NotificationService, NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -46,10 +46,15 @@ import {
   syncDomainsToFirestore,
   syncGroupsToFirestore,
   syncTagsToFirestore,
-  loadPassword,
-  syncPasswordToFirestore,
   loadNotificationSettings,
-  syncNotificationSettingsToFirestore
+  syncNotificationSettingsToFirestore,
+  loadManagedUsersSnapshot,
+  syncManagedUsersWithRevision,
+  writeAuditLog,
+  syncUserAccessProfileToFirestore,
+  getUserAccessProfileByUid,
+  syncUserActiveStateByAppUserId,
+  revokeUserAccessProfile
 } from '@/lib/firestore-sync'
 import { 
   updateDailyStats, 
@@ -59,6 +64,15 @@ import {
   shouldCheckNow
 } from '@/lib/check-history'
 import { loadLastKnownStatuses } from '@/lib/status-loader'
+import {
+  signInWithUsernamePassword,
+  createAuthUserWithUsername,
+  signInWithUsernamePasswordSecondary,
+  signOutAuth,
+  onAuthUserChanged,
+  emailToUsername,
+  changeCurrentUserPassword,
+} from '@/lib/firebase-auth'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useFilteredDomains } from '@/hooks/use-filtered-domains'
@@ -68,6 +82,50 @@ type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'sta
 type ViewMode = 'all' | 'groups' | 'group-detail'
 
 function App() {
+  const skipInitialDomainsSync = useRef(true)
+  const skipInitialGroupsSync = useRef(true)
+  const skipInitialTagsSync = useRef(true)
+
+  const getPermissionsByRole = (role: ManagedUserRole): UserPermissions => {
+    if (role === 'admin') {
+      return {
+        canView: true,
+        canAddDomain: true,
+        canEdit: true,
+        canManageUsers: true,
+      }
+    }
+
+    if (role === 'add-only') {
+      return {
+        canView: true,
+        canAddDomain: true,
+        canEdit: false,
+        canManageUsers: false,
+      }
+    }
+
+    return {
+      canView: true,
+      canAddDomain: false,
+      canEdit: false,
+      canManageUsers: false,
+    }
+  }
+
+  const createDefaultAdminUser = (): ManagedUser => ({
+    id: 'default-user',
+    username: 'admin',
+    password: localStorage.getItem('app-password') || 'admin123',
+    role: 'admin',
+    permissions: getPermissionsByRole('admin'),
+    isActive: true,
+    revision: 1,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    createdBy: 'system',
+  })
+
   // Authentication & Security States
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const auth = localStorage.getItem('app-authenticated')
@@ -75,6 +133,9 @@ function App() {
   })
   const [showLoginDialog, setShowLoginDialog] = useState(!isAuthenticated)
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now())
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([])
+  const [managedUsersRevision, setManagedUsersRevision] = useState<number>(0)
+  const [currentUser, setCurrentUser] = useState<ManagedUser | null>(null)
 
   // Domain & App States
   const [domains, setDomains] = useState<Domain[]>([])
@@ -155,10 +216,115 @@ function App() {
   const [previousStatuses, setPreviousStatuses] = useState<Record<string, 'online' | 'offline' | 'dns-only'>>({})
   const [activeIncidents, setActiveIncidents] = useState<Record<string, string>>({}) // domainId -> incidentId
 
+  const applyAuthenticatedSession = (user: ManagedUser) => {
+    setCurrentUser(user)
+    localStorage.setItem('app-current-user-id', user.id)
+    localStorage.setItem('app-current-username', user.username)
+    if (user.authUid) {
+      localStorage.setItem('app-current-auth-uid', user.authUid)
+    } else {
+      localStorage.removeItem('app-current-auth-uid')
+    }
+
+    setIsAuthenticated(true)
+    localStorage.setItem('app-authenticated', 'true')
+    localStorage.setItem('app-last-activity', Date.now().toString())
+    setLastActivityTime(Date.now())
+    setShowLoginDialog(false)
+  }
+
+  const isAuthConfigurationError = (error: unknown): boolean => {
+    const authError = error as { code?: string; message?: string } | undefined
+    return authError?.code === 'auth/configuration-not-found'
+      || authError?.message?.toLowerCase().includes('configuration-not-found')
+      || false
+  }
+
+  const isAuthEmailAlreadyInUseError = (error: unknown): boolean => {
+    const authError = error as { code?: string; message?: string } | undefined
+    return authError?.code === 'auth/email-already-in-use'
+      || authError?.message?.toLowerCase().includes('email-already-in-use')
+      || false
+  }
+
+  const refreshManagedUsersState = async () => {
+    const latestSnapshot = await loadManagedUsersSnapshot()
+    setManagedUsers(latestSnapshot.users)
+    setManagedUsersRevision(latestSnapshot.revision)
+    return latestSnapshot
+  }
+
+  const buildManagedUserFromAccessProfile = (authUid: string, profile: {
+    appUserId?: string
+    username?: string
+    email?: string | null
+    role?: ManagedUserRole
+    permissions?: UserPermissions
+    isActive?: boolean
+  }): ManagedUser => ({
+    id: profile.appUserId || authUid,
+    username: profile.username || emailToUsername(profile.email || ''),
+    email: profile.email || undefined,
+    authUid,
+    role: profile.role || 'viewer',
+    permissions: profile.permissions || getPermissionsByRole(profile.role || 'viewer'),
+    isActive: profile.isActive !== false,
+    revision: 1,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  })
+
+  const syncManagedUsersStateSafely = async (nextUsers: ManagedUser[], expectedRevision: number) => {
+    const syncResult = await syncManagedUsersWithRevision(nextUsers, expectedRevision)
+    if (syncResult.ok) {
+      setManagedUsers(nextUsers)
+      setManagedUsersRevision(syncResult.revision)
+      return { ok: true as const }
+    }
+
+    await refreshManagedUsersState()
+    return { ok: false as const, conflict: !!syncResult.conflict }
+  }
+
   // Load data from localStorage first, then refresh from Firebase after delay
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Load managed users (user directory)
+        let managedSnapshot = await loadManagedUsersSnapshot()
+        let loadedManagedUsers = managedSnapshot.users
+        if (!loadedManagedUsers || loadedManagedUsers.length === 0) {
+          const defaultAdmin = createDefaultAdminUser()
+          loadedManagedUsers = [defaultAdmin]
+          const bootstrapResult = await syncManagedUsersWithRevision(loadedManagedUsers, managedSnapshot.revision)
+          if (bootstrapResult.ok) {
+            managedSnapshot = {
+              users: loadedManagedUsers,
+              revision: bootstrapResult.revision,
+            }
+          }
+          localStorage.setItem('app-current-user-id', defaultAdmin.id)
+          localStorage.setItem('app-current-username', defaultAdmin.username)
+          console.log('[Users] Bootstrap default admin user')
+        }
+
+        setManagedUsers(loadedManagedUsers)
+        setManagedUsersRevision(managedSnapshot.revision)
+
+        // Restore current user session context
+        const storedUserId = localStorage.getItem('app-current-user-id') || 'default-user'
+        const sessionUser = loadedManagedUsers.find(u => u.id === storedUserId)
+        if (sessionUser && sessionUser.isActive) {
+          setCurrentUser(sessionUser)
+        } else {
+          setCurrentUser(null)
+          if (isAuthenticated) {
+            setIsAuthenticated(false)
+            localStorage.setItem('app-authenticated', 'false')
+            setShowLoginDialog(true)
+          }
+        }
+
         // ALWAYS load tags from Firebase first (for data consistency)
         console.log('[Tags] Loading tags directly from Firebase...')
         const loadedTags = await loadTags()
@@ -222,16 +388,6 @@ function App() {
           } else {
             throw error // Re-throw non-quota errors
           }
-        }
-        
-        // Load password (no caching for security)
-        try {
-          const loadedPassword = await loadPassword()
-          // Password loaded successfully
-        } catch (error: any) {
-          console.warn('Could not load password from Firebase:', error)
-          // If quota exceeded, user can still use app with cached data
-          // They just won't be able to edit until quota resets
         }
         
         // MIGRATION: Clear old localStorage data only on version change
@@ -304,6 +460,11 @@ function App() {
   // Sync to Firebase with debouncing (reduce writes)
   useEffect(() => {
     if (!isLoadingData && domains.length >= 0) {
+      if (skipInitialDomainsSync.current) {
+        skipInitialDomainsSync.current = false
+        return
+      }
+
       // No localStorage cache - always use Firebase as source of truth
       // Debounce Firebase sync to reduce writes
       const timeoutId = setTimeout(() => {
@@ -318,6 +479,11 @@ function App() {
   // Auto-sync groups to Firebase (same pattern as tags and domains)
   useEffect(() => {
     if (!isLoadingData && groups.length >= 0) {
+      if (skipInitialGroupsSync.current) {
+        skipInitialGroupsSync.current = false
+        return
+      }
+
       console.log('[Groups Sync] Auto-syncing', groups.length, 'groups to Firebase')
       const timeoutId = setTimeout(() => {
         syncGroupsToFirestore(groups)
@@ -333,6 +499,11 @@ function App() {
   
   useEffect(() => {
     if (!isLoadingData) {
+      if (skipInitialTagsSync.current) {
+        skipInitialTagsSync.current = false
+        return
+      }
+
       console.log('[Tags Sync] Syncing', tags.length, 'tags to Firebase')
       // Sync to Firebase only (no localStorage - always load from Firebase)
       const timeoutId = setTimeout(() => {
@@ -422,68 +593,613 @@ function App() {
     }
   }, [isAuthenticated, individualMonitorIntervals])
 
-  // Authentication Handlers
-  const handleLogin = async (password: string) => {
-    // Load password from Firebase first (for multi-device consistency)
-    let correctPassword = 'admin123' // default fallback
-    try {
-      const firebasePassword = await loadPassword()
-      correctPassword = firebasePassword
-      console.log('[Login] Using password from Firebase/localStorage')
-    } catch (error) {
-      console.warn('[Login] Could not load password, using default')
-    }
-    
-    if (password === correctPassword) {
-      setIsAuthenticated(true)
-      localStorage.setItem('app-authenticated', 'true')
-      localStorage.setItem('app-last-activity', Date.now().toString())
-      setLastActivityTime(Date.now())
-      setShowLoginDialog(false)
-      toast.success('Login berhasil! Selamat datang')
-      
-      // Re-load groups and tags after login to ensure fresh data
-      try {
-        console.log('[Login] Re-loading groups and tags from Firebase...')
-        const [freshGroups, freshTags] = await Promise.all([
-          loadGroups(),
-          loadTags()
-        ])
-        setGroups(freshGroups)
-        setTags(freshTags)
-        console.log('[Login] ✅ Reloaded:', freshGroups.length, 'groups and', freshTags.length, 'tags')
-      } catch (error) {
-        console.error('[Login] Error reloading groups/tags:', error)
+  useEffect(() => {
+    const unsubscribe = onAuthUserChanged(async (authUser) => {
+      if (!authUser) {
+        const hasLegacySession = localStorage.getItem('app-authenticated') === 'true'
+          && !!localStorage.getItem('app-current-user-id')
+          && !localStorage.getItem('app-current-auth-uid')
+
+        if (hasLegacySession) {
+          return
+        }
+
+        setIsAuthenticated(false)
+        setCurrentUser(null)
+        localStorage.setItem('app-authenticated', 'false')
+        localStorage.removeItem('app-last-activity')
+        localStorage.removeItem('app-current-auth-uid')
+        setShowLoginDialog(true)
+        return
       }
-    } else {
-      toast.error('Password salah! Silakan coba lagi')
+
+      const accessProfile = await getUserAccessProfileByUid(authUser.uid)
+      if (!accessProfile) {
+        await signOutAuth().catch(() => undefined)
+        toast.error('Akun auth tidak terdaftar di user directory')
+        return
+      }
+
+      if (accessProfile.isActive === false) {
+        await signOutAuth().catch(() => undefined)
+        toast.error('Akun nonaktif. Hubungi admin.')
+        return
+      }
+
+      const normalizedUsername = emailToUsername(authUser.email || '').trim().toLowerCase()
+      const matchedUser = managedUsers.find(user =>
+        user.authUid === authUser.uid || user.username.toLowerCase() === normalizedUsername
+      )
+
+      const effectiveUser = matchedUser
+        ? {
+            ...matchedUser,
+            id: accessProfile.appUserId || matchedUser.id,
+            username: accessProfile.username || matchedUser.username,
+            email: accessProfile.email || authUser.email || matchedUser.email,
+            authUid: authUser.uid,
+            role: accessProfile.role || matchedUser.role,
+            permissions: accessProfile.permissions || matchedUser.permissions,
+            isActive: accessProfile.isActive !== false,
+          }
+        : buildManagedUserFromAccessProfile(authUser.uid, {
+            appUserId: accessProfile.appUserId,
+            username: accessProfile.username,
+            email: accessProfile.email || authUser.email,
+            role: accessProfile.role,
+            permissions: accessProfile.permissions,
+            isActive: accessProfile.isActive,
+          })
+
+      const needsMetadataSync = !matchedUser
+        || matchedUser.authUid !== authUser.uid
+        || matchedUser.email !== (authUser.email || matchedUser.email)
+      if (needsMetadataSync) {
+        const updatedUsers = managedUsers.map(user =>
+          user.id === effectiveUser.id
+            ? {
+                ...effectiveUser,
+                authUid: authUser.uid,
+                email: authUser.email || user.email,
+                updatedAt: Date.now(),
+              }
+            : user
+        )
+        const nextUsers = matchedUser ? updatedUsers : [...managedUsers, { ...effectiveUser, updatedAt: Date.now() }]
+        const syncStateResult = await syncManagedUsersStateSafely(nextUsers, managedUsersRevision)
+        if (!syncStateResult.ok) {
+          console.warn('[Users] Metadata sync skipped due to revision conflict, state refreshed')
+        }
+      }
+
+      await syncUserAccessProfileToFirestore(authUser.uid, {
+        appUserId: effectiveUser.id,
+        username: effectiveUser.username,
+        email: authUser.email || effectiveUser.email,
+        role: effectiveUser.role,
+        permissions: effectiveUser.permissions,
+        isActive: effectiveUser.isActive,
+      }).catch(console.error)
+
+      const activeUser = {
+        ...effectiveUser,
+        authUid: authUser.uid,
+        email: authUser.email || effectiveUser.email,
+      }
+
+      if (!currentUser || currentUser.id !== activeUser.id || !isAuthenticated) {
+        applyAuthenticatedSession(activeUser)
+      }
+    })
+
+    return () => unsubscribe()
+  }, [managedUsers, currentUser, isAuthenticated])
+
+  // Authentication Handlers
+  const handleLogin = async (username: string, password: string) => {
+    const normalized = username.trim().toLowerCase()
+
+    let users = managedUsers
+    if (!users || users.length === 0) {
+      const snapshot = await loadManagedUsersSnapshot()
+      users = snapshot.users
+      setManagedUsersRevision(snapshot.revision)
+      if (!users || users.length === 0) {
+        const defaultAdmin = createDefaultAdminUser()
+        users = [defaultAdmin]
+        const bootstrapSyncResult = await syncManagedUsersWithRevision(users, snapshot.revision)
+        if (bootstrapSyncResult.ok) {
+          setManagedUsersRevision(bootstrapSyncResult.revision)
+        }
+      }
+      setManagedUsers(users)
+    }
+
+    try {
+      const authUser = await signInWithUsernamePassword(username, password)
+
+      const accessProfile = await getUserAccessProfileByUid(authUser.uid)
+      if (!accessProfile) {
+        await signOutAuth().catch(() => undefined)
+        toast.error('Akun tidak terdaftar di direktori user')
+        return
+      }
+
+      if (accessProfile.isActive === false) {
+        await signOutAuth().catch(() => undefined)
+        toast.error('Akun nonaktif. Hubungi admin.')
+        return
+      }
+
+      // Always refresh managed users from Firestore after auth is ready
+      // to avoid stale local cache data after page refresh.
+      const freshSnapshot = await loadManagedUsersSnapshot()
+      if (freshSnapshot.users.length > 0 || managedUsers.length === 0) {
+        users = freshSnapshot.users
+        setManagedUsers(freshSnapshot.users)
+        setManagedUsersRevision(freshSnapshot.revision)
+      }
+
+      const matchedUser = users.find(
+        user => user.authUid === authUser.uid || user.username.toLowerCase() === normalized
+      )
+
+      const effectiveUser = matchedUser
+        ? {
+            ...matchedUser,
+            id: accessProfile.appUserId || matchedUser.id,
+            username: accessProfile.username || matchedUser.username,
+            email: accessProfile.email || authUser.email || matchedUser.email,
+            authUid: authUser.uid,
+            role: accessProfile.role || matchedUser.role,
+            permissions: accessProfile.permissions || matchedUser.permissions,
+            isActive: accessProfile.isActive !== false,
+          }
+        : buildManagedUserFromAccessProfile(authUser.uid, {
+            appUserId: accessProfile.appUserId,
+            username: accessProfile.username,
+            email: accessProfile.email || authUser.email,
+            role: accessProfile.role,
+            permissions: accessProfile.permissions,
+            isActive: accessProfile.isActive,
+          })
+
+      const metadataNeedsSync = !matchedUser
+        || matchedUser.authUid !== authUser.uid
+        || matchedUser.email !== (authUser.email || matchedUser.email)
+      const activeUser = {
+        ...effectiveUser,
+        authUid: authUser.uid,
+        email: authUser.email || effectiveUser.email,
+      }
+
+      if (metadataNeedsSync) {
+        const updatedUsers = users.map(user =>
+          user.id === activeUser.id
+            ? {
+                ...activeUser,
+                authUid: authUser.uid,
+                email: authUser.email || user.email,
+                updatedAt: Date.now(),
+              }
+            : user
+        )
+        const nextUsers = matchedUser ? updatedUsers : [...users, { ...activeUser, updatedAt: Date.now() }]
+        const syncStateResult = await syncManagedUsersStateSafely(nextUsers, managedUsersRevision)
+        if (!syncStateResult.ok) {
+          console.warn('[Users] Login metadata sync skipped due to revision conflict, state refreshed')
+        }
+      }
+
+      await syncUserAccessProfileToFirestore(authUser.uid, {
+        appUserId: activeUser.id,
+        username: activeUser.username,
+        email: activeUser.email,
+        role: activeUser.role,
+        permissions: activeUser.permissions,
+        isActive: activeUser.isActive,
+      }).catch(console.error)
+
+      applyAuthenticatedSession(activeUser)
+      toast.success(`Login berhasil! Selamat datang, ${activeUser.username}`)
+    } catch (authError) {
+      console.error('[Auth] Firebase sign-in failed:', authError)
+
+      if (isAuthConfigurationError(authError)) {
+        const matchedLegacyUser = users.find(
+          user => user.username.toLowerCase() === normalized && (user.password || '') === password
+        )
+
+        if (!matchedLegacyUser) {
+          toast.error('Username atau password salah')
+          return
+        }
+
+        if (!matchedLegacyUser.isActive) {
+          toast.error('Akun nonaktif. Hubungi admin.')
+          return
+        }
+
+        applyAuthenticatedSession(matchedLegacyUser)
+        toast.warning('Firebase Auth belum aktif. Masuk menggunakan mode legacy sementara.')
+        return
+      }
+
+      const legacyUser = users.find(user => user.username.toLowerCase() === normalized)
+      const canBootstrapLegacyAuth = legacyUser && !legacyUser.authUid && (legacyUser.password || '') === password
+
+      if (canBootstrapLegacyAuth && legacyUser) {
+        try {
+          const bootstrappedAuth = await createAuthUserWithUsername(legacyUser.username, password)
+          const updatedUsers = users.map(user =>
+            user.id === legacyUser.id
+              ? {
+                  ...user,
+                  authUid: bootstrappedAuth.uid,
+                  email: bootstrappedAuth.email,
+                  updatedAt: Date.now(),
+                }
+              : user
+          )
+
+          const syncStateResult = await syncManagedUsersStateSafely(updatedUsers, managedUsersRevision)
+          if (!syncStateResult.ok) {
+            toast.error('Data user berubah saat bootstrap auth. Silakan login ulang.')
+            return
+          }
+
+          await syncUserAccessProfileToFirestore(bootstrappedAuth.uid, {
+            appUserId: legacyUser.id,
+            username: legacyUser.username,
+            email: bootstrappedAuth.email,
+            role: legacyUser.role,
+            permissions: legacyUser.permissions,
+            isActive: legacyUser.isActive,
+          })
+
+          await signInWithUsernamePassword(username, password)
+          toast.success('Akun user berhasil dimigrasikan ke Firebase Auth. Silakan login ulang sekali lagi jika perlu.')
+          return
+        } catch (bootstrapError) {
+          console.error('[Auth] Legacy user bootstrap failed:', bootstrapError)
+        }
+      }
+
+      toast.error('Username atau password salah / akun auth belum aktif')
+      return
+    }
+
+    // Re-load groups and tags after login to ensure fresh data
+    try {
+      console.log('[Login] Re-loading groups and tags from Firebase...')
+      const [freshGroups, freshTags] = await Promise.all([
+        loadGroups(),
+        loadTags()
+      ])
+      setGroups(freshGroups)
+      setTags(freshTags)
+      console.log('[Login] ✅ Reloaded:', freshGroups.length, 'groups and', freshTags.length, 'tags')
+    } catch (error) {
+      console.error('[Login] Error reloading groups/tags:', error)
     }
   }
 
   const handleLogout = () => {
+    signOutAuth().catch(console.error)
     setIsAuthenticated(false)
+    setCurrentUser(null)
     localStorage.setItem('app-authenticated', 'false')
     localStorage.removeItem('app-last-activity')
+    localStorage.removeItem('app-current-auth-uid')
+    localStorage.removeItem('app-current-user-id')
+    localStorage.removeItem('app-current-username')
     setShowLoginDialog(true)
     toast.info('Anda telah logout')
   }
 
   const handlePasswordChange = async (oldPassword: string, newPassword: string): Promise<boolean> => {
-    // Load current password from Firebase first
-    let currentPassword = 'admin123'
-    try {
-      const firebasePassword = await loadPassword()
-      currentPassword = firebasePassword
-    } catch (error) {
-      console.warn('[Change Password] Could not load password from Firebase')
-    }
-    
-    if (oldPassword !== currentPassword) {
+    if (!currentUser) {
       return false
     }
-    
-    localStorage.setItem('app-password', newPassword)
-    await syncPasswordToFirestore(newPassword).catch(console.error)
+
+    const userIndex = managedUsers.findIndex(u => u.id === currentUser.id)
+    if (userIndex === -1) {
+      return false
+    }
+
+    if (!currentUser.authUid) {
+      toast.error('Akun belum terhubung ke Firebase Auth')
+      return false
+    }
+
+    try {
+      await changeCurrentUserPassword(oldPassword, newPassword)
+    } catch (error) {
+      console.error('[Auth] Failed to change Firebase password:', error)
+      return false
+    }
+
+    const updatedUser: ManagedUser = {
+      ...managedUsers[userIndex],
+      revision: (managedUsers[userIndex].revision ?? 1) + 1,
+      updatedAt: Date.now(),
+    }
+
+    const updatedUsers = [...managedUsers]
+    updatedUsers[userIndex] = updatedUser
+
+    const syncResult = await syncManagedUsersWithRevision(updatedUsers, managedUsersRevision)
+    if (!syncResult.ok) {
+      await refreshManagedUsersState()
+      if (syncResult.conflict) {
+        toast.error('Perubahan user bentrok dengan update lain. Data dimuat ulang, silakan ulangi.')
+      }
+      return false
+    }
+
+    setManagedUsers(updatedUsers)
+    setManagedUsersRevision(syncResult.revision)
+    setCurrentUser(updatedUser)
+
+    await writeAuditLog({
+      actorUserId: currentUser.id,
+      actorUsername: currentUser.username,
+      action: 'change-password',
+      targetType: 'user',
+      targetId: currentUser.id,
+      changes: {
+        method: 'firebase-auth',
+      },
+    }).catch(console.error)
+
+    return true
+  }
+
+  const handleCreateUser = async (payload: { username: string; password: string; role: ManagedUserRole }): Promise<boolean> => {
+    if (!currentUser?.permissions.canManageUsers) {
+      toast.error('Anda tidak memiliki akses manajemen user')
+      return false
+    }
+
+    if (managedUsers.some(user => user.username.toLowerCase() === payload.username.toLowerCase())) {
+      toast.error('Username sudah digunakan')
+      return false
+    }
+
+    let authUser: { uid: string; email: string } | null = null
+    try {
+      authUser = await createAuthUserWithUsername(payload.username, payload.password)
+    } catch (error) {
+      console.error('[Auth] Failed to create Firebase auth user:', error)
+
+      if (isAuthEmailAlreadyInUseError(error)) {
+        try {
+          authUser = await signInWithUsernamePasswordSecondary(payload.username, payload.password)
+        } catch (existingAuthError) {
+          console.error('[Auth] Existing auth account cannot be claimed with provided password:', existingAuthError)
+          toast.error('Email auth sudah terpakai. Gunakan username lain atau password yang sesuai akun lama.')
+          return false
+        }
+      }
+
+      if (!isAuthConfigurationError(error)) {
+        if (!authUser) {
+          toast.error('Gagal membuat akun auth user')
+          return false
+        }
+      }
+
+      if (authUser) {
+        toast.info('Akun auth sudah ada. User directory akan dihubungkan ke akun tersebut.')
+      } else if (isAuthConfigurationError(error)) {
+        toast.warning('Firebase Auth belum aktif. User dibuat dengan mode legacy sementara.')
+      }
+
+      if (!authUser && !isAuthConfigurationError(error)) {
+        return false
+      }
+    }
+
+    const now = Date.now()
+    const newUser: ManagedUser = {
+      id: `user-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      username: payload.username,
+      email: authUser?.email,
+      authUid: authUser?.uid,
+      password: authUser ? undefined : payload.password,
+      role: payload.role,
+      permissions: getPermissionsByRole(payload.role),
+      isActive: true,
+      revision: 1,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: currentUser.username,
+    }
+
+    const updatedUsers = [...managedUsers, newUser]
+    const syncResult = await syncManagedUsersWithRevision(updatedUsers, managedUsersRevision)
+
+    if (!syncResult.ok) {
+      await refreshManagedUsersState()
+      if (syncResult.conflict) {
+        toast.error('Data user berubah di tempat lain. Muat ulang selesai, silakan coba lagi.')
+      } else {
+        toast.error('Gagal menyimpan user ke Firebase')
+      }
+      return false
+    }
+
+    setManagedUsers(updatedUsers)
+    setManagedUsersRevision(syncResult.revision)
+
+    // Re-sync from server snapshot to keep list consistent across cache/auth timing.
+    await refreshManagedUsersState().catch(console.error)
+
+    if (authUser?.uid) {
+      const syncedProfile = await syncUserAccessProfileToFirestore(authUser.uid, {
+        appUserId: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        permissions: newUser.permissions,
+        isActive: newUser.isActive,
+      })
+
+      if (!syncedProfile) {
+        toast.warning('User dibuat, tetapi profile akses belum sinkron ke Firebase')
+      }
+    }
+
+    await writeAuditLog({
+      actorUserId: currentUser.id,
+      actorUsername: currentUser.username,
+      action: 'create-user',
+      targetType: 'user',
+      targetId: newUser.id,
+      changes: {
+        username: newUser.username,
+        role: newUser.role,
+        isActive: newUser.isActive,
+      },
+    }).catch(console.error)
+
+    toast.success(`User ${newUser.username} berhasil dibuat`)
+    return true
+  }
+
+  const handleToggleUserActive = async (userId: string, isActive: boolean): Promise<boolean> => {
+    if (!currentUser?.permissions.canManageUsers) {
+      toast.error('Anda tidak memiliki akses manajemen user')
+      return false
+    }
+
+    const targetUser = managedUsers.find(user => user.id === userId)
+    if (!targetUser) return false
+
+    if (targetUser.role === 'admin' && !isActive) {
+      toast.error('Admin tidak dapat dinonaktifkan')
+      return false
+    }
+
+    const updatedUsers = managedUsers.map(user =>
+      user.id === userId
+        ? { ...user, isActive, revision: (user.revision ?? 1) + 1, updatedAt: Date.now() }
+        : user
+    )
+
+    const syncResult = await syncManagedUsersWithRevision(updatedUsers, managedUsersRevision)
+
+    if (!syncResult.ok) {
+      await refreshManagedUsersState()
+      if (syncResult.conflict) {
+        toast.error('Perubahan bentrok dengan update lain. Data dimuat ulang, silakan ulangi.')
+      } else {
+        toast.error('Gagal memperbarui status user')
+      }
+      return false
+    }
+
+    setManagedUsers(updatedUsers)
+    setManagedUsersRevision(syncResult.revision)
+
+    const updatedTargetUser = updatedUsers.find(user => user.id === userId)
+    let profileSynced = false
+    if (updatedTargetUser?.authUid) {
+      profileSynced = await syncUserAccessProfileToFirestore(updatedTargetUser.authUid, {
+        appUserId: updatedTargetUser.id,
+        username: updatedTargetUser.username,
+        email: updatedTargetUser.email,
+        role: updatedTargetUser.role,
+        permissions: updatedTargetUser.permissions,
+        isActive: updatedTargetUser.isActive,
+      })
+    }
+
+    if (!profileSynced && updatedTargetUser) {
+      profileSynced = await syncUserActiveStateByAppUserId(updatedTargetUser.id, updatedTargetUser.isActive)
+    }
+
+    if (!profileSynced) {
+      toast.warning('Status user tersimpan di directory, tetapi profile auth belum sinkron')
+    }
+
+    await writeAuditLog({
+      actorUserId: currentUser.id,
+      actorUsername: currentUser.username,
+      action: 'toggle-user-active',
+      targetType: 'user',
+      targetId: userId,
+      changes: {
+        isActive,
+      },
+    }).catch(console.error)
+
+    toast.success(isActive ? 'User diaktifkan' : 'User dinonaktifkan')
+    return true
+  }
+
+  const handleDeleteUser = async (userId: string): Promise<boolean> => {
+    if (!currentUser?.permissions.canManageUsers) {
+      toast.error('Anda tidak memiliki akses manajemen user')
+      return false
+    }
+
+    const targetUser = managedUsers.find(user => user.id === userId)
+    if (!targetUser) {
+      toast.error('User tidak ditemukan')
+      return false
+    }
+
+    if (targetUser.role === 'admin') {
+      toast.error('User admin tidak bisa dihapus')
+      return false
+    }
+
+    if (currentUser.id === targetUser.id) {
+      toast.error('Tidak bisa menghapus akun yang sedang dipakai')
+      return false
+    }
+
+    const updatedUsers = managedUsers.filter(user => user.id !== userId)
+    const syncResult = await syncManagedUsersWithRevision(updatedUsers, managedUsersRevision)
+
+    if (!syncResult.ok) {
+      await refreshManagedUsersState()
+      if (syncResult.conflict) {
+        toast.error('Perubahan bentrok dengan update lain. Data dimuat ulang, silakan ulangi.')
+      } else {
+        toast.error('Gagal menghapus user')
+      }
+      return false
+    }
+
+    setManagedUsers(updatedUsers)
+    setManagedUsersRevision(syncResult.revision)
+
+    const profileRevoked = await revokeUserAccessProfile({
+      appUserId: targetUser.id,
+      authUid: targetUser.authUid,
+      username: targetUser.username,
+      email: targetUser.email,
+    })
+
+    if (!profileRevoked) {
+      toast.warning('User terhapus dari directory, tetapi profile auth tidak ditemukan untuk direvoke')
+    }
+
+    await writeAuditLog({
+      actorUserId: currentUser.id,
+      actorUsername: currentUser.username,
+      action: 'delete-user',
+      targetType: 'user',
+      targetId: targetUser.id,
+      changes: {
+        username: targetUser.username,
+        role: targetUser.role,
+      },
+    }).catch(console.error)
+
+    toast.success(`User ${targetUser.username} berhasil dihapus`)
     return true
   }
 
@@ -584,8 +1300,16 @@ function App() {
     }
   }, [activeTab, isLoadingData])
 
-  // Check if user can edit (authenticated only)
-  const canEdit = isAuthenticated
+  // Capability checks based on current user permissions
+  const canView = isAuthenticated && (currentUser?.permissions.canView ?? false)
+  const canAddDomain = isAuthenticated && (currentUser?.permissions.canAddDomain ?? false)
+  const canEdit = isAuthenticated && (currentUser?.permissions.canEdit ?? false)
+  const canManageUsers = isAuthenticated && (currentUser?.permissions.canManageUsers ?? false)
+  const currentUserRoleLabel = currentUser?.role === 'admin'
+    ? 'Admin'
+    : currentUser?.role === 'add-only'
+      ? 'Add URL Only'
+      : 'Readonly'
 
   const checkAllDomains = async (showToast = false, batchCheckOnly = false, isAutoCheck = false) => {
     if (!domains || domains.length === 0) return
@@ -820,7 +1544,7 @@ function App() {
   }
 
   const handleAddDomain = (url: string) => {
-    if (!canEdit) {
+    if (!canAddDomain) {
       toast.error('Anda tidak memiliki akses untuk menambah domain')
       return
     }
@@ -898,6 +1622,11 @@ function App() {
   }
 
   const handleTogglePin = async (id: string) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk pin/unpin domain')
+      return
+    }
+
     const domain = domains.find(d => d.id === id)
     const newPinnedState = !domain?.pinned
     
@@ -928,6 +1657,11 @@ function App() {
   }
 
   const handleToggleDomainMonitoring = async (id: string) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk mengubah monitoring domain')
+      return
+    }
+
     const domain = domains?.find(d => d.id === id)
     if (!domain) {
       console.error('Domain not found:', id)
@@ -1268,6 +2002,11 @@ function App() {
   }
 
   const handleImportDomains = (importedDomains: Domain[], groupId?: string) => {
+    if (!canEdit) {
+      toast.error('Anda tidak memiliki akses untuk import domain')
+      return
+    }
+
     if (importedDomains.length === 0) return
 
     const domainsWithGroup = groupId 
@@ -1674,6 +2413,7 @@ function App() {
                 onLogout={handleLogout}
                 isAutoRefresh={autoRefreshEnabled}
                 onToggleAutoRefresh={handleToggleAutoRefresh}
+                canManageUsers={canManageUsers}
               />
               
               <div className="flex items-center gap-2.5">
@@ -1694,6 +2434,16 @@ function App() {
 
               {/* Desktop Actions - Hidden on mobile */}
               <div className="hidden md:flex items-center gap-2">
+                {isAuthenticated && currentUser && (
+                  <div className="h-8 flex items-center gap-1.5 px-2 rounded-md border border-border bg-muted/20">
+                    <UserCircle size={17} className="text-muted-foreground" />
+                    <div className="leading-[1.05]">
+                      <p className="text-xs font-medium text-foreground">{currentUser.username}</p>
+                      <p className="text-[10px] text-muted-foreground">{currentUserRoleLabel}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Settings Menu Button */}
                 {isAuthenticated && (
                   <SettingsMenuDialog
@@ -1704,6 +2454,12 @@ function App() {
                     clearHistory={() => notificationService.clearHistory()}
                     onChangePassword={handlePasswordChange}
                     onLogout={handleLogout}
+                    canManageUsers={canManageUsers}
+                    managedUsers={managedUsers}
+                    currentUserId={currentUser?.id}
+                    onCreateUser={handleCreateUser}
+                    onToggleUserActive={handleToggleUserActive}
+                    onDeleteUser={handleDeleteUser}
                   />
                 )}
 
@@ -2196,8 +2952,8 @@ function App() {
                       statuses={statuses}
                       groups={groups}
                       tags={tags}
-                      onToggleMonitoring={handleToggleDomainMonitoring}
-                      onTogglePin={handleTogglePin}
+                      onToggleMonitoring={canEdit ? handleToggleDomainMonitoring : undefined}
+                      onTogglePin={canEdit ? handleTogglePin : undefined}
                       showCheckbox={false}
                       simpleMode={false}
                     />
@@ -2214,7 +2970,7 @@ function App() {
               </p>
             </div>
 
-            {canEdit && <AddDomainForm onAdd={handleAddDomain} />}
+            {canAddDomain && <AddDomainForm onAdd={handleAddDomain} />}
 
             {globalTotalCount > 0 && (
               <div className="space-y-3">
@@ -2464,8 +3220,8 @@ function App() {
                         tags={tags}
                         onDelete={canEdit ? handleDeleteDomain : undefined}
                         onEdit={canEdit ? handleEditDomain : undefined}
-                        onToggleMonitoring={handleToggleDomainMonitoring}
-                        onTogglePin={handleTogglePin}
+                        onToggleMonitoring={canEdit ? handleToggleDomainMonitoring : undefined}
+                        onTogglePin={canEdit ? handleTogglePin : undefined}
                         existingUrls={(domains || []).filter(d => !filteredManageDomains.some(fd => fd.id === d.id)).map(d => d.url)}
                         selectedDomains={selectedDomains}
                         onSelect={canEdit ? handleSelectDomain : undefined}
@@ -2554,7 +3310,7 @@ function App() {
                         key={domain.id}
                         domain={domain}
                         status={domainStatus}
-                        onUnpin={handleTogglePin}
+                        onUnpin={canEdit ? handleTogglePin : undefined}
                       />
                     )
                   })}

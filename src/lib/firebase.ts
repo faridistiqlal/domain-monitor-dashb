@@ -23,5 +23,6 @@ export const COLLECTIONS = {
   DOMAINS: 'domains',
   GROUPS: 'groups',
   TAGS: 'tags',
-  USERS: 'users'
+  USERS: 'users',
+  AUDIT_LOGS: 'audit-logs'
 } as const

@@ -32,7 +32,7 @@ Aplikasi Domain Monitor memiliki **5 metode monitoring** yang berbeda dengan rul
 
 ┌─────────────────────────────────────────────────────────────┐
 │           4. GITHUB ACTIONS CRON (SERVER-SIDE)              │
-│  GitHub Actions → Check semua domain setiap 20 menit        │
+│  GitHub Actions → Check per batch setiap 1 jam              │
 │  💾 Firebase Write: ✅ YES (+ Slack notification)            │
 └─────────────────────────────────────────────────────────────┘
 
@@ -264,21 +264,21 @@ const handleCheckDomain = async (domainId) => {
 ## 4️⃣ GITHUB ACTIONS CRON (Server-side)
 
 ### 📖 Deskripsi
-**24/7 automated monitoring** yang berjalan di GitHub Actions server. Check semua domain setiap 20 menit, **tidak butuh browser terbuka**.
+**24/7 automated monitoring** yang berjalan di GitHub Actions server. Check domain by batch setiap 1 jam, **tidak butuh browser terbuka**.
 
 ### 🎛️ Cara Kerja
-- **Automatic:** Runs every 20 minutes via cron schedule
+- **Automatic:** Runs every 1 hour via cron schedule
 - **Manual Trigger:** Bisa trigger manual dari GitHub Actions UI
 - **Completely Independent:** Tidak tergantung browser/user
 
 ### ⚙️ Rules
-- **Schedule:** `*/20 * * * *` (setiap 20 menit)
+- **Schedule:** `0 * * * *` (setiap 1 jam)
 - **Check Scope:** Batch-based (1 batch per run, rotates B1→B2→B3→B4)
 - **Firebase Write:** ✅ YES - Writes to `domain-stats-daily`, `domains`, and `github-actions-logs`
 - **Slack Notification:** ✅ YES - Summary results per batch
-- **4 Batch System:** Check staggered by time (B1: 0,20,40 / B2: 5,25,45 / B3: 10,30,50 / B4: 15,35,55)
-- **Duration:** ~30-60 seconds per run
-- **Free Tier:** 2000 minutes/month (≈1,231 min/month used)
+- **4 Batch System:** Hourly rotation (B1: 00,04,08,12,16,20 / B2: 01,05,09,13,17,21 / B3: 02,06,10,14,18,22 / B4: 03,07,11,15,19,23)
+- **Duration:** ~2.4 minutes per run
+- **Free Tier:** 2000 minutes/month (≈1,728 min/month used)
 - **Data Written:**
   - Daily stats dengan hourly breakdown
   - Domain status updates (last checked, response time, IP)
@@ -290,7 +290,7 @@ const handleCheckDomain = async (domainId) => {
 ```
 Scenario: Butuh monitoring kontinyu tanpa manpower
 Action: Setup once, forget it
-Result: Domain dicek setiap 20 menit, 72 checks/day per batch
+Result: Domain dicek setiap ~4 jam per domain (rotasi 4 batch)
 Benefit: True 24/7 monitoring, FREE
 ```
 
@@ -320,7 +320,7 @@ Benefit: Reliable metrics untuk stakeholder
 
 ### ❌ Tidak Cocok Untuk
 
-❌ **Instant feedback** - Delay up to 20 minutes  
+❌ **Instant feedback** - Delay up to 1 hour untuk batch berikutnya  
 ❌ **On-demand checks** - Schedule fixed, tidak bisa dipercepat  
 ❌ **Real-time troubleshooting** - Terlalu lambat untuk debugging  
 
@@ -329,7 +329,7 @@ Benefit: Reliable metrics untuk stakeholder
 # .github/workflows/monitor-domains.yml
 on:
   schedule:
-    - cron: '*/20 * * * *'
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -462,7 +462,7 @@ useEffect(() => {
 | **Browser Required** | ✅ YES | ✅ YES | ✅ YES | ❌ NO | ✅ YES |
 | **Firebase Write** | ✅ YES | ❌ NO | ❌ NO | ✅ YES | Conditional |
 | **Check Scope** | Batch | All | 1 Domain | All | Pinned Only |
-| **Interval** | 60s | Manual | Manual | 20 min | On Tab Open |
+| **Interval** | 60s | Manual | Manual | 1 hour (batch rotation) | On Tab Open |
 | **Best For** | Live Dashboard | Quick Check | Troubleshooting | 24/7 Monitoring | VIP Domains |
 | **Data History** | ✅ YES | ❌ NO | ❌ NO | ✅ YES | Conditional |
 | **Slack Notify** | ❌ NO | ❌ NO | ❌ NO | ✅ YES | ❌ NO |

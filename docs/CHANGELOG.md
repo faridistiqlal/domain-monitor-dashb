@@ -1,5 +1,129 @@
 # Changelog
 
+## Version 3.10.2 - Firebase Rules Deploy & E2E Readiness
+**Tanggal Rilis:** 16 Februari 2026
+
+### 🔐 Firebase Security & Release Sync
+
+**Changes:**
+1. **Firestore Rules deployment finalized**
+  - Rules dari `firestore.rules` sudah dideploy ke project Firebase `kendal-monitor`.
+  - Perbaikan warning rules (`exists`) sudah diterapkan dan deploy ulang berhasil tanpa warning compile.
+
+2. **Deployment workflow readiness (Firebase/Vercel)**
+  - Menambahkan `firebase.json` sebagai mapping source rules.
+  - Menambahkan script deploy rules berbasis `firebase-tools` di `package.json`.
+
+3. **E2E execution checklist prepared**
+  - Menambahkan dokumen `docs/USER-MANAGEMENT-E2E-CHECKLIST.md` untuk uji real Firebase (admin/viewer/add-only, audit-log, toggle active, change password).
+
+4. **Footer + changelog version sync**
+  - `APP_VERSION` diperbarui ke `3.10.2` agar footer menampilkan versi yang sama dengan changelog.
+
+**Status:** ✅ Ready for Vercel deployment
+
+---
+
+## Version 3.10.1 - Read-Only Action Lock Fix
+**Tanggal Rilis:** 16 Februari 2026
+
+### 🛡️ Permission Enforcement Fix
+
+**Issue fixed:**
+- User read-only/add-only masih melihat/menjalankan beberapa aksi mutasi di tab Kelola (pin, monitoring toggle, delete/edit visibility mismatch).
+
+**Changes:**
+1. **Action callbacks gated by permission**
+  - `onTogglePin` dan `onToggleMonitoring` hanya dipass saat user memiliki `canEdit`.
+
+2. **Delete button visibility fixed**
+  - Tombol delete di card hanya render jika callback delete tersedia.
+
+3. **No-op fallback removed**
+  - `onDelete` fallback kosong di list dihapus agar UI tidak menampilkan aksi palsu.
+
+4. **Double guard in handlers**
+  - Handler pin/monitoring juga validasi permission untuk mencegah bypass.
+
+**Status:** ✅ Ready for deployment
+
+---
+
+## Version 3.10.0 - User Management MVP
+**Tanggal Rilis:** 16 Februari 2026
+
+### ✨ New Features
+
+1. **Username + Password Login**
+  - Login tidak lagi password-only.
+  - Mendukung akun user terkelola (managed users).
+
+2. **User Management di Settings (Admin Only)**
+  - Admin dapat membuat user baru.
+  - Admin dapat enable/disable user.
+  - Daftar user menampilkan role dan permission ringkas.
+
+3. **Permission MVP Implemented**
+  - **Viewer**: hanya lihat.
+  - **Add URL Only**: bisa tambah domain, tidak bisa edit/delete.
+  - **Admin**: full access + manage users.
+
+### 🔧 Sync & Data Handling
+
+- Menambahkan sinkronisasi `managed users` ke Firebase (`users/user-directory`).
+- Menjaga data monitoring (`domains/groups/tags`) tetap shared agar konsisten untuk seluruh user operasional.
+
+**Status:** ✅ Ready for production deployment
+
+---
+
+## Version 3.9.11 - Pin/Group Sync Data-Loss Prevention
+**Tanggal Rilis:** 16 Februari 2026
+
+### 🛡️ Critical Sync Safeguards
+
+**Root cause addressed:**
+- Saat pembacaan Firestore error (quota/network/permission), sebelumnya fungsi read mengembalikan `[]`.
+- State kosong ini bisa langsung ter-sync balik saat startup dan menimpa data Firebase (pin/group terlihat hilang).
+
+**Fix implemented:**
+1. **Do not treat read errors as empty data**
+  - Firestore read helpers sekarang melempar error (throw), bukan return empty array.
+  - Load flow bisa membedakan "data kosong valid" vs "gagal baca".
+
+2. **Skip first auto-sync after initial load**
+  - Auto-sync startup untuk domains/groups/tags dilewati sekali.
+  - Mencegah overwrite data cloud oleh state awal yang belum stabil.
+
+**Impact:**
+- ✅ Mengurangi risiko hilangnya pin/group karena startup race + read failure.
+- ✅ Sinkronisasi tetap jalan normal untuk perubahan user setelah app loaded.
+
+---
+
+## Version 3.9.10 - Statistics & Usage Sync Alignment
+**Tanggal Rilis:** 16 Februari 2026
+
+### 🔧 Fixes & Consistency Update
+
+**Updated to match actual production behavior:**
+1. **GitHub Actions Monthly Usage calculation in Statistics tab:**
+  - ❌ Sebelumnya: estimasi `1.5 min/run` → `36 min/day`
+  - ✅ Sekarang: estimasi `2.4 min/run` → `57.6 min/day`
+  - ✅ Proyeksi bulanan sinkron: `~1,728 min/month` (86% dari quota 2,000)
+
+2. **Workflow documentation comment sync:**
+  - ✅ Comment di workflow `.github/workflows/monitor-domains.yml` disesuaikan dengan runtime aktual
+  - ✅ Keterangan quota kini konsisten dengan schedule `cron: '0 * * * *'` (setiap 1 jam)
+
+3. **Footer & Changelog version sync:**
+  - ✅ `APP_VERSION` di-update ke `3.9.10`
+  - ✅ Footer `v3.9.10` otomatis sinkron melalui `ChangelogDialog triggerText`
+
+**Status:** ✅ Ready for Vercel deployment
+
+---
+
 ## Version 3.9.9 - GitHub Actions Schedule Adjustment
 **Tanggal Rilis:** 1 Februari 2026
 

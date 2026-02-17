@@ -49,30 +49,29 @@ export function ChangelogDialog({ triggerText, showIcon = true }: ChangelogDialo
         <ScrollArea className="px-6 pb-6 max-h-[calc(85vh-120px)]">
           <div className="space-y-6 pr-4">
             
-            {/* Version 3.9.5 */}
+            {/* Version 3.10.2 */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.5</h3>
-                  <p className="text-xs text-muted-foreground">Current Release • 12 Januari 2026</p>
+                  <h3 className="text-lg font-semibold text-foreground">Version 3.10.2</h3>
+                  <p className="text-xs text-muted-foreground">Current Release • 16 Februari 2026</p>
                 </div>
                 <div className="flex gap-2">
-                  <Badge className="text-xs bg-gradient-to-r from-green-500 to-emerald-500">Critical Fix</Badge>
+                  <Badge className="text-xs bg-gradient-to-r from-red-500 to-orange-500">Security & Deploy</Badge>
                 </div>
               </div>
               
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Bug size={16} className="text-green-500" weight="duotone" />
-                    <h4 className="text-sm font-semibold text-foreground">Groups Persistence Fixed (Final)</h4>
+                    <Bug size={16} className="text-red-500" weight="duotone" />
+                    <h4 className="text-sm font-semibold text-foreground">Firebase Rules Deploy & E2E Readiness</h4>
                   </div>
                   <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
-                    <li><strong>Firebase Undefined Error:</strong> Fixed groups failing to save due to undefined description field</li>
-                    <li><strong>Auto-check on Load:</strong> Monitoring tab now auto-checks domains on first open</li>
-                    <li><strong>Last Check Display:</strong> Added timestamp showing when domains were last checked</li>
-                    <li><strong>Immediate Firebase Sync:</strong> Groups and domain assignments now sync instantly (no delay)</li>
-                    <li><strong>Cache Optimization:</strong> Firebase data loads immediately after cache (no 30s wait)</li>
+                    <li><strong>Firestore Rules Live:</strong> Rules sudah terdeploy ke Firebase project <strong>kendal-monitor</strong> dengan compile bersih.</li>
+                    <li><strong>Rules Mapping Ready:</strong> Konfigurasi <strong>firebase.json</strong> + script deploy rules berbasis <strong>firebase-tools</strong> sudah disiapkan.</li>
+                    <li><strong>E2E Checklist Added:</strong> Dokumen uji nyata Firebase untuk role admin/viewer/add-only dan audit log sudah tersedia.</li>
+                    <li><strong>Footer Version Sync:</strong> Footer otomatis menampilkan v3.10.2 dari source-of-truth version constant.</li>
                   </ul>
                 </div>
               </div>

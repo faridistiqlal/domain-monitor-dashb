@@ -105,7 +105,7 @@ export const OptimizedDomainList = memo(({
             key={domain.id}
             domain={domain}
             status={status}
-            onDelete={onDelete || (() => {})}
+            onDelete={onDelete}
             onEdit={onEdit}
             onToggleMonitoring={onToggleMonitoring}
             onTogglePin={onTogglePin}
@@ -113,7 +113,7 @@ export const OptimizedDomainList = memo(({
             group={group}
             tags={tags}
             isSelected={selectedDomains?.has(domain.id) || false}
-            onSelect={onSelect || (() => {})}
+            onSelect={onSelect}
             showCheckbox={showCheckbox}
             simpleMode={simpleMode}
           />

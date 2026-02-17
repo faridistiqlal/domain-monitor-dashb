@@ -17,7 +17,7 @@ import {
 interface PinnedDomainCardProps {
   domain: Domain
   status: DomainStatus
-  onUnpin: (id: string) => void
+  onUnpin?: (id: string) => void
 }
 
 export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardProps) {
@@ -25,6 +25,7 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleUnpin = () => {
+    if (!onUnpin) return
     setIsDeleting(true)
     onUnpin(domain.id)
   }
@@ -99,14 +100,16 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
                 <Globe size={14} className="mr-2" />
                 Buka di tab baru
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={handleUnpin}
-                disabled={isDeleting}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash size={14} className="mr-2" />
-                Unpin domain
-              </DropdownMenuItem>
+              {onUnpin && (
+                <DropdownMenuItem 
+                  onClick={handleUnpin}
+                  disabled={isDeleting}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash size={14} className="mr-2" />
+                  Unpin domain
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

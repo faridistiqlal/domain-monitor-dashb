@@ -22,6 +22,7 @@ interface MobileNavProps {
   onLogout: () => void
   isAutoRefresh: boolean
   onToggleAutoRefresh: () => void
+  canManageUsers: boolean
 }
 
 export function MobileNav({
@@ -36,6 +37,7 @@ export function MobileNav({
   onLogout,
   isAutoRefresh,
   onToggleAutoRefresh,
+  canManageUsers,
 }: MobileNavProps) {
   const [open, setOpen] = useState(false)
   const [showNotificationSettings, setShowNotificationSettings] = useState(false)
@@ -138,30 +140,34 @@ export function MobileNav({
           <div className="space-y-3">
             <p className="text-sm font-semibold text-foreground">Pengaturan</p>
             <div className="space-y-2">
-              <Button
-                onClick={() => {
-                  setOpen(false)
-                  setShowNotificationSettings(true)
-                }}
-                variant="ghost"
-                className="w-full justify-start h-12 text-base"
-                size="lg"
-              >
-                <Bell size={22} className="mr-3" weight={notificationSettings.enabled ? 'fill' : 'regular'} />
-                Pengaturan Notifikasi
-              </Button>
-              <Button
-                onClick={() => {
-                  setOpen(false)
-                  setShowHistory(true)
-                }}
-                variant="ghost"
-                className="w-full justify-start h-12 text-base"
-                size="lg"
-              >
-                <ClockCounterClockwise size={22} className="mr-3" />
-                Riwayat Notifikasi
-              </Button>
+              {canManageUsers && (
+                <>
+                  <Button
+                    onClick={() => {
+                      setOpen(false)
+                      setShowNotificationSettings(true)
+                    }}
+                    variant="ghost"
+                    className="w-full justify-start h-12 text-base"
+                    size="lg"
+                  >
+                    <Bell size={22} className="mr-3" weight={notificationSettings.enabled ? 'fill' : 'regular'} />
+                    Pengaturan Notifikasi
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setOpen(false)
+                      setShowHistory(true)
+                    }}
+                    variant="ghost"
+                    className="w-full justify-start h-12 text-base"
+                    size="lg"
+                  >
+                    <ClockCounterClockwise size={22} className="mr-3" />
+                    Riwayat Notifikasi
+                  </Button>
+                </>
+              )}
               <Button
                 onClick={() => {
                   setOpen(false)
@@ -194,15 +200,17 @@ export function MobileNav({
     </Sheet>
 
     {/* Dialogs */}
-      <NotificationSettingsDialog
-        open={showNotificationSettings}
-        onOpenChange={setShowNotificationSettings}
-        settings={notificationSettings}
-        onSave={onNotificationSettingsSave}
-        onTest={onTestNotification}
-      />
+      {canManageUsers && (
+        <NotificationSettingsDialog
+          open={showNotificationSettings}
+          onOpenChange={setShowNotificationSettings}
+          settings={notificationSettings}
+          onSave={onNotificationSettingsSave}
+          onTest={onTestNotification}
+        />
+      )}
 
-      {showHistory && (
+      {canManageUsers && showHistory && (
         <Dialog open={showHistory} onOpenChange={setShowHistory}>
           <DialogContent className="max-w-3xl max-h-[85vh]">
             <NotificationHistoryDialog

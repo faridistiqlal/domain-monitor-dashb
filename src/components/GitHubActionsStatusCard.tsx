@@ -43,7 +43,9 @@ export function GitHubActionsStatusCard() {
     const now = new Date()
     const month = now.getMonth() // 0 = Jan, 1 = Feb, etc
     const dayOfMonth = now.getDate()
-    const estimatedDailyUsage = 36 // minutes (24 runs × 1.5 min per run)
+    const runsPerDay = 24 // Every 1 hour
+    const estimatedMinutesPerRun = 2.4 // Based on measured actual runtime
+    const estimatedDailyUsage = runsPerDay * estimatedMinutesPerRun // 57.6 minutes/day
     
     // January 2026: Quota exhausted (cron disabled mid-month)
     if (month === 0) {

@@ -218,6 +218,40 @@ Example:
 
 ## 🚨 Troubleshooting
 
+### **Problem: `permission-denied` on `node scripts/monitor-cron.js`**
+
+**Gejala log:**
+```bash
+[Monitor] Error: [FirebaseError: Missing or insufficient permissions.]
+```
+
+**Root cause paling umum:**
+- Workflow belum punya credential Firebase untuk cron job.
+- Secret kosong: `FIREBASE_SERVICE_ACCOUNT` atau fallback auth (`FIREBASE_CRON_EMAIL` / `FIREBASE_CRON_PASSWORD`).
+
+**Solusi yang direkomendasikan (Admin SDK):**
+1. Buka Google Cloud Console → IAM & Admin → Service Accounts.
+2. Buat/pilih service account untuk project Firebase.
+3. Beri role minimal `Cloud Datastore User` (atau `Firestore Admin` untuk setup cepat).
+4. Generate key JSON.
+5. Buka GitHub repo → Settings → Secrets and variables → Actions.
+6. Tambah secret:
+    - Name: `FIREBASE_SERVICE_ACCOUNT`
+    - Value: isi JSON key (raw JSON atau base64 JSON).
+7. Jalankan ulang workflow `Domain Monitoring Cron` via `workflow_dispatch`.
+
+**Fallback jika belum pakai service account:**
+- Isi secret:
+   - `FIREBASE_CRON_EMAIL`
+   - `FIREBASE_CRON_PASSWORD`
+
+**Indikator sukses di log:**
+- `Firestore mode: admin-sdk (service account)`
+   **atau**
+- `Client auth login success: ...`
+
+Jika dua log di atas tidak muncul, workflow masih belum membaca secret yang benar (cek branch, nama secret, dan value secret).
+
 ### **Problem: Still Exceeding Quota**
 
 **Possible Causes:**

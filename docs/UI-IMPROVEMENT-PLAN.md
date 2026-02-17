@@ -224,7 +224,7 @@ const getTimestampColor = (lastChecked?: Date) => {
 - ✅ Firebase onSnapshot (background sync every 30s)
 - ✅ Manual "Check All Domains"
 - ✅ Individual domain Play button
-- ✅ GitHub Actions (every 20 minutes)
+- ✅ GitHub Actions (every 1 hour)
 
 ---
 

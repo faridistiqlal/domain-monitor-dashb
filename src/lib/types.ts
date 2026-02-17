@@ -50,6 +50,41 @@ export interface NotificationSettings {
   cooldownMinutes: number
 }
 
+export type ManagedUserRole = 'admin' | 'viewer' | 'add-only'
+
+export interface UserPermissions {
+  canView: boolean
+  canAddDomain: boolean
+  canEdit: boolean
+  canManageUsers: boolean
+}
+
+export interface ManagedUser {
+  id: string
+  username: string
+  password?: string
+  email?: string
+  authUid?: string
+  role: ManagedUserRole
+  permissions: UserPermissions
+  isActive: boolean
+  revision?: number
+  createdAt: number
+  updatedAt: number
+  createdBy?: string
+}
+
+export interface AuditLogEntry {
+  id: string
+  actorUserId: string
+  actorUsername: string
+  action: 'create-user' | 'update-user-permission' | 'toggle-user-active' | 'change-password' | 'delete-user'
+  targetType: 'user'
+  targetId: string
+  changes: Record<string, unknown>
+  timestamp: number
+}
+
 export interface NotificationHistory {
   id: string
   timestamp: number

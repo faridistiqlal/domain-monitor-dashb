@@ -1,0 +1,228 @@
+diff --git a/.github/workflows/monitor-domains.yml b/.github/workflows/monitor-domains.yml
+index 24ae7a2..0ea578d 100644
+--- a/.github/workflows/monitor-domains.yml
++++ b/.github/workflows/monitor-domains.yml
+@@ -4,7 +4,7 @@ on:
+   schedule:
+     # Runs every 1 hour for batch rotation (B1-B4)
+     # Batch rotation: 00:00(B1), 01:00(B2), 02:00(B3), 03:00(B4), 04:00(B1), repeat...
+-    # Per run: ~79 domains × 1.5 min actual | 24 runs/day × 1.5 min = 1,080 min/month (54% quota)
++    # Per run: ~79 domains × ~2.4 min actual | 24 runs/day × 2.4 min = 1,728 min/month (86% quota)
+     - cron: '0 * * * *'
+   
+   # Allow manual trigger from GitHub UI
+diff --git a/docs/CHANGELOG.md b/docs/CHANGELOG.md
+index c6c396e..c83e705 100644
+--- a/docs/CHANGELOG.md
++++ b/docs/CHANGELOG.md
+@@ -1,5 +1,52 @@
+ # Changelog
+ 
++## Version 3.9.11 - Pin/Group Sync Data-Loss Prevention
++**Tanggal Rilis:** 16 Februari 2026
++
++### 🛡️ Critical Sync Safeguards
++
++**Root cause addressed:**
++- Saat pembacaan Firestore error (quota/network/permission), sebelumnya fungsi read mengembalikan `[]`.
++- State kosong ini bisa langsung ter-sync balik saat startup dan menimpa data Firebase (pin/group terlihat hilang).
++
++**Fix implemented:**
++1. **Do not treat read errors as empty data**
++  - Firestore read helpers sekarang melempar error (throw), bukan return empty array.
++  - Load flow bisa membedakan "data kosong valid" vs "gagal baca".
++
++2. **Skip first auto-sync after initial load**
++  - Auto-sync startup untuk domains/groups/tags dilewati sekali.
++  - Mencegah overwrite data cloud oleh state awal yang belum stabil.
++
++**Impact:**
++- ✅ Mengurangi risiko hilangnya pin/group karena startup race + read failure.
++- ✅ Sinkronisasi tetap jalan normal untuk perubahan user setelah app loaded.
++
++---
++
++## Version 3.9.10 - Statistics & Usage Sync Alignment
++**Tanggal Rilis:** 16 Februari 2026
++
++### 🔧 Fixes & Consistency Update
++
++**Updated to match actual production behavior:**
++1. **GitHub Actions Monthly Usage calculation in Statistics tab:**
++  - ❌ Sebelumnya: estimasi `1.5 min/run` → `36 min/day`
++  - ✅ Sekarang: estimasi `2.4 min/run` → `57.6 min/day`
++  - ✅ Proyeksi bulanan sinkron: `~1,728 min/month` (86% dari quota 2,000)
++
++2. **Workflow documentation comment sync:**
++  - ✅ Comment di workflow `.github/workflows/monitor-domains.yml` disesuaikan dengan runtime aktual
++  - ✅ Keterangan quota kini konsisten dengan schedule `cron: '0 * * * *'` (setiap 1 jam)
++
++3. **Footer & Changelog version sync:**
++  - ✅ `APP_VERSION` di-update ke `3.9.10`
++  - ✅ Footer `v3.9.10` otomatis sinkron melalui `ChangelogDialog triggerText`
++
++**Status:** ✅ Ready for Vercel deployment
++
++---
++
+ ## Version 3.9.9 - GitHub Actions Schedule Adjustment
+ **Tanggal Rilis:** 1 Februari 2026
+ 
+diff --git a/src/App.tsx b/src/App.tsx
+index 2e892cf..ae40ea1 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useState, useMemo } from 'react'
++import { useEffect, useState, useMemo, useRef } from 'react'
+ import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Bell, MapPin, Clock } from '@phosphor-icons/react'
+ import { Badge } from '@/components/ui/badge'
+ import { Button } from '@/components/ui/button'
+@@ -68,6 +68,10 @@ type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'sta
+ type ViewMode = 'all' | 'groups' | 'group-detail'
+ 
+ function App() {
++  const skipInitialDomainsSync = useRef(true)
++  const skipInitialGroupsSync = useRef(true)
++  const skipInitialTagsSync = useRef(true)
++
+   // Authentication & Security States
+   const [isAuthenticated, setIsAuthenticated] = useState(() => {
+     const auth = localStorage.getItem('app-authenticated')
+@@ -304,6 +308,11 @@ function App() {
+   // Sync to Firebase with debouncing (reduce writes)
+   useEffect(() => {
+     if (!isLoadingData && domains.length >= 0) {
++      if (skipInitialDomainsSync.current) {
++        skipInitialDomainsSync.current = false
++        return
++      }
++
+       // No localStorage cache - always use Firebase as source of truth
+       // Debounce Firebase sync to reduce writes
+       const timeoutId = setTimeout(() => {
+@@ -318,6 +327,11 @@ function App() {
+   // Auto-sync groups to Firebase (same pattern as tags and domains)
+   useEffect(() => {
+     if (!isLoadingData && groups.length >= 0) {
++      if (skipInitialGroupsSync.current) {
++        skipInitialGroupsSync.current = false
++        return
++      }
++
+       console.log('[Groups Sync] Auto-syncing', groups.length, 'groups to Firebase')
+       const timeoutId = setTimeout(() => {
+         syncGroupsToFirestore(groups)
+@@ -333,6 +347,11 @@ function App() {
+   
+   useEffect(() => {
+     if (!isLoadingData) {
++      if (skipInitialTagsSync.current) {
++        skipInitialTagsSync.current = false
++        return
++      }
++
+       console.log('[Tags Sync] Syncing', tags.length, 'tags to Firebase')
+       // Sync to Firebase only (no localStorage - always load from Firebase)
+       const timeoutId = setTimeout(() => {
+diff --git a/src/components/ChangelogDialog.tsx b/src/components/ChangelogDialog.tsx
+index fb46bd3..3fb2d66 100644
+--- a/src/components/ChangelogDialog.tsx
++++ b/src/components/ChangelogDialog.tsx
+@@ -49,30 +49,29 @@ export function ChangelogDialog({ triggerText, showIcon = true }: ChangelogDialo
+         <ScrollArea className="px-6 pb-6 max-h-[calc(85vh-120px)]">
+           <div className="space-y-6 pr-4">
+             
+-            {/* Version 3.9.5 */}
++            {/* Version 3.9.11 */}
+             <div className="space-y-4">
+               <div className="flex items-center justify-between">
+                 <div>
+-                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.5</h3>
+-                  <p className="text-xs text-muted-foreground">Current Release • 12 Januari 2026</p>
++                  <h3 className="text-lg font-semibold text-foreground">Version 3.9.11</h3>
++                  <p className="text-xs text-muted-foreground">Current Release • 16 Februari 2026</p>
+                 </div>
+                 <div className="flex gap-2">
+-                  <Badge className="text-xs bg-gradient-to-r from-green-500 to-emerald-500">Critical Fix</Badge>
++                  <Badge className="text-xs bg-gradient-to-r from-red-500 to-orange-500">Critical Fix</Badge>
+                 </div>
+               </div>
+               
+               <div className="space-y-4">
+                 <div>
+                   <div className="flex items-center gap-2 mb-2">
+-                    <Bug size={16} className="text-green-500" weight="duotone" />
+-                    <h4 className="text-sm font-semibold text-foreground">Groups Persistence Fixed (Final)</h4>
++                    <Bug size={16} className="text-red-500" weight="duotone" />
++                    <h4 className="text-sm font-semibold text-foreground">Pin/Group Sync Data-Loss Prevention</h4>
+                   </div>
+                   <ul className="text-sm text-muted-foreground space-y-2 ml-6 list-disc">
+-                    <li><strong>Firebase Undefined Error:</strong> Fixed groups failing to save due to undefined description field</li>
+-                    <li><strong>Auto-check on Load:</strong> Monitoring tab now auto-checks domains on first open</li>
+-                    <li><strong>Last Check Display:</strong> Added timestamp showing when domains were last checked</li>
+-                    <li><strong>Immediate Firebase Sync:</strong> Groups and domain assignments now sync instantly (no delay)</li>
+-                    <li><strong>Cache Optimization:</strong> Firebase data loads immediately after cache (no 30s wait)</li>
++                    <li><strong>Startup Sync Guard:</strong> First auto-sync cycle now skipped to prevent accidental overwrite on initial load.</li>
++                    <li><strong>Firestore Read Error Handling:</strong> Read failures no longer treated as empty arrays.</li>
++                    <li><strong>Pin/Group Safety:</strong> Reduces risk of pin/group data appearing lost due to startup race conditions.</li>
++                    <li><strong>Footer Version Sync:</strong> App footer now shows v3.9.11 from source-of-truth version constant.</li>
+                   </ul>
+                 </div>
+               </div>
+diff --git a/src/components/GitHubActionsStatusCard.tsx b/src/components/GitHubActionsStatusCard.tsx
+index d6bd5fc..09b8687 100644
+--- a/src/components/GitHubActionsStatusCard.tsx
++++ b/src/components/GitHubActionsStatusCard.tsx
+@@ -43,7 +43,9 @@ export function GitHubActionsStatusCard() {
+     const now = new Date()
+     const month = now.getMonth() // 0 = Jan, 1 = Feb, etc
+     const dayOfMonth = now.getDate()
+-    const estimatedDailyUsage = 36 // minutes (24 runs × 1.5 min per run)
++    const runsPerDay = 24 // Every 1 hour
++    const estimatedMinutesPerRun = 2.4 // Based on measured actual runtime
++    const estimatedDailyUsage = runsPerDay * estimatedMinutesPerRun // 57.6 minutes/day
+     
+     // January 2026: Quota exhausted (cron disabled mid-month)
+     if (month === 0) {
+diff --git a/src/lib/firestore-sync.ts b/src/lib/firestore-sync.ts
+index 8339de7..e051500 100644
+--- a/src/lib/firestore-sync.ts
++++ b/src/lib/firestore-sync.ts
+@@ -59,7 +59,7 @@ export const getDomainsFromFirestore = async (): Promise<Domain[]> => {
+     return []
+   } catch (error) {
+     console.error('Error getting domains:', error)
+-    return []
++    throw error
+   }
+ }
+ 
+@@ -118,7 +118,7 @@ export const getGroupsFromFirestore = async (): Promise<DomainGroup[]> => {
+     return []
+   } catch (error) {
+     console.error('Error getting groups:', error)
+-    return []
++    throw error
+   }
+ }
+ 
+@@ -160,7 +160,7 @@ export const getTagsFromFirestore = async (): Promise<DomainTag[]> => {
+     return []
+   } catch (error) {
+     console.error('Error getting tags:', error)
+-    return []
++    throw error
+   }
+ }
+ 
+diff --git a/src/lib/version.ts b/src/lib/version.ts
+index 5990d0d..264b32b 100644
+--- a/src/lib/version.ts
++++ b/src/lib/version.ts
+@@ -3,4 +3,4 @@
+  * Increment this version number with every deployment to Vercel
+  * This ensures localStorage migration runs and users get the latest updates
+  */
+-export const APP_VERSION = '3.9.9';
++export const APP_VERSION = '3.9.11';

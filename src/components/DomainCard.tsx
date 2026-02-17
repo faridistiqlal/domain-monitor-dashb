@@ -26,7 +26,7 @@ import { toast } from 'sonner'
 interface DomainCardProps {
   domain: Domain
   status: DomainStatus
-  onDelete: (id: string) => void
+  onDelete?: (id: string) => void
   onEdit?: (id: string, newUrl: string) => void
   onToggleMonitoring?: (id: string) => void
   onTogglePin?: (id: string) => void
@@ -244,16 +244,18 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                 </Button>
               )}
               
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(domain.id)}
-                className="h-9 w-9 md:h-7 md:w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                title="Delete"
-              >
-                <Trash size={18} className="md:hidden" />
-                <Trash size={16} className="hidden md:block" />
-              </Button>
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(domain.id)}
+                  className="h-9 w-9 md:h-7 md:w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  title="Delete"
+                >
+                  <Trash size={18} className="md:hidden" />
+                  <Trash size={16} className="hidden md:block" />
+                </Button>
+              )}
               </div>
             </div>
           </div>

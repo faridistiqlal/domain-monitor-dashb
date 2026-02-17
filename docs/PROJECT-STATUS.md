@@ -25,7 +25,7 @@ Aplikasi monitoring real-time untuk melacak status availability dari multiple su
 | **Documentation** | 14 files, up-to-date |
 | **Test Status** | Tested with 300+ domains |
 | **Deployment** | Vercel Production (https://kendal-uptime.vercel.app) |
-| **24/7 Monitoring** | GitHub Actions (every 20 min) |
+| **24/7 Monitoring** | GitHub Actions (every 1 hour, batch rotation B1-B4) |
 
 ---
 

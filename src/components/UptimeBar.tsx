@@ -18,8 +18,15 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
   const [stats, setStats] = useState<DomainDailyStats[]>([])
   const [loading, setLoading] = useState(true)
   const [overallUptime, setOverallUptime] = useState<number>(0)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
+    setRetryCount(0)
+  }, [domainId, days])
+
+  useEffect(() => {
+    let isCancelled = false
+
     async function loadStats() {
       try {
         setLoading(true)
@@ -46,17 +53,35 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
         const successChecks = sortedData.reduce((sum, stat) => sum + (stat.successChecks || 0), 0)
         const uptime = totalChecks > 0 ? (successChecks / totalChecks) * 100 : 0
         
+        if (isCancelled) return
+
         setStats(sortedData)
         setOverallUptime(uptime)
       } catch (error) {
         console.error('[UptimeBar] Error loading stats:', error)
+
+        const code = (error as { code?: string } | undefined)?.code
+        if (!isCancelled && code === 'permission-denied' && retryCount < 5) {
+          const delayMs = 800 + (retryCount * 400)
+          window.setTimeout(() => {
+            if (!isCancelled) {
+              setRetryCount(prev => prev + 1)
+            }
+          }, delayMs)
+        }
       } finally {
-        setLoading(false)
+        if (!isCancelled) {
+          setLoading(false)
+        }
       }
     }
 
     loadStats()
-  }, [domainId, days])
+
+    return () => {
+      isCancelled = true
+    }
+  }, [domainId, days, retryCount])
 
   if (loading) {
     return (

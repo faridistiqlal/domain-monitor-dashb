@@ -7,7 +7,7 @@ Real-time monitoring dashboard untuk track availability status dari multiple sub
 📚 **Dokumentasi:** [docs/](./docs/)  
 🔥 **Firebase:** kendal-monitor project  
 🔧 **Current Version:** 3.9.6  
-🤖 **24/7 Monitoring:** GitHub Actions (auto-runs every 20 minutes)
+🤖 **24/7 Monitoring:** GitHub Actions (auto-runs every 1 hour)
 
 ---
 
@@ -27,7 +27,7 @@ Real-time monitoring dashboard untuk track availability status dari multiple sub
 - `domains` - Domain list dengan batch assignment (B1-B4)
 - `domain-stats-daily` - Daily stats dengan hourly aggregates (written by GitHub Actions)
 - `domain-incidents` - Down/recovery tracking
-- `github-actions-logs` - Monitoring execution logs (setiap 20 menit)
+- `github-actions-logs` - Monitoring execution logs (setiap 1 jam, rotasi batch B1-B4)
 - `groups` - Domain groups
 - `tags` - Domain tags
 - `notifications` - Slack notification history
@@ -79,7 +79,7 @@ npm run preview
 
 ### **Core Monitoring (v2.x)**
 - ✅ **3-State System**: Online (Green) / DNS-Only (Amber) / Offline (Red)
-- ✅ **Staggered Auto-Check**: 4 batches (B1-B4), 20-min intervals, 600 writes/day
+- ✅ **Staggered Auto-Check**: 4 batches (B1-B4), 1-hour cron rotation, 600 writes/day
 - ✅ **Firebase Cloud Sync**: Real-time sync antar device
 - ✅ **Check History**: 30-day retention, hourly aggregates
 - ✅ **Dual Mode**: Auto-refresh (60s) & Manual check
@@ -122,7 +122,7 @@ npm run preview
 - ✅ **Session Management**: localStorage + Firebase sync
 
 ### **24/7 Background Monitoring (v3.6.x)** 🤖
-- ✅ **GitHub Actions Cron**: Auto-runs every 20 minutes, 24/7 tanpa browser
+- ✅ **GitHub Actions Cron**: Auto-runs every 1 hour, 24/7 tanpa browser
 - ✅ **Batch System**: 4 batches (B1-B4) staggered checking
 - ✅ **Firebase Direct Query**: Script langsung query Firestore
 - ✅ **Slack Notifications**: Summary results per batch (optional)
@@ -390,12 +390,12 @@ vercel env ls            # List environment variables
 
 ### **Overview:**
 
-GitHub Actions workflow runs **every 20 minutes** untuk monitoring domain secara background tanpa perlu browser terbuka. Script berjalan di GitHub's cloud servers dan menulis hasil ke Firebase.
+GitHub Actions workflow runs **every 1 hour** untuk monitoring domain secara background tanpa perlu browser terbuka. Script berjalan di GitHub's cloud servers dan menulis hasil ke Firebase.
 
 ### **How It Works:**
 
 ```
-GitHub Actions Cron (Every 20 min)
+GitHub Actions Cron (Every 1 hour)
   ↓
 Run scripts/monitor-cron.js
   ↓
@@ -405,7 +405,7 @@ Check domains (DNS + HTTP/HTTPS)
   ↓
 Send Slack notification (optional)
   ↓
-Update Firebase (TODO: implement)
+Update Firebase (stats + domain status + logs)
 ```
 
 ### **Setup GitHub Actions:**
@@ -415,6 +415,9 @@ Update Firebase (TODO: implement)
 Secrets sudah ditambahkan di: https://github.com/faridistiqlal/domain-monitor-dashb/settings/secrets/actions
 
 ```
+✅ FIREBASE_SERVICE_ACCOUNT (recommended)
+⚠️ FIREBASE_CRON_EMAIL (fallback if not using service account)
+⚠️ FIREBASE_CRON_PASSWORD (fallback if not using service account)
 ✅ FIREBASE_API_KEY
 ✅ FIREBASE_AUTH_DOMAIN
 ✅ FIREBASE_PROJECT_ID
@@ -428,9 +431,9 @@ Secrets sudah ditambahkan di: https://github.com/faridistiqlal/domain-monitor-da
 **2. Workflow File:** `.github/workflows/monitor-domains.yml`
 
 ```yaml
-# Runs every 20 minutes
+# Runs every 1 hour
 schedule:
-  - cron: '*/20 * * * *'
+  - cron: '0 * * * *'
 
 # Manual trigger available
 workflow_dispatch:
@@ -439,7 +442,7 @@ workflow_dispatch:
 **3. Monitoring Script:** `scripts/monitor-cron.js`
 
 - Standalone Node.js script (no React/browser dependencies)
-- Uses Firebase Admin SDK for direct Firestore access
+- Uses Firebase Admin SDK via `FIREBASE_SERVICE_ACCOUNT` (fallback to client auth)
 - DNS lookup + HTTP/HTTPS checking
 - Batch-aware (B1-B4 based on current time)
 - Slack notifications for summary results
@@ -459,9 +462,9 @@ workflow_dispatch:
 
 **Monitor Usage:**
 - GitHub Actions free tier: **2,000 minutes/month** (private repo)
-- **OPTIMIZED:** Each run ~30-45 seconds (was 2-3 minutes before)
-- Current usage: **~54 min/day × 30 days = 1,620 min/month** ✅
-- **19% buffer remaining** (380 minutes)
+- **Current measured:** Each run ~2.4 minutes
+- Current usage: **~58 min/day × 30 days = 1,728 min/month** ✅
+- **14% buffer remaining** (~272 minutes)
 - Check usage: https://github.com/settings/billing
 
 **Optimization Applied (v3.9.8):**
@@ -476,12 +479,12 @@ workflow_dispatch:
 
 | Time (WIB) | Batch | Cron Trigger | Domains Checked |
 |------------|-------|--------------|-----------------|
-| 00:00, 00:20, 00:40 | B1 | ✅ Yes | ~25% domains |
-| 00:05, 00:25, 00:45 | B2 | ✅ Yes | ~25% domains |
-| 00:10, 00:30, 00:50 | B3 | ✅ Yes | ~25% domains |
-| 00:15, 00:35, 00:55 | B4 | ✅ Yes | ~25% domains |
+| 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 | B1 | ✅ Yes | ~25% domains |
+| 01:00, 05:00, 09:00, 13:00, 17:00, 21:00 | B2 | ✅ Yes | ~25% domains |
+| 02:00, 06:00, 10:00, 14:00, 18:00, 22:00 | B3 | ✅ Yes | ~25% domains |
+| 03:00, 07:00, 11:00, 15:00, 19:00, 23:00 | B4 | ✅ Yes | ~25% domains |
 
-**Result:** Setiap domain di-check setiap ~1 jam (4 batches × 20 min spacing)
+**Result:** Setiap domain di-check setiap ~4 jam (1 batch per jam, rotasi B1-B4)
 
 ### **Performance:**
 
@@ -492,9 +495,9 @@ Duration Breakdown:
 - Run monitoring: ~2s
 - Cleanup: ~5s
 
-Total: ~34 seconds per run
-Monthly: ~1,231 minutes (61% of free tier limit)
-Buffer: 769 minutes remaining
+Total: ~2.4 minutes per run
+Monthly: ~1,728 minutes (86% of free tier limit)
+Buffer: ~272 minutes remaining
 ```
 
 ### **Benefits:**
@@ -519,6 +522,7 @@ Buffer: 769 minutes remaining
 - Firebase connection → Check credentials
 - npm install slow → Normal, cached after first run
 - No domains checked → Batch timing (normal if no domains in current batch)
+- `permission-denied` → pastikan `FIREBASE_SERVICE_ACCOUNT` valid (JSON/base64)
 
 ### **Test Locally:**
 
@@ -580,7 +584,7 @@ node scripts/monitor-cron.js
 **Version:** 3.6.1 (Update di `src/lib/version.ts` setiap deploy!)  
 **Status:** ✅ Production Ready + Mobile Optimized + 24/7 Monitoring  
 **Deployed:** https://kendal-uptime.vercel.app  
-**Background Monitoring:** ✅ GitHub Actions (every 20 min)  
+**Background Monitoring:** ✅ GitHub Actions (every 1 hour)  
 **Documentation:** 98% accurate  
 **Components:** 22 custom + 45+ UI  
 **Lines of Code:** ~7,500+  

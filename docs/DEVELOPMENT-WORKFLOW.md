@@ -10,14 +10,19 @@
 
 ### **SETIAP ADA PERUBAHAN CODE:**
 
+0. ✅ **Backup sebelum edit** - Simpan patch backup (`git diff > backup-pre-edit.patch` atau bertimestamp)
 1. ✅ **Edit code** - Buat perubahan yang diperlukan
 2. ✅ **Update versi** - Increment version number di `src/lib/version.ts`
-3. ✅ **Test locally** - `npm run dev` untuk test perubahan
-4. ✅ **Commit & push** - Git commit dengan message yang jelas
-5. ✅ **Auto-deploy** - Vercel otomatis deploy dari GitHub push
+3. ✅ **Update changelog** - Sinkronkan `docs/CHANGELOG.md` dengan versi terbaru
+4. ✅ **Vercel CLI login check** - `npx vercel login` jika sesi belum aktif/expired
+5. ✅ **Test locally** - `npm run dev` untuk test perubahan
+6. ✅ **Commit & push** - Git commit dengan message yang jelas
+7. ✅ **Auto-deploy** - Vercel otomatis deploy dari GitHub push
+8. ✅ **Post-deploy verify** - Pastikan footer menampilkan versi yang sama dengan changelog
 
-**Kenapa update versi penting?**
+**Kenapa update versi + changelog penting?**
 - Footer menampilkan versi → Anda tahu deployment terbaru berhasil
+- Changelog menjadi source of truth perubahan rilis
 - localStorage migration berjalan otomatis
 - User tahu mereka dapat update terbaru
 
@@ -52,20 +57,31 @@ npm run preview
 
 ### **Deploy Workflow:**
 ```bash
-# 1. Edit version
+# 0. Backup sebelum edit
+git diff > backup-pre-edit-$(date +%Y%m%d-%H%M).patch
+
+# 1. Pastikan sesi Vercel CLI aktif
+npx vercel login
+
+# 2. Edit version
 vim src/lib/version.ts
 # Change: export const APP_VERSION = '3.0.1'
 
-# 2. Test locally
+# 3. Update changelog sesuai versi
+vim docs/CHANGELOG.md
+
+# 4. Test locally
 npm run dev
 
-# 3. Commit & push (replace dengan pesan Anda)
+# 5. Commit & push (replace dengan pesan Anda)
 git add .
 git commit -m "feat: add new feature"
 git push
 
-# 4. Auto-deploy via GitHub → Vercel (1-2 menit)
+# 6. Auto-deploy via GitHub → Vercel (1-2 menit)
 # Cek: https://kendal-uptime.vercel.app
+
+# 7. Verify footer version == changelog version
 ```
 
 ---
@@ -213,14 +229,19 @@ curl -s https://kendal-uptime.vercel.app | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+'
 ## 🎯 **BEST PRACTICES**
 
 ### **DO's:**
+✅ Selalu backup patch sebelum edit
 ✅ Selalu update versi setiap deploy  
+✅ Selalu update changelog setiap push yang menargetkan deploy
+✅ Pastikan sesi `npx vercel login` valid sebelum release/deploy
 ✅ Test locally sebelum push  
 ✅ Gunakan commit message yang jelas  
 ✅ Verify deployment di footer setelah push  
 ✅ Keep version incremental (3.0.0 → 3.0.1 → 3.0.2)
 
 ### **DON'Ts:**
+❌ Jangan edit besar tanpa backup patch
 ❌ Jangan skip version update  
+❌ Jangan push ke jalur deploy jika changelog belum diupdate
 ❌ Jangan push code yang belum di-test  
 ❌ Jangan gunakan commit message tidak jelas ("update", "fix")  
 ❌ Jangan deploy langsung tanpa verify locally  

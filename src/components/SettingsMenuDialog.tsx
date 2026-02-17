@@ -13,7 +13,8 @@ import { Separator } from '@/components/ui/separator'
 import { NotificationSettingsDialog } from './NotificationSettingsDialog'
 import { NotificationHistoryDialog } from './NotificationHistoryDialog'
 import { SettingsDialog } from './SettingsDialog'
-import type { NotificationSettings } from '@/lib/types'
+import { UserManagementDialog } from './UserManagementDialog'
+import type { NotificationSettings, ManagedUser, ManagedUserRole } from '@/lib/types'
 
 interface SettingsMenuDialogProps {
   notificationSettings: NotificationSettings
@@ -23,6 +24,12 @@ interface SettingsMenuDialogProps {
   clearHistory: () => void
   onChangePassword: (oldPassword: string, newPassword: string) => Promise<boolean>
   onLogout: () => void
+  canManageUsers: boolean
+  managedUsers: ManagedUser[]
+  currentUserId?: string
+  onCreateUser: (payload: { username: string; password: string; role: ManagedUserRole }) => Promise<boolean>
+  onToggleUserActive: (userId: string, isActive: boolean) => Promise<boolean>
+  onDeleteUser: (userId: string) => Promise<boolean>
 }
 
 export function SettingsMenuDialog({
@@ -33,11 +40,18 @@ export function SettingsMenuDialog({
   clearHistory,
   onChangePassword,
   onLogout,
+  canManageUsers,
+  managedUsers,
+  currentUserId,
+  onCreateUser,
+  onToggleUserActive,
+  onDeleteUser,
 }: SettingsMenuDialogProps) {
   const [open, setOpen] = useState(false)
   const [showNotificationSettings, setShowNotificationSettings] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showUserManagement, setShowUserManagement] = useState(false)
 
   const handleLogout = () => {
     setOpen(false)
@@ -59,46 +73,71 @@ export function SettingsMenuDialog({
               Pengaturan
             </DialogTitle>
             <DialogDescription>
-              Kelola notifikasi, riwayat, password, dan akses
+              Kelola password dan akses
             </DialogDescription>
           </DialogHeader>
           <Separator />
           <div className="space-y-2 py-2">
-            {/* Notification Settings */}
-            <button
-              onClick={() => {
-                setOpen(false)
-                setShowNotificationSettings(true)
-              }}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-primary/10 hover:border-primary/20 border border-transparent transition-all text-left group"
-            >
-              <div className="w-11 h-11 rounded-lg bg-primary/15 group-hover:bg-primary/25 flex items-center justify-center transition-colors">
-                <Bell size={22} weight="fill" className="text-primary group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Pengaturan Notifikasi</p>
-                <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Konfigurasi Slack webhook & rules</p>
-              </div>
-            </button>
+            {canManageUsers && (
+              <>
+                {/* Notification Settings */}
+                <button
+                  onClick={() => {
+                    setOpen(false)
+                    setShowNotificationSettings(true)
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-primary/10 hover:border-primary/20 border border-transparent transition-all text-left group"
+                >
+                  <div className="w-11 h-11 rounded-lg bg-primary/15 group-hover:bg-primary/25 flex items-center justify-center transition-colors">
+                    <Bell size={22} weight="fill" className="text-primary group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Pengaturan Notifikasi</p>
+                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Konfigurasi Slack webhook & rules</p>
+                  </div>
+                </button>
 
-            {/* Notification History */}
-            <button
-              onClick={() => {
-                setOpen(false)
-                setShowHistory(true)
-              }}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-accent/10 hover:border-accent/20 border border-transparent transition-all text-left group"
-            >
-              <div className="w-11 h-11 rounded-lg bg-accent/15 group-hover:bg-accent/25 flex items-center justify-center transition-colors">
-                <ClockCounterClockwise size={22} weight="fill" className="text-accent group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">Riwayat Notifikasi</p>
-                <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Lihat history notifikasi terkirim</p>
-              </div>
-            </button>
+                {/* Notification History */}
+                <button
+                  onClick={() => {
+                    setOpen(false)
+                    setShowHistory(true)
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-accent/10 hover:border-accent/20 border border-transparent transition-all text-left group"
+                >
+                  <div className="w-11 h-11 rounded-lg bg-accent/15 group-hover:bg-accent/25 flex items-center justify-center transition-colors">
+                    <ClockCounterClockwise size={22} weight="fill" className="text-accent group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">Riwayat Notifikasi</p>
+                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Lihat history notifikasi terkirim</p>
+                  </div>
+                </button>
 
-            <Separator />
+                <Separator />
+              </>
+            )}
+
+            {canManageUsers && (
+              <>
+                <button
+                  onClick={() => {
+                    setOpen(false)
+                    setShowUserManagement(true)
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-primary/10 hover:border-primary/20 border border-transparent transition-all text-left group"
+                >
+                  <div className="w-11 h-11 rounded-lg bg-primary/15 group-hover:bg-primary/25 flex items-center justify-center transition-colors">
+                    <Gear size={22} weight="fill" className="text-primary group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Manajemen User</p>
+                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Buat user & atur akses terbatas</p>
+                  </div>
+                </button>
+                <Separator />
+              </>
+            )}
 
             {/* Change Password */}
             <button
@@ -135,15 +174,17 @@ export function SettingsMenuDialog({
       </Dialog>
 
       {/* Sub-dialogs */}
-      <NotificationSettingsDialog
-        open={showNotificationSettings}
-        onOpenChange={setShowNotificationSettings}
-        settings={notificationSettings}
-        onSave={onNotificationSettingsSave}
-        onTest={onTestNotification}
-      />
+      {canManageUsers && (
+        <NotificationSettingsDialog
+          open={showNotificationSettings}
+          onOpenChange={setShowNotificationSettings}
+          settings={notificationSettings}
+          onSave={onNotificationSettingsSave}
+          onTest={onTestNotification}
+        />
+      )}
 
-      {showHistory && (
+      {canManageUsers && showHistory && (
         <Dialog open={showHistory} onOpenChange={setShowHistory}>
           <DialogContent className="max-w-3xl max-h-[85vh]">
             <NotificationHistoryDialog
@@ -158,6 +199,16 @@ export function SettingsMenuDialog({
         open={showChangePassword}
         onOpenChange={setShowChangePassword}
         onChangePassword={onChangePassword}
+      />
+
+      <UserManagementDialog
+        open={showUserManagement}
+        onOpenChange={setShowUserManagement}
+        users={managedUsers}
+        currentUserId={currentUserId}
+        onCreateUser={onCreateUser}
+        onToggleUserActive={onToggleUserActive}
+        onDeleteUser={onDeleteUser}
       />
     </>
   )

@@ -1,4 +1,5 @@
 {
+  "installCommand": "npm install --include=dev && npm install --no-save typescript vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite"

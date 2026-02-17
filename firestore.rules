@@ -1,0 +1,243 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function authUid() {
+      return request.auth.uid;
+    }
+
+    function isNumber(value) {
+      return value is int || value is float;
+    }
+
+    function isOptionalStringField(fieldName) {
+      return !(fieldName in request.resource.data) || request.resource.data[fieldName] is string;
+    }
+
+    function isOptionalNumberField(fieldName) {
+      return !(fieldName in request.resource.data) || isNumber(request.resource.data[fieldName]);
+    }
+
+    function validDomainsDoc() {
+      return request.resource.data.keys().hasOnly(['domains', 'updatedAt'])
+        && request.resource.data.domains is list
+        && isNumber(request.resource.data.updatedAt);
+    }
+
+    function validGroupsDoc() {
+      return request.resource.data.keys().hasOnly(['groups', 'updatedAt'])
+        && request.resource.data.groups is list
+        && isNumber(request.resource.data.updatedAt);
+    }
+
+    function validTagsDoc() {
+      return request.resource.data.keys().hasOnly(['tags', 'updatedAt'])
+        && request.resource.data.tags is list
+        && isNumber(request.resource.data.updatedAt);
+    }
+
+    function validManagedUsersDoc() {
+      return request.resource.data.keys().hasOnly(['users', 'updatedAt', 'updatedBy', 'revision'])
+        && request.resource.data.users is list
+        && isNumber(request.resource.data.updatedAt)
+        && (!('revision' in request.resource.data) || isNumber(request.resource.data.revision))
+        && isOptionalStringField('updatedBy');
+    }
+
+    function validAuditLogDoc() {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'actorUserId',
+          'actorUsername',
+          'action',
+          'targetType',
+          'targetId',
+          'changes',
+          'timestamp'
+        ])
+        && request.resource.data.id is string
+        && request.resource.data.actorUserId is string
+        && request.resource.data.actorUsername is string
+        && request.resource.data.action is string
+        && request.resource.data.targetType is string
+        && request.resource.data.targetId is string
+        && request.resource.data.changes is map
+        && isNumber(request.resource.data.timestamp);
+    }
+
+    function validUserSettingsDoc() {
+      return request.resource.data.keys().hasOnly([
+          'appUserId',
+          'username',
+          'email',
+          'role',
+          'permissions',
+          'isActive',
+          'notificationSettings',
+          'updatedAt',
+          'password'
+        ])
+        && isOptionalStringField('appUserId')
+        && isOptionalStringField('username')
+        && isOptionalStringField('email')
+        && isOptionalStringField('role')
+        && (!("permissions" in request.resource.data) || request.resource.data.permissions is map)
+        && (!("isActive" in request.resource.data) || request.resource.data.isActive is bool)
+        && (!("notificationSettings" in request.resource.data) || request.resource.data.notificationSettings is map)
+        && isOptionalStringField('password')
+        && isOptionalNumberField('updatedAt');
+    }
+
+    function profilePath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function profileDoc(uid) {
+      return get(profilePath(uid));
+    }
+
+    function hasActiveProfile() {
+      return isSignedIn()
+        && exists(profilePath(authUid()))
+        && profileDoc(authUid()).data.isActive == true;
+    }
+
+    function currentRole() {
+      return profileDoc(authUid()).data.role;
+    }
+
+    function isAdmin() {
+      return hasActiveProfile() && currentRole() == 'admin';
+    }
+
+    function canReadApp() {
+      return hasActiveProfile();
+    }
+
+    function validDailyStatsDoc() {
+      return request.resource.data.keys().hasAll([
+          'id',
+          'domainId',
+          'date',
+          'totalChecks',
+          'successChecks',
+          'uptimePercent',
+          'hourly',
+          'incidentIds'
+        ])
+        && request.resource.data.id is string
+        && request.resource.data.domainId is string
+        && request.resource.data.date is string
+        && isNumber(request.resource.data.totalChecks)
+        && isNumber(request.resource.data.successChecks)
+        && isNumber(request.resource.data.uptimePercent)
+        && request.resource.data.hourly is list
+        && request.resource.data.incidentIds is list;
+    }
+
+    function validIncidentDoc() {
+      return request.resource.data.keys().hasAll([
+          'id',
+          'domainId',
+          'startTime',
+          'status',
+          'prevStatus',
+          'resolved'
+        ])
+        && request.resource.data.id is string
+        && request.resource.data.domainId is string
+        && isNumber(request.resource.data.startTime)
+        && request.resource.data.status is string
+        && request.resource.data.prevStatus is string
+        && request.resource.data.resolved is bool
+        && isOptionalNumberField('endTime')
+        && isOptionalNumberField('duration')
+        && isOptionalStringField('error');
+    }
+
+    function validGithubActionsLogDoc() {
+      return request.resource.data.keys().hasOnly([
+          'timestamp',
+          'batch',
+          'totalDomains',
+          'domainsChecked',
+          'results',
+          'duration',
+          'status',
+          'error',
+          'stack'
+        ])
+        && request.resource.data.status is string
+        && (!("batch" in request.resource.data) || isNumber(request.resource.data.batch))
+        && (!("totalDomains" in request.resource.data) || isNumber(request.resource.data.totalDomains))
+        && (!("domainsChecked" in request.resource.data) || isNumber(request.resource.data.domainsChecked))
+        && (!("duration" in request.resource.data) || request.resource.data.duration == null || isNumber(request.resource.data.duration))
+        && (!("results" in request.resource.data) || (
+          request.resource.data.results is map
+          && request.resource.data.results.keys().hasOnly(['online', 'dnsOnly', 'offline'])
+          && (!("online" in request.resource.data.results) || isNumber(request.resource.data.results.online))
+          && (!("dnsOnly" in request.resource.data.results) || isNumber(request.resource.data.results.dnsOnly))
+          && (!("offline" in request.resource.data.results) || isNumber(request.resource.data.results.offline))
+        ))
+        && isOptionalStringField('error')
+        && isOptionalStringField('stack');
+    }
+
+    match /domains/{docId} {
+      allow read: if docId == 'default-user';
+      allow write: if docId == 'default-user' && validDomainsDoc();
+    }
+
+    match /groups/{docId} {
+      allow read: if docId == 'default-user';
+      allow write: if docId == 'default-user' && validGroupsDoc();
+    }
+
+    match /tags/{docId} {
+      allow read: if docId == 'default-user';
+      allow write: if docId == 'default-user' && validTagsDoc();
+    }
+
+    match /users/user-directory {
+      allow read: if canReadApp();
+      allow write: if isAdmin() && validManagedUsersDoc();
+    }
+
+    match /users/{userId} {
+      allow read: if userId != 'user-directory' && (isAdmin() || (isSignedIn() && userId == authUid()));
+      allow write: if userId != 'user-directory'
+        && validUserSettingsDoc()
+        && (
+          (isSignedIn() && userId == authUid())
+          || isAdmin()
+        );
+    }
+
+    match /domain-stats-daily/{docId} {
+      allow read: if canReadApp();
+      allow write: if validDailyStatsDoc();
+    }
+
+    match /domain-incidents/{docId} {
+      allow read: if canReadApp();
+      allow write: if validIncidentDoc();
+    }
+
+    match /github-actions-logs/{docId} {
+      allow read: if canReadApp();
+      allow write: if validGithubActionsLogDoc();
+    }
+
+    match /audit-logs/{docId} {
+      allow read: if canReadApp();
+      allow write: if isAdmin() && validAuditLogDoc();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

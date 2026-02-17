@@ -6,21 +6,158 @@ import {
   getDocs, 
   deleteDoc,
   query,
+  where,
   onSnapshot,
   Unsubscribe
 } from 'firebase/firestore'
 import { db, COLLECTIONS } from './firebase'
-import { Domain, DomainGroup, DomainTag } from './types'
+import { Domain, DomainGroup, DomainTag, ManagedUser, AuditLogEntry, ManagedUserRole, UserPermissions } from './types'
 
-// Get current user ID (from localStorage for now)
-const getUserId = () => {
-  return localStorage.getItem('app-current-user-id') || 'default-user'
+// Shared data owner for domains/groups/tags
+const getSharedDataUserId = () => {
+  return 'default-user'
+}
+
+// Get current authenticated user ID (from localStorage)
+const getCurrentUserId = () => {
+  return localStorage.getItem('app-current-auth-uid') || localStorage.getItem('app-current-user-id') || 'default-user'
+}
+
+const USER_DIRECTORY_DOC_ID = 'user-directory'
+const MAX_WRITE_RETRIES = 3
+const BASE_RETRY_MS = 350
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+const isRetryableFirestoreError = (error: unknown): boolean => {
+  const code = (error as { code?: string } | undefined)?.code
+  return code === 'aborted'
+    || code === 'unavailable'
+    || code === 'deadline-exceeded'
+    || code === 'resource-exhausted'
+}
+
+const runWithRetry = async <T>(task: () => Promise<T>): Promise<T> => {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt < MAX_WRITE_RETRIES; attempt += 1) {
+    try {
+      return await task()
+    } catch (error) {
+      lastError = error
+      if (!isRetryableFirestoreError(error) || attempt === MAX_WRITE_RETRIES - 1) {
+        throw error
+      }
+
+      const backoffMs = BASE_RETRY_MS * Math.pow(2, attempt)
+      const jitterMs = Math.floor(Math.random() * 120)
+      await sleep(backoffMs + jitterMs)
+    }
+  }
+
+  throw lastError
+}
+
+const removeUndefinedDeep = <T>(value: T): T => {
+  if (Array.isArray(value)) {
+    return value.map(item => removeUndefinedDeep(item)) as T
+  }
+
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([, entryValue]) => entryValue !== undefined)
+      .map(([entryKey, entryValue]) => [entryKey, removeUndefinedDeep(entryValue)])
+
+    return Object.fromEntries(entries) as T
+  }
+
+  return value
+}
+
+const normalizeManagedUser = (user: ManagedUser): ManagedUser => {
+  const normalized: ManagedUser = {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    permissions: {
+      canView: !!user.permissions?.canView,
+      canAddDomain: !!user.permissions?.canAddDomain,
+      canEdit: !!user.permissions?.canEdit,
+      canManageUsers: !!user.permissions?.canManageUsers,
+    },
+    isActive: user.isActive !== false,
+    revision: typeof user.revision === 'number' ? user.revision : 1,
+    createdAt: typeof user.createdAt === 'number' ? user.createdAt : Date.now(),
+    updatedAt: typeof user.updatedAt === 'number' ? user.updatedAt : Date.now(),
+  }
+
+  if (typeof user.password === 'string') normalized.password = user.password
+  if (typeof user.email === 'string') normalized.email = user.email
+  if (typeof user.authUid === 'string') normalized.authUid = user.authUid
+  if (typeof user.createdBy === 'string') normalized.createdBy = user.createdBy
+
+  return normalized
+}
+
+export interface ManagedUsersSnapshot {
+  users: ManagedUser[]
+  revision: number
+}
+
+export interface ManagedUsersWriteResult {
+  ok: boolean
+  revision: number
+  conflict?: boolean
+}
+
+export interface UserAccessProfile {
+  appUserId?: string
+  username?: string
+  email?: string | null
+  role?: ManagedUserRole
+  permissions?: UserPermissions
+  isActive?: boolean
+  updatedAt?: number
+}
+
+const toPermissionsByRole = (role: ManagedUserRole): UserPermissions => {
+  if (role === 'admin') {
+    return {
+      canView: true,
+      canAddDomain: true,
+      canEdit: true,
+      canManageUsers: true,
+    }
+  }
+
+  if (role === 'add-only') {
+    return {
+      canView: true,
+      canAddDomain: true,
+      canEdit: false,
+      canManageUsers: false,
+    }
+  }
+
+  return {
+    canView: true,
+    canAddDomain: false,
+    canEdit: false,
+    canManageUsers: false,
+  }
+}
+
+const normalizeRole = (value: unknown): ManagedUserRole => {
+  if (value === 'admin' || value === 'viewer' || value === 'add-only') {
+    return value
+  }
+  return 'viewer'
 }
 
 // === DOMAINS ===
 
 export const syncDomainsToFirestore = async (domains: Domain[]) => {
-  const userId = getUserId()
+  const userId = getSharedDataUserId()
   const userDocRef = doc(db, COLLECTIONS.DOMAINS, userId)
   
   try {
@@ -48,7 +185,7 @@ export const syncDomainsToFirestore = async (domains: Domain[]) => {
 }
 
 export const getDomainsFromFirestore = async (): Promise<Domain[]> => {
-  const userId = getUserId()
+  const userId = getSharedDataUserId()
   const userDocRef = doc(db, COLLECTIONS.DOMAINS, userId)
   
   try {
@@ -59,7 +196,7 @@ export const getDomainsFromFirestore = async (): Promise<Domain[]> => {
     return []
   } catch (error) {
     console.error('Error getting domains:', error)
-    return []
+    throw error
   }
 }
 
@@ -76,7 +213,7 @@ export const getDomainsFromFirestore = async (): Promise<Domain[]> => {
 // === GROUPS ===
 
 export const syncGroupsToFirestore = async (groups: DomainGroup[]) => {
-  const userId = getUserId()
+  const userId = getSharedDataUserId()
   const userDocRef = doc(db, COLLECTIONS.GROUPS, userId)
   
   try {
@@ -107,7 +244,7 @@ export const syncGroupsToFirestore = async (groups: DomainGroup[]) => {
 }
 
 export const getGroupsFromFirestore = async (): Promise<DomainGroup[]> => {
-  const userId = getUserId()
+  const userId = getSharedDataUserId()
   const userDocRef = doc(db, COLLECTIONS.GROUPS, userId)
   
   try {
@@ -118,7 +255,7 @@ export const getGroupsFromFirestore = async (): Promise<DomainGroup[]> => {
     return []
   } catch (error) {
     console.error('Error getting groups:', error)
-    return []
+    throw error
   }
 }
 
@@ -133,7 +270,7 @@ export const getGroupsFromFirestore = async (): Promise<DomainGroup[]> => {
 // === TAGS ===
 
 export const syncTagsToFirestore = async (tags: DomainTag[]) => {
-  const userId = getUserId()
+  const userId = getSharedDataUserId()
   const userDocRef = doc(db, COLLECTIONS.TAGS, userId)
   
   try {
@@ -149,7 +286,7 @@ export const syncTagsToFirestore = async (tags: DomainTag[]) => {
 }
 
 export const getTagsFromFirestore = async (): Promise<DomainTag[]> => {
-  const userId = getUserId()
+  const userId = getSharedDataUserId()
   const userDocRef = doc(db, COLLECTIONS.TAGS, userId)
   
   try {
@@ -160,7 +297,7 @@ export const getTagsFromFirestore = async (): Promise<DomainTag[]> => {
     return []
   } catch (error) {
     console.error('Error getting tags:', error)
-    return []
+    throw error
   }
 }
 
@@ -220,7 +357,7 @@ export const loadTags = async (): Promise<DomainTag[]> => {
 // === USER SETTINGS (Password) ===
 
 export const syncPasswordToFirestore = async (password: string) => {
-  const userId = getUserId()
+  const userId = getCurrentUserId()
   const userDocRef = doc(db, COLLECTIONS.USERS, userId)
   
   try {
@@ -237,7 +374,7 @@ export const syncPasswordToFirestore = async (password: string) => {
 }
 
 export const getPasswordFromFirestore = async (): Promise<string | null> => {
-  const userId = getUserId()
+  const userId = getCurrentUserId()
   const userDocRef = doc(db, COLLECTIONS.USERS, userId)
   
   try {
@@ -271,7 +408,7 @@ export const loadPassword = async (): Promise<string> => {
 // === NOTIFICATION SETTINGS ===
 
 export const syncNotificationSettingsToFirestore = async (settings: any) => {
-  const userId = getUserId()
+  const userId = getCurrentUserId()
   const userDocRef = doc(db, COLLECTIONS.USERS, userId)
   
   try {
@@ -288,7 +425,7 @@ export const syncNotificationSettingsToFirestore = async (settings: any) => {
 }
 
 export const getNotificationSettingsFromFirestore = async (): Promise<any | null> => {
-  const userId = getUserId()
+  const userId = getCurrentUserId()
   const userDocRef = doc(db, COLLECTIONS.USERS, userId)
   
   try {
@@ -327,4 +464,293 @@ export const loadNotificationSettings = async (): Promise<any | null> => {
   const result = saved ? JSON.parse(saved) : null
   console.log('[loadNotificationSettings] Returning:', result)
   return result
+}
+
+// === USER DIRECTORY (MANAGEMENT) ===
+
+export const getManagedUsersFromFirestore = async (): Promise<ManagedUser[]> => {
+  const snapshot = await getManagedUsersSnapshotFromFirestore()
+  return snapshot.users
+}
+
+export const getManagedUsersSnapshotFromFirestore = async (): Promise<ManagedUsersSnapshot> => {
+  const userDirectoryRef = doc(db, COLLECTIONS.USERS, USER_DIRECTORY_DOC_ID)
+
+  try {
+    const docSnap = await getDoc(userDirectoryRef)
+    if (!docSnap.exists()) {
+      return { users: [], revision: 0 }
+    }
+
+    const data = docSnap.data()
+    const users = Array.isArray(data.users)
+      ? (data.users as ManagedUser[]).map(normalizeManagedUser)
+      : []
+    const revision = typeof data.revision === 'number' ? data.revision : 0
+    return { users, revision }
+  } catch (error) {
+    console.error('Error getting managed users snapshot:', error)
+    throw error
+  }
+}
+
+export const syncManagedUsersWithRevision = async (
+  users: ManagedUser[],
+  expectedRevision: number,
+): Promise<ManagedUsersWriteResult> => {
+  const userDirectoryRef = doc(db, COLLECTIONS.USERS, USER_DIRECTORY_DOC_ID)
+
+  try {
+    return await runWithRetry(async () => {
+      const latestSnapshot = await getManagedUsersSnapshotFromFirestore()
+      if (latestSnapshot.revision !== expectedRevision) {
+        return {
+          ok: false,
+          conflict: true,
+          revision: latestSnapshot.revision,
+        }
+      }
+
+      const nextRevision = expectedRevision + 1
+      const normalizedUsers = users.map(normalizeManagedUser).map(user => removeUndefinedDeep(user))
+
+      await setDoc(userDirectoryRef, {
+        users: normalizedUsers,
+        revision: nextRevision,
+        updatedAt: Date.now(),
+        updatedBy: getCurrentUserId(),
+      }, { merge: true })
+
+      return {
+        ok: true,
+        revision: nextRevision,
+      }
+    })
+  } catch (error) {
+    console.error('Error syncing managed users with revision:', error)
+    return {
+      ok: false,
+      revision: expectedRevision,
+    }
+  }
+}
+
+export const syncManagedUsersToFirestore = async (users: ManagedUser[]) => {
+  const userDirectoryRef = doc(db, COLLECTIONS.USERS, USER_DIRECTORY_DOC_ID)
+
+  try {
+    await runWithRetry(async () => {
+      const normalizedUsers = users.map(normalizeManagedUser).map(user => removeUndefinedDeep(user))
+      await setDoc(userDirectoryRef, {
+        users: normalizedUsers,
+        updatedAt: Date.now(),
+        updatedBy: getCurrentUserId(),
+      }, { merge: true })
+    })
+
+    return true
+  } catch (error) {
+    console.error('Error syncing managed users:', error)
+    return false
+  }
+}
+
+export const syncUserAccessProfileToFirestore = async (authUid: string, profile: {
+  appUserId: string
+  username: string
+  email?: string
+  role: string
+  permissions: Record<string, unknown>
+  isActive: boolean
+}) => {
+  const userDocRef = doc(db, COLLECTIONS.USERS, authUid)
+
+  try {
+    await setDoc(userDocRef, {
+      appUserId: profile.appUserId,
+      username: profile.username,
+      email: profile.email || null,
+      role: profile.role,
+      permissions: profile.permissions,
+      isActive: profile.isActive,
+      updatedAt: Date.now(),
+    }, { merge: true })
+
+    return true
+  } catch (error) {
+    console.error('Error syncing user access profile:', error)
+    return false
+  }
+}
+
+export const syncUserActiveStateByAppUserId = async (appUserId: string, isActive: boolean): Promise<boolean> => {
+  try {
+    const usersRef = collection(db, COLLECTIONS.USERS)
+    const q = query(usersRef, where('appUserId', '==', appUserId))
+    const snapshot = await getDocs(q)
+
+    if (snapshot.empty) {
+      return false
+    }
+
+    await Promise.all(
+      snapshot.docs
+        .filter(docSnap => docSnap.id !== USER_DIRECTORY_DOC_ID)
+        .map(docSnap =>
+          setDoc(doc(db, COLLECTIONS.USERS, docSnap.id), {
+            isActive,
+            updatedAt: Date.now(),
+          }, { merge: true })
+        )
+    )
+
+    return true
+  } catch (error) {
+    console.error('Error syncing user active state by appUserId:', error)
+    return false
+  }
+}
+
+export const revokeUserAccessProfile = async (payload: {
+  appUserId: string
+  authUid?: string
+  username?: string
+  email?: string
+}): Promise<boolean> => {
+  const revokedProfilePayload = {
+    appUserId: payload.appUserId,
+    username: payload.username,
+    email: payload.email || null,
+    role: 'viewer',
+    permissions: {
+      canView: false,
+      canAddDomain: false,
+      canEdit: false,
+      canManageUsers: false,
+    },
+    isActive: false,
+    updatedAt: Date.now(),
+  }
+
+  try {
+    const updateTasks: Promise<unknown>[] = []
+
+    if (payload.authUid && payload.authUid !== USER_DIRECTORY_DOC_ID) {
+      updateTasks.push(
+        setDoc(doc(db, COLLECTIONS.USERS, payload.authUid), revokedProfilePayload, { merge: true })
+      )
+    }
+
+    const usersRef = collection(db, COLLECTIONS.USERS)
+    const q = query(usersRef, where('appUserId', '==', payload.appUserId))
+    const snapshot = await getDocs(q)
+
+    snapshot.docs
+      .filter(docSnap => docSnap.id !== USER_DIRECTORY_DOC_ID && docSnap.id !== payload.authUid)
+      .forEach(docSnap => {
+        updateTasks.push(
+          setDoc(doc(db, COLLECTIONS.USERS, docSnap.id), revokedProfilePayload, { merge: true })
+        )
+      })
+
+    if (updateTasks.length === 0) {
+      return false
+    }
+
+    await Promise.all(updateTasks)
+    return true
+  } catch (error) {
+    console.error('Error revoking user access profile:', error)
+    return false
+  }
+}
+
+export const getUserAccessProfileByUid = async (authUid: string): Promise<UserAccessProfile | null> => {
+  const userDocRef = doc(db, COLLECTIONS.USERS, authUid)
+
+  try {
+    const docSnap = await getDoc(userDocRef)
+    if (!docSnap.exists()) {
+      return null
+    }
+
+    const data = docSnap.data()
+    const role = normalizeRole(data.role)
+    const permissions = (data.permissions && typeof data.permissions === 'object')
+      ? {
+          canView: !!data.permissions.canView,
+          canAddDomain: !!data.permissions.canAddDomain,
+          canEdit: !!data.permissions.canEdit,
+          canManageUsers: !!data.permissions.canManageUsers,
+        }
+      : toPermissionsByRole(role)
+
+    return {
+      appUserId: typeof data.appUserId === 'string' ? data.appUserId : undefined,
+      username: typeof data.username === 'string' ? data.username : undefined,
+      email: typeof data.email === 'string' ? data.email : null,
+      role,
+      permissions,
+      isActive: data.isActive !== false,
+      updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : undefined,
+    }
+  } catch (error) {
+    console.error('Error getting user access profile:', error)
+    return null
+  }
+}
+
+export const loadManagedUsers = async (): Promise<ManagedUser[]> => {
+  try {
+    const firebaseUsers = await getManagedUsersFromFirestore()
+    if (firebaseUsers.length >= 0) {
+      localStorage.setItem('managed-users-cache', JSON.stringify(firebaseUsers))
+      return firebaseUsers
+    }
+  } catch (error) {
+    console.log('Firebase managed users not available, using localStorage fallback')
+  }
+
+  const saved = localStorage.getItem('managed-users-cache')
+  return saved ? JSON.parse(saved) : []
+}
+
+export const loadManagedUsersSnapshot = async (): Promise<ManagedUsersSnapshot> => {
+  try {
+    const snapshot = await getManagedUsersSnapshotFromFirestore()
+    localStorage.setItem('managed-users-cache', JSON.stringify(snapshot.users))
+    return snapshot
+  } catch (error) {
+    console.log('Firebase managed users snapshot not available, using localStorage fallback')
+  }
+
+  const saved = localStorage.getItem('managed-users-cache')
+  const users = saved ? (JSON.parse(saved) as ManagedUser[]).map(normalizeManagedUser) : []
+  return { users, revision: 0 }
+}
+
+export const writeAuditLog = async (payload: Omit<AuditLogEntry, 'id' | 'timestamp'> & { timestamp?: number }) => {
+  const timestamp = payload.timestamp ?? Date.now()
+  const logId = `audit-${timestamp}-${Math.random().toString(36).slice(2, 10)}`
+  const logRef = doc(db, COLLECTIONS.AUDIT_LOGS, logId)
+
+  try {
+    await runWithRetry(async () => {
+      await setDoc(logRef, {
+        id: logId,
+        actorUserId: payload.actorUserId,
+        actorUsername: payload.actorUsername,
+        action: payload.action,
+        targetType: payload.targetType,
+        targetId: payload.targetId,
+        changes: payload.changes,
+        timestamp,
+      })
+    })
+
+    return true
+  } catch (error) {
+    console.error('Error writing audit log:', error)
+    return false
+  }
 }

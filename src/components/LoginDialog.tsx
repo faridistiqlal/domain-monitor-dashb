@@ -8,10 +8,11 @@ import { toast } from 'sonner'
 
 interface LoginDialogProps {
   open: boolean
-  onLogin: (password: string) => void
+  onLogin: (username: string, password: string) => void
 }
 
 export function LoginDialog({ open, onLogin }: LoginDialogProps) {
+  const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -19,6 +20,11 @@ export function LoginDialog({ open, onLogin }: LoginDialogProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
+    if (!username.trim()) {
+      toast.error('Username tidak boleh kosong')
+      return
+    }
+
     if (!password.trim()) {
       toast.error('Password tidak boleh kosong')
       return
@@ -28,7 +34,7 @@ export function LoginDialog({ open, onLogin }: LoginDialogProps) {
     
     // Simulasi delay untuk keamanan (prevent brute force)
     setTimeout(() => {
-      onLogin(password)
+      onLogin(username.trim(), password)
       setPassword('')
       setIsLoading(false)
     }, 300)
@@ -43,11 +49,23 @@ export function LoginDialog({ open, onLogin }: LoginDialogProps) {
             Login Required
           </DialogTitle>
           <DialogDescription>
-            Masukkan password untuk mengakses fitur edit dan delete
+            Login dengan akun Anda untuk mengakses dashboard
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Masukkan username"
+              autoFocus
+              disabled={isLoading}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
@@ -57,7 +75,6 @@ export function LoginDialog({ open, onLogin }: LoginDialogProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Masukkan password Anda"
-                autoFocus
                 disabled={isLoading}
                 className="pr-10"
               />
