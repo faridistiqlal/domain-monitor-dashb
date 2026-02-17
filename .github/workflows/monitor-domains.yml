@@ -4,7 +4,7 @@ on:
   schedule:
     # Runs every 1 hour for batch rotation (B1-B4)
     # Batch rotation: 00:00(B1), 01:00(B2), 02:00(B3), 03:00(B4), 04:00(B1), repeat...
-    # Per run: ~79 domains × 1.5 min actual | 24 runs/day × 1.5 min = 1,080 min/month (54% quota)
+    # Per run: ~79 domains × ~2.4 min actual | 24 runs/day × 2.4 min = 1,728 min/month (86% quota)
     - cron: '0 * * * *'
   
   # Allow manual trigger from GitHub UI
@@ -29,7 +29,7 @@ jobs:
       
       - name: Install only monitoring dependencies
         run: |
-          npm install --no-save firebase node-fetch
+          npm install --no-save firebase firebase-admin node-fetch
       
       - name: Run domain monitoring
         timeout-minutes: 4
@@ -41,6 +41,9 @@ jobs:
           FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_CRON_EMAIL: ${{ secrets.FIREBASE_CRON_EMAIL }}
+          FIREBASE_CRON_PASSWORD: ${{ secrets.FIREBASE_CRON_PASSWORD }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: node scripts/monitor-cron.js
       

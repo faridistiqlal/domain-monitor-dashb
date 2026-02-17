@@ -7,8 +7,17 @@
  * Checks domains, writes to Firebase, sends Slack notifications
  */
 
-import { initializeApp } from 'firebase/app'
-import { getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { initializeApp as initializeClientApp } from 'firebase/app'
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import {
+  getFirestore as getClientFirestore,
+  collection as clientCollection,
+  addDoc as clientAddDoc,
+  doc as clientDoc,
+  getDoc as clientGetDoc,
+  setDoc as clientSetDoc,
+  serverTimestamp as clientServerTimestamp,
+} from 'firebase/firestore'
 import dns from 'dns'
 import { promisify } from 'util'
 import fetch from 'node-fetch'
@@ -27,9 +36,10 @@ const firebaseConfig = {
   measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-C3RLK090HK"
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
-const db = getFirestore(app)
+let db
+let firestoreMode = 'client'
+let adminServerTimestampFactory = null
+let clientAuthUid = null
 
 // Slack webhook URL
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL
@@ -37,6 +47,122 @@ const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL
 console.log('[Monitor] Starting domain monitoring cron job...')
 console.log('[Monitor] Firebase Project:', firebaseConfig.projectId)
 console.log('[Monitor] Slack Enabled:', !!SLACK_WEBHOOK_URL)
+
+function parseServiceAccount(rawValue) {
+  if (!rawValue) return null
+
+  try {
+    return JSON.parse(rawValue)
+  } catch (_) {
+    try {
+      const decoded = Buffer.from(rawValue, 'base64').toString('utf8')
+      return JSON.parse(decoded)
+    } catch {
+      return null
+    }
+  }
+}
+
+const docExists = (snapshot) => {
+  if (typeof snapshot?.exists === 'function') {
+    return snapshot.exists()
+  }
+  return !!snapshot?.exists
+}
+
+const fsCollection = (name) => {
+  if (firestoreMode === 'admin') {
+    return db.collection(name)
+  }
+  return clientCollection(db, name)
+}
+
+const fsDoc = (collectionName, docId) => {
+  if (firestoreMode === 'admin') {
+    return db.collection(collectionName).doc(docId)
+  }
+  return clientDoc(db, collectionName, docId)
+}
+
+const fsGetDoc = async (docRef) => {
+  if (firestoreMode === 'admin') {
+    return docRef.get()
+  }
+  return clientGetDoc(docRef)
+}
+
+const fsSetDoc = async (docRef, data, options = undefined) => {
+  if (firestoreMode === 'admin') {
+    if (options?.merge) {
+      return docRef.set(data, { merge: true })
+    }
+    return docRef.set(data)
+  }
+  return clientSetDoc(docRef, data, options)
+}
+
+const fsAddDoc = async (collectionRef, data) => {
+  if (firestoreMode === 'admin') {
+    return collectionRef.add(data)
+  }
+  return clientAddDoc(collectionRef, data)
+}
+
+const fsServerTimestamp = () => {
+  if (firestoreMode === 'admin' && adminServerTimestampFactory) {
+    return adminServerTimestampFactory()
+  }
+  return clientServerTimestamp()
+}
+
+async function initializeFirestoreConnection() {
+  const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT
+  const serviceAccount = parseServiceAccount(serviceAccountRaw)
+
+  if (serviceAccount) {
+    try {
+      const { initializeApp: initializeAdminApp, cert, getApps } = await import('firebase-admin/app')
+      const { getFirestore: getAdminFirestore, FieldValue } = await import('firebase-admin/firestore')
+
+      const adminApp = getApps().length > 0
+        ? getApps()[0]
+        : initializeAdminApp({
+            credential: cert(serviceAccount),
+            projectId: serviceAccount.project_id || firebaseConfig.projectId,
+          })
+
+      db = getAdminFirestore(adminApp)
+      firestoreMode = 'admin'
+      adminServerTimestampFactory = () => FieldValue.serverTimestamp()
+      console.log('[Monitor] Firestore mode: admin-sdk (service account)')
+      return
+    } catch (adminInitError) {
+      console.error('[Monitor] Failed to initialize admin SDK, falling back to client SDK:', adminInitError.message)
+    }
+  }
+
+  const app = initializeClientApp(firebaseConfig)
+  db = getClientFirestore(app)
+  firestoreMode = 'client'
+  console.log('[Monitor] Firestore mode: client-sdk (rules apply)')
+
+  const cronEmail = process.env.FIREBASE_CRON_EMAIL
+  const cronPassword = process.env.FIREBASE_CRON_PASSWORD
+
+  if (cronEmail && cronPassword) {
+    try {
+      const auth = getAuth(app)
+      const credential = await signInWithEmailAndPassword(auth, cronEmail, cronPassword)
+      clientAuthUid = credential.user.uid
+      console.log('[Monitor] Client auth login success:', clientAuthUid)
+    } catch (authError) {
+      console.error('[Monitor] Client auth login failed:', authError.message)
+      throw authError
+    }
+  } else {
+    console.log('[Monitor] Client auth credentials not provided (FIREBASE_CRON_EMAIL/FIREBASE_CRON_PASSWORD)')
+  }
+}
 
 /**
  * Check single domain with timeout
@@ -187,10 +313,10 @@ async function getOrCreateDailyStats(domainId) {
   const statsId = `${domainId}-${today}`
   
   try {
-    const statsRef = doc(db, 'domain-stats-daily', statsId)
-    const statsSnap = await getDoc(statsRef)
+    const statsRef = fsDoc('domain-stats-daily', statsId)
+    const statsSnap = await fsGetDoc(statsRef)
     
-    if (statsSnap.exists()) {
+    if (docExists(statsSnap)) {
       return { id: statsId, ...statsSnap.data() }
     }
     
@@ -211,7 +337,7 @@ async function getOrCreateDailyStats(domainId) {
       incidentIds: []
     }
     
-    await setDoc(statsRef, newStats)
+    await fsSetDoc(statsRef, newStats)
     return newStats
   } catch (error) {
     console.error(`[Stats] Error getting/creating stats for ${domainId}:`, error.message)
@@ -287,8 +413,8 @@ async function updateDailyStats(domainId, checkResult) {
     }
     
     // Save to Firestore
-    const statsRef = doc(db, 'domain-stats-daily', stats.id)
-    await setDoc(statsRef, stats, { merge: true })
+    const statsRef = fsDoc('domain-stats-daily', stats.id)
+    await fsSetDoc(statsRef, stats, { merge: true })
     
     console.log(`[Stats] Updated stats for ${domainId}: ${stats.totalChecks} checks, ${stats.uptimePercent.toFixed(1)}% uptime`)
   } catch (error) {
@@ -313,8 +439,8 @@ async function updateDomainStatus(domainId, checkResult, allDomains) {
     allDomains[domainIndex].error = checkResult.error
     
     // Write back to Firebase (default-user document)
-    const domainsRef = doc(db, 'domains', 'default-user')
-    await setDoc(domainsRef, {
+    const domainsRef = fsDoc('domains', 'default-user')
+    await fsSetDoc(domainsRef, {
       domains: allDomains,
       updatedAt: Date.now()
     }, { merge: true })
@@ -348,24 +474,27 @@ async function sendSlackNotification(message) {
  */
 async function runMonitoring() {
   try {
+    if (firestoreMode === 'client' && !clientAuthUid) {
+      throw new Error('Client mode requires FIREBASE_CRON_EMAIL and FIREBASE_CRON_PASSWORD, or provide FIREBASE_SERVICE_ACCOUNT for admin mode')
+    }
+
     console.log('[Monitor] Fetching domains from Firebase...')
-    
-    const domainsRef = collection(db, 'domains')
-    const snapshot = await getDocs(domainsRef)
-    
-    if (snapshot.empty) {
-      console.log('[Monitor] No domains found in Firebase')
+
+    const domainsDocRef = fsDoc('domains', 'default-user')
+    const domainsDocSnap = await fsGetDoc(domainsDocRef)
+
+    if (!docExists(domainsDocSnap)) {
+      console.log('[Monitor] domains/default-user not found in Firebase')
       return
     }
-    
-    // Get domains array from default-user document
-    let allDomains = []
-    snapshot.docs.forEach(doc => {
-      const data = doc.data()
-      if (data.domains && Array.isArray(data.domains)) {
-        allDomains = allDomains.concat(data.domains)
-      }
-    })
+
+    const data = domainsDocSnap.data()
+    const allDomains = Array.isArray(data.domains) ? data.domains : []
+
+    if (allDomains.length === 0) {
+      console.log('[Monitor] No domains found in domains/default-user')
+      return
+    }
     
     console.log(`[Monitor] Found ${allDomains.length} total domains`)
     
@@ -382,9 +511,9 @@ async function runMonitoring() {
       
       // Write log even if no domains checked
       try {
-        const logsRef = collection(db, 'github-actions-logs')
-        await addDoc(logsRef, {
-          timestamp: serverTimestamp(),
+        const logsRef = fsCollection('github-actions-logs')
+        await fsAddDoc(logsRef, {
+          timestamp: fsServerTimestamp(),
           batch: currentBatch,
           totalDomains: allDomains.length,
           domainsChecked: 0,
@@ -451,9 +580,9 @@ Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
     
     // Write log to Firebase for web app monitoring
     try {
-      const logsRef = collection(db, 'github-actions-logs')
-      await addDoc(logsRef, {
-        timestamp: serverTimestamp(),
+      const logsRef = fsCollection('github-actions-logs')
+      await fsAddDoc(logsRef, {
+        timestamp: fsServerTimestamp(),
         batch: currentBatch,
         totalDomains: allDomains.length,
         domainsChecked: domainsToCheck.length,
@@ -477,9 +606,9 @@ Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
     
     // Write error log to Firebase
     try {
-      const logsRef = collection(db, 'github-actions-logs')
-      await addDoc(logsRef, {
-        timestamp: serverTimestamp(),
+      const logsRef = fsCollection('github-actions-logs')
+      await fsAddDoc(logsRef, {
+        timestamp: fsServerTimestamp(),
         status: 'error',
         error: error.message,
         stack: error.stack
@@ -493,8 +622,9 @@ Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
   }
 }
 
-// Run monitoring
-runMonitoring()
+// Initialize and run monitoring
+initializeFirestoreConnection()
+  .then(() => runMonitoring())
   .then(() => {
     console.log('[Monitor] Done!')
     process.exit(0)
