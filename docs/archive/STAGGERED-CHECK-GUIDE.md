@@ -1,5 +1,10 @@
 # Staggered Auto-Check System Guide
 
+> **Doc Class:** Historical Staggered Monitoring Guide  
+> **Trust Level:** Archive Reference (not source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `GITHUB-ACTIONS-USAGE.md`
+
 ## 📋 Overview
 
 Sistem auto-check terbaru (v2.3.0) menggunakan strategi **staggered batch checking** untuk mengatasi limitasi Firebase free tier saat memonitor 300-400 domain secara bersamaan.
@@ -268,14 +273,14 @@ console.log('Stats:', stats)
 ## 📞 Support
 
 Issues or questions? Check:
-- [CHANGELOG.md](./CHANGELOG.md) - Version history
-- [PRD.md](./PRD.md) - Product requirements
+- [CHANGELOG.md](../CHANGELOG.md) - Version history
+- [PROJECT-STATUS.md](../PROJECT-STATUS.md) - Current implementation status
 - Firebase Console - Usage and errors
 - Browser DevTools Console - Runtime errors
 
 ---
 
-**Version**: 2.3.0  
-**Last Updated**: 7 Januari 2026  
+**Version**: Historical guide (staggered checks)  
+**Last Updated**: 18 Februari 2026  
 **Author**: AI Assistant  
-**Status**: Production Ready ✅
+**Status**: Historical Reference ℹ️

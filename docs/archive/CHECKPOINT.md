@@ -1,4 +1,9 @@
 # CHECKPOINT - Domain Monitoring Dashboard
+> **Doc Class:** Historical Archive  
+> **Trust Level:** Archive Reference (not source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `CHANGELOG.md`
+
 **Iteration:** 59 - Staggered Auto-Check Implementation  
 **Date:** 7 Januari 2026  
 **Status:** Production Ready - Data Collection Phase ⏳

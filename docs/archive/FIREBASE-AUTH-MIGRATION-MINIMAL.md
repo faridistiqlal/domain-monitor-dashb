@@ -1,5 +1,10 @@
 # Firebase Auth Migration (Minimal UI Change)
 
+> **Doc Class:** Migration Reference  
+> **Trust Level:** Transitional Reference (not primary source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `USER-MANAGEMENT-BLUEPRINT.md`
+
 Status: Ready for implementation  
 Date: 16 Februari 2026  
 Owner: Development Team

@@ -1,5 +1,10 @@
 # 🎯 Feature Plan: Individual Domain Monitoring (v3.1.0)
 
+> **Doc Class:** Historical Feature Plan  
+> **Trust Level:** Archive Reference (not source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `CHANGELOG.md`
+
 **Created:** 7 Januari 2026  
 **Status:** In Development  
 **Priority:** High

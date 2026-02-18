@@ -1,5 +1,10 @@
 # 🚀 Development Workflow Guide
 
+> **Doc Class:** Historical Workflow Reference  
+> **Trust Level:** Archive Reference (not source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `CHANGELOG.md`
+
 **Project:** Domain Monitor - Kabupaten Kendal  
 **Last Updated:** 12 Januari 2026  
 **Status:** Production Ready with Auto-Deploy

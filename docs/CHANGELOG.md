@@ -372,7 +372,7 @@ Buffer: 560 minutes remaining ✅
 
 ---
 
-## Version 3.10.0 - Sticky Bar & Last Checked Timestamp
+## Legacy Note - Sticky Bar & Last Checked Timestamp
 **Tanggal Rilis:** 12 Januari 2026
 
 ### ✨ New Features: Enhanced Tab Monitoring
@@ -403,7 +403,7 @@ Buffer: 560 minutes remaining ✅
 
 ---
 
-## Version 3.9.4 - Icon & Layout Fix
+## Legacy Note - Icon & Layout Fix
 **Tanggal Rilis:** 12 Januari 2026
 
 ### 🎨 UI Improvement: Correct Icons & Better Layout
@@ -1626,18 +1626,3 @@ Jika masih kosong setelah fix ini, berarti **data memang belum ada** di Firebase
 - Shadcn UI components
 - Phosphor icons
 - Tailwind CSS styling
-
----
-
-## Roadmap
-
-### 🔮 Fitur Mendatang
-- **Historical Data**: Track perubahan status domain dari waktu ke waktu
-- **Alert Notifications**: Notifikasi ketika domain down
-- **Uptime Percentage**: Hitung persentase uptime per domain
-- **Bulk Operations**: Import/export dengan lebih banyak format
-- **Advanced Analytics**: Lebih banyak insight dan visualisasi
-- **API Integration**: Webhook dan API untuk integrasi external
-- **Custom Check Interval**: Atur interval check per domain atau grup
-- **SSL Certificate Monitoring**: Check status SSL certificate
-- **Multi-User Support**: Kolaborasi team dengan role management

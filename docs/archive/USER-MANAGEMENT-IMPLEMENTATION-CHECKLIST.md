@@ -1,10 +1,15 @@
 # User Management Implementation Checklist (Execution Plan)
 
+> **Doc Class:** Implementation Checklist Reference  
+> **Trust Level:** Supporting Reference (context-specific)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `USER-MANAGEMENT-BLUEPRINT.md` + `PROJECT-STATUS.md`
+
 Status: In progress (MVP + E2E PASS, closing operational gates)  
 Date: 16 Februari 2026  
 Reference: USER-MANAGEMENT-BLUEPRINT.md
 
-E2E (real Firebase) checklist: [USER-MANAGEMENT-E2E-CHECKLIST.md](./USER-MANAGEMENT-E2E-CHECKLIST.md)
+E2E (real Firebase) checklist: [USER-MANAGEMENT-E2E-CHECKLIST.md](../USER-MANAGEMENT-E2E-CHECKLIST.md)
 
 ---
 
@@ -131,7 +136,7 @@ Referensi migrasi auth:
 - `firestore.rules` (atau dokumen rules deployment yang dipakai)
 
 ### Checklist
-- [x] Buat baseline rules file: [firestore.rules](../firestore.rules)
+- [x] Buat baseline rules file: [firestore.rules](../../firestore.rules)
 - [x] Terapkan deny-by-default untuk collection di luar scope app
 - [x] Tambah schema guard untuk `domains/groups/tags/users/domain-stats-daily/domain-incidents/github-actions-logs`
 - [x] Rule read/write berdasarkan role user (scope user-management)
@@ -229,7 +234,7 @@ Acceptance:
 - [ ] Verifikasi bundle production memuat versi terbaru
 - [ ] Verifikasi footer app menampilkan versi yang sama dengan changelog
 - [ ] Jika build gagal, cek log: `npx vercel inspect <deployment-url> --logs`
-- [ ] Validasi baseline [vercel.json](../vercel.json):
+- [ ] Validasi baseline [vercel.json](../../vercel.json):
 	- [ ] `installCommand` = `npm install --include=dev && npm install --no-save typescript vite`
 	- [ ] `buildCommand` = `npm run build`
 
@@ -268,6 +273,6 @@ Acceptance:
 
 ## 14) Catatan Sinkronisasi (16 Feb 2026)
 
-- [x] E2E Firebase real environment lulus 7/7 (lihat [USER-MANAGEMENT-E2E-CHECKLIST.md](./USER-MANAGEMENT-E2E-CHECKLIST.md))
+- [x] E2E Firebase real environment lulus 7/7 (lihat [USER-MANAGEMENT-E2E-CHECKLIST.md](../USER-MANAGEMENT-E2E-CHECKLIST.md))
 - [x] Aksi `delete-user` sudah diimplementasikan (khusus non-admin) + audit log
 - [ ] Gate operasional tersisa: backup evidence, rollback drill, dan regression lintas fitur

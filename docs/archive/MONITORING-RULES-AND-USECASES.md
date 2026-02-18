@@ -1,5 +1,10 @@
 # 🔍 Monitoring Rules & Use Cases Guide
 
+> **Doc Class:** Historical Monitoring Reference  
+> **Trust Level:** Archive Reference (not source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `CHANGELOG.md`
+
 **Version:** 3.8.5  
 **Last Updated:** 10 Januari 2026
 
@@ -595,9 +600,9 @@ Solution: Pin hanya 5-20 domain paling critical
 ## 📚 Related Documentation
 
 - [STAGGERED-CHECK-GUIDE.md](./STAGGERED-CHECK-GUIDE.md) - Batch system technical details
-- [FIREBASE-QUERY-GUIDE.md](./FIREBASE-QUERY-GUIDE.md) - Query history data
+- [FIREBASE-QUERY-GUIDE.md](../FIREBASE-QUERY-GUIDE.md) - Query history data
 - [FEATURE-PLAN-INDIVIDUAL-MONITORING.md](./FEATURE-PLAN-INDIVIDUAL-MONITORING.md) - Individual monitoring architecture
-- [CHANGELOG.md](./CHANGELOG.md) - Version history & features
+- [CHANGELOG.md](../CHANGELOG.md) - Version history & features
 
 ---
 

@@ -1,5 +1,10 @@
 # 🚀 Setup GitHub Repository - Panduan Lengkap
 
+> **Doc Class:** Historical Setup Record  
+> **Trust Level:** Archive Reference (not source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `README.md`
+
 **Tanggal:** 7 Januari 2026  
 **Status:** ✅ Git Repository Siap, Tinggal Create di GitHub
 

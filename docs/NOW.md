@@ -1,0 +1,286 @@
+# 📍 NOW - Single Source of Truth
+
+> **Baca file ini saja = langsung paham keseluruhan sistem.**
+> Tidak perlu baca file lain kecuali butuh detail spesifik.
+
+**Last Updated:** 18 Februari 2026  
+**Current Version:** 3.10.2 (sumber: `src/lib/version.ts`)  
+**Live App:** https://kendal-uptime.vercel.app
+
+---
+
+## 📋 Prompt untuk Chat Session Baru
+
+**Copy-paste prompt di bawah ini ke chat baru agar AI langsung paham konteks penuh:**
+
+> ```
+> Baca file docs/NOW.md di workspace ini. File itu adalah single source of truth
+> untuk seluruh proyek. Setelah baca, kamu akan paham: apa proyeknya, tech stack,
+> versi saat ini, fitur yang sudah jalan, roadmap & progress sampai mana,
+> workflow deploy (test → vercel), dan changelog ringkas. Jika butuh detail
+> rilis lengkap baca docs/CHANGELOG.md, jika butuh panduan user baca
+> docs/GUIDES.md. Jangan buat file .md baru — semua plan & progress ditulis
+> di NOW.md bagian Roadmap.
+> ```
+
+---
+
+## ⚡ RULES untuk AI / Developer Baru
+
+1. **Plan & Progress di mana?**
+   - **Plan baru / fitur baru** → tulis di bagian **§5. Roadmap** di file ini
+   - **Progress / sudah sampai mana** → update status di tabel Roadmap (`Planned` → `In Progress` → `Done`)
+   - **Selesai & di-release** → pindahkan ke tabel "Done Recently" + catat detail di `CHANGELOG.md`
+   - **Catatan teknis harian** → tulis langsung di section Roadmap item terkait
+
+2. **Sebelum coding, baca file ini saja.** Tidak perlu baca file lain.
+
+3. **Setelah coding:**
+   - Update versi di `src/lib/version.ts`
+   - Tambah entry di `docs/CHANGELOG.md`
+   - Update status roadmap di file ini (§5)
+   - Update "Last Updated" di header file ini
+
+4. **Jangan buat file .md baru** kecuali benar-benar perlu. Semua plan/status/progress cukup di file ini.
+
+5. **Git commit per kategori, bukan sekaligus.** Pisahkan commit berdasarkan jenis perubahan:
+   - `docs: simplify documentation structure` — perubahan dokumentasi
+   - `feat: add user management dialog` — fitur baru
+   - `fix: pin sync across devices` — bug fix
+   - `refactor: clean firestore sync logic` — refactor kode
+   - `chore: remove backup patch files` — cleanup/maintenance
+   - `style: fix mobile card overflow` — UI/styling
+   
+   Format: `kategori: 4-5 kata penjelasan`. Jangan commit semua file sekaligus.
+
+---
+
+## 1. Apa Ini?
+
+Dashboard monitoring availability subdomain Kabupaten Kendal.  
+Fitur inti: cek status domain (online/dns-only/offline), statistik uptime, notifikasi Slack, sinkronisasi Firebase, user management.
+
+### Tech Stack
+- Frontend: React 19 + TypeScript + Vite 7 + Tailwind CSS 4
+- Data: Firebase Firestore
+- Monitoring terjadwal: GitHub Actions (`.github/workflows/monitor-domains.yml`)
+- Script cron: `scripts/monitor-cron.js`
+- Rules keamanan: `firestore.rules`
+- Deploy: Vercel (auto-deploy dari Git)
+
+---
+
+## 2. Status Sistem (Production Ready)
+
+| Aspek | Detail |
+|-------|--------|
+| Status | ✅ Production Ready |
+| Role aktif | `admin`, `viewer`, `add-only` |
+| Monitoring cron | GitHub Actions tiap 1 jam (`0 * * * *`) |
+| Runtime per run | ~2.4 menit |
+| Usage bulanan | ~1,728 menit/bulan (86% kuota 2,000) |
+| Deploy target | Vercel production |
+
+### Fitur Implementasi
+
+**Monitoring & Data:**
+- 3-state status: `online`, `dns-only`, `offline`
+- Batch staggered checking (B1-B4)
+- Statistik harian/jam + incident tracking
+- Auto-refresh (60 detik) + manual check
+- Sinkronisasi domain/group/tag ke Firebase
+- Import/export CSV
+- Pin domain (sync antar device)
+
+**User & Permission (MVP - v3.10.0):**
+- Login username + password (bukan password-only lagi)
+- Role enforcement: admin (full), viewer (read-only), add-only (tambah domain saja)
+- User Management dialog khusus admin
+- Managed users sync ke Firebase (`users/user-directory`)
+
+**Notifications:**
+- Slack webhook settings sinkron ke Firebase
+- Rule: down / recovery / slow + cooldown
+- Per-domain notification toggle tersimpan cloud
+
+---
+
+## 3. Struktur Proyek
+
+```text
+src/
+  App.tsx                     # Entry point aplikasi
+  components/                 # React components
+  hooks/                      # Custom hooks
+  lib/
+    version.ts                # APP_VERSION (source of truth versi)
+    firestore-sync.ts         # Firebase sync logic
+docs/
+  NOW.md                      # ← File ini (baca ini saja)
+  CHANGELOG.md                # Detail histori semua rilis
+  GUIDES.md                   # Panduan penggunaan aplikasi
+  archive/                    # Dokumen historis (reference only)
+scripts/
+  monitor-cron.js             # Script monitoring GitHub Actions
+  *.mjs                       # Tools query/debug Firebase
+.github/workflows/
+  monitor-domains.yml         # Cron job monitoring tiap 1 jam
+firestore.rules               # Security rules Firestore
+```
+
+---
+
+## 4. Release Terbaru
+
+### v3.10.2 (16 Feb 2026)
+- Firestore Rules deploy finalized
+- Script deploy rules disiapkan (`firebase.json` + `package.json`)
+- E2E checklist user management selesai (PASS)
+- Footer version sinkron changelog
+
+### v3.10.1 (16 Feb 2026)
+- Lock aksi mutasi untuk read-only/add-only diperketat
+- Pin/monitoring toggle gated by permission
+
+### v3.10.0 (16 Feb 2026) — **Major: User Management MVP**
+- Username + password login (bukan password-only)
+- Admin: create/enable/disable user
+- Role enforcement: viewer, add-only, admin
+- Managed users sync ke Firebase
+
+### v3.9.11 (16 Feb 2026)
+- Data-loss prevention: skip auto-sync startup, throw on read error
+
+### v3.9.10 (16 Feb 2026)
+- Sinkronisasi estimasi runtime GitHub Actions (~2.4 min/run)
+
+### v3.9.9 (1 Feb 2026)
+- Schedule diubah dari 20 menit → 1 jam (fix syntax error + quota)
+
+### v3.9.8 (24 Jan 2026)
+- 80% reduction workflow time (minimal deps install)
+
+### v3.9.5-3.9.7 (12-19 Jan 2026)
+- Groups persistence fix, notification settings Firebase sync, UI fixes
+
+### v3.9.0-3.9.4 (12 Jan 2026)
+- Search in assign dialog, tag sync fix, pin sync fix, icon/layout fixes
+
+### Milestone Lama
+| Versi | Highlight |
+|-------|-----------|
+| v3.8.x | UptimeBar fix, GitHub Actions stats, domain persistence, countdown timer |
+| v3.7.x | GitHub Actions health monitoring tab |
+| v3.6.x | GitHub Actions 24/7 monitoring (FREE tier) |
+| v3.5.x | Mobile responsive, unified charts |
+| v3.4.x | Individual monitoring, pin tab Firebase sync |
+| v3.1.x | Analytics data, individual domain monitoring |
+| v2.3.x | Firebase optimization, staggered auto-check |
+| v2.2.0 | Slack notifications |
+| v2.1.0 | Firebase cloud sync |
+| v2.0.0 | Statistics, tags, manual check |
+| v1.0.0 | Initial release (2023) |
+
+Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
+
+---
+
+## 5. Roadmap (Pending Work)
+
+| ID | Item | Status | Target |
+|----|------|--------|--------|
+| R-004 | Hardening auth/rules monitoring | Planned | 3.11.x |
+| R-005 | Governance update docs per release | Planned | 3.10.x |
+
+### Done Recently
+| ID | Item | Versi |
+|----|------|-------|
+| R-001 | Simplifikasi dokumentasi ke single-entry | 3.10.x |
+| R-002 | Split dokumen historis ke `docs/archive/` | 3.10.x |
+| R-003 | Sinkronisasi metadata arsip | 3.10.x |
+| D-001 | User Management MVP | 3.10.0 |
+| D-002 | Read-only/add-only action lock | 3.10.1 |
+| D-003 | Firebase rules deploy & E2E | 3.10.2 |
+
+---
+
+## 6. Workflow: Plan → Test → Deploy
+
+### A. Sebelum coding
+1. (Opsional) Backup: `git diff > backup-pre-edit-$(date +%Y%m%d-%H%M%S).patch`
+2. Tetapkan scope perubahan + target versi
+
+### B. Implementasi
+1. Ubah kode sesuai scope
+2. Update versi di `src/lib/version.ts`
+3. Catat perubahan di `docs/CHANGELOG.md`
+
+### C. Validasi lokal
+```bash
+npm run build          # Wajib berhasil
+npm run dev            # Opsional: verifikasi manual
+```
+
+### D. Deploy ke Vercel
+Deploy dilakukan lewat **Vercel CLI** (bukan Git push auto-deploy).
+
+```bash
+npx vercel login       # Login dulu (session bisa expire di codespace baru)
+npx vercel --prod      # Deploy ke production
+```
+
+**Info deploy:**
+- Project: `spark-template`
+- Deployment URL: `spark-template-j6ip2af5g-farid-istiqlals-projects.vercel.app`
+- Production Domain: `kendal-uptime.vercel.app`
+
+> **Penting:** Di Codespace/session baru, `npx vercel login` wajib dijalankan ulang karena session CLI tidak persist.
+
+### E. Post-deploy
+1. Cek https://kendal-uptime.vercel.app
+2. Verifikasi footer version == changelog terbaru
+3. Jika gagal: cek log Vercel → rollback/redeploy
+
+### Release Gate Checklist
+- [ ] Kode sudah dites lokal (`npm run build` pass)
+- [ ] `src/lib/version.ts` sinkron target rilis
+- [ ] `docs/CHANGELOG.md` diupdate
+- [ ] Sesi `npx vercel login` valid
+- [ ] Deploy sukses, footer versi sesuai
+
+---
+
+## 7. Commands Reference
+
+```bash
+# Development
+npm run dev              # Start dev server
+npm run build            # Build production
+npm run preview          # Preview build
+
+# Monitoring
+npm run monitor          # Run monitoring script
+
+# Firebase
+npm run firebase:login   # Login Firebase CLI
+npm run firebase:rules:deploy  # Deploy Firestore rules
+
+# Deploy
+npx vercel login         # Login Vercel CLI
+npx vercel --prod        # Manual deploy production
+```
+
+---
+
+## 8. File Dokumentasi
+
+| File | Fungsi |
+|------|--------|
+| [NOW.md](./NOW.md) | ← File ini. Baca ini = tahu segalanya |
+| [CHANGELOG.md](./CHANGELOG.md) | Detail lengkap semua rilis (30+ versi) |
+| [GUIDES.md](./GUIDES.md) | Panduan penggunaan aplikasi untuk end-user |
+| [archive/](./archive/) | Dokumen historis (development plan, blueprint, checklist lama) |
+
+---
+
+*File ini adalah satu-satunya yang perlu dibaca untuk memahami keseluruhan sistem.*

@@ -1,5 +1,10 @@
 # 🎨 UI Improvement Plan - Tab Monitor Enhancement
 
+> **Doc Class:** Historical UI Plan  
+> **Trust Level:** Archive Reference (not source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `CHANGELOG.md`
+
 **Created:** 12 Januari 2026  
 **Status:** Planning Phase  
 **Priority:** High (Mengatasi halaman kosong di initial load)

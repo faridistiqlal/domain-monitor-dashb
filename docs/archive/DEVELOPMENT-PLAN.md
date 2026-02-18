@@ -1,5 +1,10 @@
 # 🗺️ DEVELOPMENT PLAN - Domain Monitor
 
+> **Doc Class:** Historical Plan  
+> **Trust Level:** Archive Reference (not source of truth)  
+> **Last Reviewed:** 18 Februari 2026  
+> **Source of Truth:** `PROJECT-STATUS.md` + `CHANGELOG.md`
+
 **Project:** Domain Monitor Dashboard - Kabupaten Kendal  
 **Version:** 2.1.0 (Current)  
 **Target:** v3.0.0 (Multi-User System)
