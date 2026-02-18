@@ -15,17 +15,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { DomainTag, Domain } from '@/lib/types'
+import { DomainTag, Domain, DomainStatus, DomainGroup } from '@/lib/types'
 
 interface TagCardProps {
   tag: DomainTag
   domainCount: number
   domains: Domain[]
+  statuses?: Record<string, DomainStatus>
+  groups?: DomainGroup[]
   onEdit?: (tag: DomainTag) => void
   onDelete?: (tagId: string) => void
 }
 
-export function TagCard({ tag, domainCount, domains, onEdit, onDelete }: TagCardProps) {
+export function TagCard({ tag, domainCount, domains, statuses = {}, groups = [], onEdit, onDelete }: TagCardProps) {
   const [showDomainsDialog, setShowDomainsDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   
@@ -131,15 +133,16 @@ export function TagCard({ tag, domainCount, domains, onEdit, onDelete }: TagCard
                     className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      domain.status === 'online' ? 'bg-green-500' :
-                      domain.status === 'dns-only' ? 'bg-yellow-500' :
-                      'bg-red-500'
+                      statuses[domain.id]?.status === 'online' ? 'bg-green-500' :
+                      statuses[domain.id]?.status === 'dns-only' ? 'bg-yellow-500' :
+                      statuses[domain.id]?.status ? 'bg-red-500' :
+                      'bg-muted-foreground/50'
                     }`} />
                     <div className="flex-1 min-w-0">
                       <p className="font-mono text-sm break-all sm:truncate">{domain.url}</p>
-                      {domain.group && (
+                      {domain.groupId && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Group: {domain.group}
+                          Group: {groups.find(g => g.id === domain.groupId)?.name ?? domain.groupId}
                         </p>
                       )}
                     </div>

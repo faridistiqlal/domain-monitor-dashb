@@ -39,7 +39,7 @@ export function GroupCard({
 
   const handleDelete = () => {
     setIsDeleting(true)
-    onDelete(group.id)
+    onDelete?.(group.id)
   }
 
   return (
