@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Bell, MapPin, Clock, UserCircle } from '@phosphor-icons/react'
+import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Lock, Bell, MapPin, Clock, UserCircle } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,7 +30,8 @@ import { GitHubActionsStatusCard } from '@/components/GitHubActionsStatusCard'
 import { ChangelogDialog } from '@/components/ChangelogDialog'
 import { PrivacyPolicyDialog } from '@/components/PrivacyPolicyDialog'
 import { TermsOfServiceDialog } from '@/components/TermsOfServiceDialog'
-import { LoginDialog } from '@/components/LoginDialog'
+import { FAQDialog } from '@/components/FAQDialog'
+import { LoginDialog, LoginForm } from '@/components/LoginDialog'
 import { SettingsDialog } from '@/components/SettingsDialog'
 import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog'
 import { NotificationHistoryDialog } from '@/components/NotificationHistoryDialog'
@@ -268,7 +269,7 @@ function App() {
     authUid,
     role: profile.role || 'viewer',
     permissions: profile.permissions || getPermissionsByRole(profile.role || 'viewer'),
-    isActive: profile.isActive !== false,
+    isActive: profile.isActive ?? true,
     revision: 1,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -640,7 +641,7 @@ function App() {
             authUid: authUser.uid,
             role: accessProfile.role || matchedUser.role,
             permissions: accessProfile.permissions || matchedUser.permissions,
-            isActive: accessProfile.isActive !== false,
+            isActive: accessProfile.isActive ?? true,
           }
         : buildManagedUserFromAccessProfile(authUser.uid, {
             appUserId: accessProfile.appUserId,
@@ -753,7 +754,7 @@ function App() {
             authUid: authUser.uid,
             role: accessProfile.role || matchedUser.role,
             permissions: accessProfile.permissions || matchedUser.permissions,
-            isActive: accessProfile.isActive !== false,
+            isActive: accessProfile.isActive ?? true,
           }
         : buildManagedUserFromAccessProfile(authUser.uid, {
             appUserId: accessProfile.appUserId,
@@ -2397,6 +2398,46 @@ function App() {
   return (
     <TooltipProvider>
       <div className="h-screen bg-card overflow-hidden flex flex-col">
+        {!isAuthenticated ? (
+          /* Landing Page - Login Screen */
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="w-full max-w-sm space-y-8">
+              {/* Branding */}
+              <div className="text-center space-y-3">
+                <div className="flex justify-center">
+                  <img 
+                    src="/logo.webp" 
+                    alt="Logo Kendal"
+                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+                    Domain Monitor
+                  </h1>
+                  <p className="text-sm text-muted-foreground tracking-wide mt-1">
+                    Kabupaten Kendal
+                  </p>
+                </div>
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  Monitoring availability & uptime subdomain secara real-time
+                </p>
+              </div>
+
+              {/* Login Form */}
+              <div className="bg-card border border-border rounded-lg p-6 shadow-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <Lock className="h-5 w-5 text-muted-foreground" weight="duotone" />
+                  <h2 className="text-lg font-semibold text-foreground">Login</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Masuk dengan akun Anda untuk mengakses dashboard
+                </p>
+                <LoginForm onLogin={handleLogin} />
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="container mx-auto px-2 md:px-4 py-4 max-w-5xl flex-1 flex flex-col overflow-hidden min-h-0">
           <header className="mb-4">
             <div className="flex items-center justify-between gap-2">
@@ -3541,12 +3582,13 @@ function App() {
           />
         )}
 
-        {/* Login Dialog */}
+        {/* Login Dialog - only for re-auth scenarios */}
         <LoginDialog 
-          open={showLoginDialog} 
+          open={showLoginDialog && isAuthenticated} 
           onLogin={handleLogin}
         />
         </div>
+        )}
 
         <footer className="bg-card border-t border-border">
           <div className="container mx-auto px-2 md:px-4 py-2 max-w-5xl">
@@ -3569,6 +3611,9 @@ function App() {
               
               <span className="text-muted-foreground">•</span>
               <InfoDialog triggerText="Panduan" asLink={true} />
+              
+              <span className="text-muted-foreground">•</span>
+              <FAQDialog />
               
               <span className="text-muted-foreground">•</span>
               <PrivacyPolicyDialog triggerText="Privacy" />
