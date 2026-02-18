@@ -35,15 +35,21 @@
 
 2. **Sebelum coding, baca file ini saja.** Tidak perlu baca file lain.
 
-3. **Setelah coding:**
-   - Update versi di `src/lib/version.ts`
+3. **Setelah coding & sebelum deploy:**
+   - Update versi di `src/lib/version.ts` (wajib setiap deploy)
    - Tambah entry di `docs/CHANGELOG.md`
    - Update status roadmap di file ini (§5)
    - Update "Last Updated" di header file ini
 
-4. **Jangan buat file .md baru** kecuali benar-benar perlu. Semua plan/status/progress cukup di file ini.
+4. **Versioning rule (setiap deploy wajib bump versi):**
+   - **Perubahan minor** (fix, tweak, style, docs) → bump angka paling kanan: `3.10.2` → `3.10.3`
+   - **Perubahan major** (fitur baru, breaking change) → bump angka tengah/kiri: `3.10.x` → `3.11.0`
+   - Versi di `src/lib/version.ts` = yang tampil di footer app
+   - Setiap bump versi **wajib** tambah entry di `docs/CHANGELOG.md`
 
-5. **Git commit per kategori, bukan sekaligus.** Pisahkan commit berdasarkan jenis perubahan:
+5. **Jangan buat file .md baru** kecuali benar-benar perlu. Semua plan/status/progress cukup di file ini.
+
+6. **Git commit per kategori, bukan sekaligus.** Pisahkan commit berdasarkan jenis perubahan:
    - `docs: simplify documentation structure` — perubahan dokumentasi
    - `feat: add user management dialog` — fitur baru
    - `fix: pin sync across devices` — bug fix
@@ -225,13 +231,14 @@ npm run dev            # Opsional: verifikasi manual
 Deploy dilakukan lewat **Vercel CLI** (bukan Git push auto-deploy).
 
 ```bash
-npx vercel login       # Login dulu (session bisa expire di codespace baru)
-npx vercel --prod      # Deploy ke production
+npx vercel login                                    # Login dulu (session expire di codespace baru)
+npx vercel link --project monitoring-domain-bulk --yes  # Link ke project yang benar
+npx vercel --prod --yes                              # Deploy ke production
 ```
 
 **Info deploy:**
-- Project: `spark-template`
-- Deployment URL: `spark-template-j6ip2af5g-farid-istiqlals-projects.vercel.app`
+- Project: `monitoring-domain-bulk`
+- Deployment URL: `monitoring-domain-bulk-*-farid-istiqlals-projects.vercel.app`
 - Production Domain: `kendal-uptime.vercel.app`
 
 > **Penting:** Di Codespace/session baru, `npx vercel login` wajib dijalankan ulang karena session CLI tidak persist.
