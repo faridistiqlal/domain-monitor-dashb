@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Gear, Bell, ClockCounterClockwise, LockKey, SignOut } from '@phosphor-icons/react'
+import { Gear, Bell, ClockCounterClockwise, LockKey, SignOut, Scroll } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -14,6 +14,7 @@ import { NotificationSettingsDialog } from './NotificationSettingsDialog'
 import { NotificationHistoryDialog } from './NotificationHistoryDialog'
 import { SettingsDialog } from './SettingsDialog'
 import { UserManagementDialog } from './UserManagementDialog'
+import { AuditLogDialog } from './AuditLogDialog'
 import type { NotificationSettings, ManagedUser, ManagedUserRole } from '@/lib/types'
 
 interface SettingsMenuDialogProps {
@@ -52,6 +53,7 @@ export function SettingsMenuDialog({
   const [showHistory, setShowHistory] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [showUserManagement, setShowUserManagement] = useState(false)
+  const [showAuditLog, setShowAuditLog] = useState(false)
 
   const handleLogout = () => {
     setOpen(false)
@@ -135,6 +137,23 @@ export function SettingsMenuDialog({
                     <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Buat user & atur akses terbatas</p>
                   </div>
                 </button>
+
+                {/* Audit Log */}
+                <button
+                  onClick={() => {
+                    setOpen(false)
+                    setShowAuditLog(true)
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg hover:bg-accent/10 hover:border-accent/20 border border-transparent transition-all text-left group"
+                >
+                  <div className="w-11 h-11 rounded-lg bg-accent/15 group-hover:bg-accent/25 flex items-center justify-center transition-colors">
+                    <Scroll size={22} weight="fill" className="text-accent group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">Audit Log</p>
+                    <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors">Riwayat aktivitas manajemen user</p>
+                  </div>
+                </button>
                 <Separator />
               </>
             )}
@@ -209,6 +228,11 @@ export function SettingsMenuDialog({
         onCreateUser={onCreateUser}
         onToggleUserActive={onToggleUserActive}
         onDeleteUser={onDeleteUser}
+      />
+
+      <AuditLogDialog
+        open={showAuditLog}
+        onOpenChange={setShowAuditLog}
       />
     </>
   )

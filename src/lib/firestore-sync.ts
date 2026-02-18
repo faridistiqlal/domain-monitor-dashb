@@ -7,6 +7,8 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
+  limit,
   onSnapshot,
   Unsubscribe
 } from 'firebase/firestore'
@@ -752,5 +754,17 @@ export const writeAuditLog = async (payload: Omit<AuditLogEntry, 'id' | 'timesta
   } catch (error) {
     console.error('Error writing audit log:', error)
     return false
+  }
+}
+
+export const fetchAuditLogs = async (maxCount = 100): Promise<AuditLogEntry[]> => {
+  try {
+    const logsRef = collection(db, COLLECTIONS.AUDIT_LOGS)
+    const q = query(logsRef, orderBy('timestamp', 'desc'), limit(maxCount))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => doc.data() as AuditLogEntry)
+  } catch (error) {
+    console.error('Error fetching audit logs:', error)
+    return []
   }
 }
