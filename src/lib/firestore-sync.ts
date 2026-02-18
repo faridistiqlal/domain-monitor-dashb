@@ -560,7 +560,7 @@ export const syncUserAccessProfileToFirestore = async (authUid: string, profile:
   username: string
   email?: string
   role: string
-  permissions: Record<string, unknown>
+  permissions: UserPermissions
   isActive: boolean
 }) => {
   const userDocRef = doc(db, COLLECTIONS.USERS, authUid)
