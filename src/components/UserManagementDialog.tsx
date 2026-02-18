@@ -133,7 +133,7 @@ export function UserManagementDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-auto">
+      <DialogContent className="w-[95vw] max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>User Management</DialogTitle>
           <DialogDescription>
@@ -141,8 +141,8 @@ export function UserManagementDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <form onSubmit={handleCreate} className="space-y-3 rounded-lg border border-border p-4">
+        <div className="space-y-5">
+          <form onSubmit={handleCreate} className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="new-username">Username</Label>
@@ -180,11 +180,11 @@ export function UserManagementDialog({
               </div>
             </div>
 
-            <div className="text-xs text-muted-foreground">
+            <div className="rounded-md border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
               Permission: View {rolePermissions[role].canView ? '✅' : '❌'} • Add URL {rolePermissions[role].canAddDomain ? '✅' : '❌'} • Edit/Delete {rolePermissions[role].canEdit ? '✅' : '❌'}
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-1">
               <Button type="submit" disabled={isCreating}>
                 {isCreating ? 'Membuat...' : 'Buat User'}
               </Button>
@@ -193,22 +193,22 @@ export function UserManagementDialog({
 
           <Separator />
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="text-sm font-semibold">Daftar User ({users.length})</div>
             {sortedUsers.length === 0 ? (
               <p className="text-sm text-muted-foreground">Belum ada user terdaftar.</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {sortedUsers.map((user) => {
                   const isCurrentUser = user.id === currentUserId
                   const isAdminUser = user.role === 'admin'
                   return (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+                      className="flex flex-col gap-3 rounded-md border border-border px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium text-foreground">{user.username}</span>
                           <Badge variant="outline" className="text-[10px]">{roleLabels[user.role]}</Badge>
                           {isCurrentUser && (
@@ -218,14 +218,18 @@ export function UserManagementDialog({
                             <Badge variant="destructive" className="text-[10px]">Disabled</Badge>
                           )}
                         </div>
+                        {user.email && (
+                          <p className="text-xs text-muted-foreground/90">{user.email}</p>
+                        )}
                         <p className="text-xs text-muted-foreground">
                           View {user.permissions.canView ? '✅' : '❌'} • Add URL {user.permissions.canAddDomain ? '✅' : '❌'} • Edit/Delete {user.permissions.canEdit ? '✅' : '❌'}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
                         <Button
                           variant={user.isActive ? 'outline' : 'default'}
                           size="sm"
+                          className="min-w-24"
                           disabled={isCurrentUser || isAdminUser || updatingUserId === user.id || deletingUserId === user.id}
                           onClick={() => handleToggleActive(user)}
                         >
@@ -240,6 +244,7 @@ export function UserManagementDialog({
                           <Button
                             variant="destructive"
                             size="sm"
+                            className="min-w-24"
                             disabled={deletingUserId === user.id || updatingUserId === user.id}
                             onClick={() => handleDeleteUser(user)}
                           >
