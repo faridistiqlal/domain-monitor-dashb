@@ -1,7 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from "react-error-boundary";
-import { Toaster } from 'sonner'
+import { ThemeProvider } from 'next-themes'
+import { Toaster } from '@/components/ui/sonner'
 import "@github/spark/spark"
 
 import App from './App.tsx'
@@ -11,9 +12,11 @@ import "./main.css"
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <App />
-      <Toaster position="bottom-right" richColors />
-    </ErrorBoundary>
+    <ThemeProvider attribute="class" defaultTheme="dark" storageKey="kendal-theme">
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <App />
+        <Toaster position="bottom-right" richColors />
+      </ErrorBoundary>
+    </ThemeProvider>
   </StrictMode>
 )

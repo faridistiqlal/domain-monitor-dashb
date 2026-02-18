@@ -36,6 +36,7 @@ import { SettingsDialog } from '@/components/SettingsDialog'
 import { NotificationSettingsDialog } from '@/components/NotificationSettingsDialog'
 import { NotificationHistoryDialog } from '@/components/NotificationHistoryDialog'
 import { SettingsMenuDialog } from '@/components/SettingsMenuDialog'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings, ManagedUser, ManagedUserRole, UserPermissions } from '@/lib/types'
 import { NotificationService, NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
@@ -2400,7 +2401,11 @@ function App() {
       <div className="h-screen bg-card overflow-hidden flex flex-col">
         {!isAuthenticated ? (
           /* Landing Page - Login Screen */
-          <div className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 relative">
+            {/* Theme toggle on landing page */}
+            <div className="absolute top-4 right-4">
+              <ThemeToggle />
+            </div>
             <div className="w-full max-w-sm space-y-8">
               {/* Branding */}
               <div className="text-center space-y-3">
@@ -2503,6 +2508,8 @@ function App() {
                     onDeleteUser={handleDeleteUser}
                   />
                 )}
+
+                <ThemeToggle />
 
                 <div className="h-6 w-px bg-border" />
 
@@ -3541,6 +3548,8 @@ function App() {
                         tag={tag}
                         domainCount={domainCount}
                         domains={domains}
+                        statuses={statuses}
+                        groups={groups}
                         onEdit={canEdit ? (t) => setEditingTag(t) : undefined}
                         onDelete={canEdit ? handleDeleteTag : undefined}
                       />

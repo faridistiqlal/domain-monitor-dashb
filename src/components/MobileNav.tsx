@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { useTheme } from 'next-themes'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { List, Bell, SignOut, LockKey, ClockCounterClockwise } from '@phosphor-icons/react'
+import { List, Bell, SignOut, LockKey, ClockCounterClockwise, Moon, Sun } from '@phosphor-icons/react'
 import { Separator } from '@/components/ui/separator'
 import { NotificationSettingsDialog } from './NotificationSettingsDialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -47,6 +48,7 @@ export function MobileNav({
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -184,6 +186,21 @@ export function MobileNav({
           </div>
           
           <Separator className="my-4" />
+
+          {/* Theme Toggle */}
+          <Button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            variant="outline"
+            className="w-full justify-start h-12 text-base"
+            size="lg"
+          >
+            {theme === 'dark' ? (
+              <Sun size={22} className="mr-3" />
+            ) : (
+              <Moon size={22} className="mr-3" />
+            )}
+            {theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
+          </Button>
           
           {/* Logout */}
           <Button
