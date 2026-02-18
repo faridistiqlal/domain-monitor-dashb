@@ -1,5 +1,38 @@
 # Changelog
 
+## Version 3.11.0 - Dark Mode, Audit Log & UI Polish
+**Tanggal Rilis:** 18 Februari 2026
+
+### 🌓 Dark/Light Mode Toggle
+- Implementasi `next-themes` ThemeProvider dengan `attribute="class"` dan `storageKey: kendal-theme`
+- Light theme CSS variables di `:root`, dark di `.dark` class
+- `ThemeToggle` component (animated sun/moon icon) tersedia di: desktop header, mobile nav, landing page
+- FOUC prevention script di `index.html`
+- Sonner toaster auto-sync tema via `@/components/ui/sonner`
+
+### 📋 Audit Log Viewer
+- `fetchAuditLogs()` function dengan Firestore `orderBy` + `limit`
+- `AuditLogDialog` component: timeline UI, relative timestamps (Bahasa Indonesia), action badges
+- Aksesibel dari Settings menu (admin only)
+- Fix scroll issue (ganti ScrollArea → `overflow-y-auto`)
+
+### 🎨 Landing Page & UI Improvements
+- Landing page login screen (conditional render saat belum autentikasi)
+- Login form loading/disable state dengan spinner (async `onLogin`, `fieldset disabled`)
+- FAQ dialog di footer (10 item accordion, antara Panduan dan Privacy)
+- Uptime bar tooltip redesign: `bg-popover`, colored dot indicators, border separator
+- Dynamic toast colors (`richColors` Sonner, gantikan `theme="dark"`)
+
+### 🔧 TypeScript Fixes
+- GroupCard: optional chaining `onDelete?.(group.id)` (fix TS2722)
+- TagCard: tambah `statuses` + `groups` props, fix `domain.status` → `statuses[domain.id]?.status`
+- TagCard: fix `domain.group` → `domain.groupId` (fix TS2551)
+- firestore-sync: `Record<string, unknown>` → `UserPermissions` type fix
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
+---
+
 ## Version 3.10.2 - Firebase Rules Deploy & E2E Readiness
 **Tanggal Rilis:** 16 Februari 2026
 

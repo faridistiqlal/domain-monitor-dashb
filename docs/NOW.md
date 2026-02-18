@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 18 Februari 2026  
-**Current Version:** 3.10.2 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.0 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -109,6 +109,14 @@ Fitur inti: cek status domain (online/dns-only/offline), statistik uptime, notif
 - Rule: down / recovery / slow + cooldown
 - Per-domain notification toggle tersimpan cloud
 
+**UI/UX (v3.11.0):**
+- Dark/Light mode toggle (persisted, tersedia di header + mobile nav + landing page)
+- Audit log viewer (timeline UI, admin only, dari Settings menu)
+- Landing page login screen dengan loading state + spinner
+- FAQ dialog di footer (10 item)
+- Uptime bar tooltip redesign (readable, colored dots)
+- Dynamic toast colors (richColors)
+
 ---
 
 ## 3. Struktur Proyek
@@ -137,6 +145,16 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.0 (18 Feb 2026) — **Major: Dark Mode + Audit Log**
+- Dark/Light mode toggle dengan `next-themes` (persist di localStorage)
+- Audit log viewer UI (timeline, fetch dari Firestore, admin only)
+- Landing page login screen dengan loading/disable state + spinner
+- FAQ dialog di footer (10 item accordion)
+- Uptime bar tooltip redesign (bg-popover, colored dots)
+- Dynamic toast colors (`richColors` Sonner)
+- Fix TS errors: GroupCard optional chaining, TagCard status/group props
+- Fix audit log dialog scroll issue
 
 ### v3.10.2 (16 Feb 2026)
 - Firestore Rules deploy finalized
@@ -193,14 +211,45 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 
 ## 5. Roadmap (Pending Work)
 
-| ID | Item | Status | Target |
-|----|------|--------|--------|
-| R-004 | Hardening auth/rules monitoring | Planned | 3.11.x |
-| R-005 | Governance update docs per release | Planned | 3.10.x |
+#### 🔴 High Priority (Fix / Security)
+| ID | Item | Kategori | Effort | Status | Target |
+|----|------|----------|--------|--------|--------|
+| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | Planned | 3.12.x |
+| R-007 | Hapus console.log berlebihan (~126 statements di App.tsx) | fix | small | Planned | 3.11.x |
+| R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Planned | 3.12.x |
+| R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Planned | 3.11.x |
+| R-009 | Hardcode default password `admin123` di source code | fix/security | small | Planned | 3.11.x |
+
+#### 🟡 Medium Priority (Improvement / Feature)
+| ID | Item | Kategori | Effort | Status | Target |
+|----|------|----------|--------|--------|--------|
+| R-010 | Deduplikasi domain loading logic (initial + version-change) | fix | medium | Planned | 3.12.x |
+| R-011 | Error boundary per section/tab (bukan hanya root) | improvement | small | Planned | 3.12.x |
+| R-012 | Accessibility: ARIA labels, keyboard nav, color-blind safe indicators | improvement | medium | Planned | 3.12.x |
+| R-013 | Konsistensi bahasa UI (campur ID/EN → pilih satu atau i18n) | improvement | medium | Planned | 3.13.x |
+| R-014 | Loading skeleton saat initial Firebase data fetch | improvement | small | Planned | 3.11.x |
+| R-015 | Public status page (read-only, tanpa auth) | feature | large | Planned | 3.13.x |
+| R-016 | Uptime percentage badge per domain (7d/30d) | feature | medium | Planned | 3.12.x |
+| R-017 | Response time trend sparkline charts per domain | feature | medium | Planned | 3.12.x |
+
+#### 🟢 Low Priority (Nice to Have)
+| ID | Item | Kategori | Effort | Status | Target |
+|----|------|----------|--------|--------|--------|
+| R-018 | Keyboard shortcuts (R=refresh, /=search, 1-6=tab, Esc=close) | feature | small | Planned | 3.13.x |
+| R-019 | Bulk operations: pin, enable notif, assign tag dari manage tab | improvement | medium | Planned | 3.13.x |
+| R-020 | SSL certificate expiry monitoring & warning (30/14/7 hari) | feature | large | Planned | 3.14.x |
+| R-021 | Rate limiting pada manual refresh (cooldown 30s) | improvement | small | Planned | 3.12.x |
+| R-022 | Session management: sync logout antar tab (BroadcastChannel) | improvement | medium | Planned | 3.13.x |
+| R-023 | Cleanup unused dependencies (three, embla, vaul, heroicons) | fix | small | Planned | 3.11.x |
+| R-005 | Governance update docs per release | improvement | small | Planned | ongoing |
 
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-004 | Dark/Light mode toggle | 3.11.0 |
+| D-005 | Audit log viewer UI | 3.11.0 |
+| D-006 | Landing page login + FAQ + tooltip fix | 3.11.0 |
+| D-007 | Fix TS errors GroupCard + TagCard | 3.11.0 |
 | R-001 | Simplifikasi dokumentasi ke single-entry | 3.10.x |
 | R-002 | Split dokumen historis ke `docs/archive/` | 3.10.x |
 | R-003 | Sinkronisasi metadata arsip | 3.10.x |
