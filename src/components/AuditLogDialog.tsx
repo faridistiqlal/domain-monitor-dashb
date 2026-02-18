@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { ClockCounterClockwise, UserPlus, UserMinus, ShieldCheck, LockKey, Trash, ArrowsClockwise } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -8,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { fetchAuditLogs } from '@/lib/firestore-sync'
 import type { AuditLogEntry } from '@/lib/types'
@@ -79,8 +77,8 @@ export function AuditLogDialog({ open, onOpenChange }: AuditLogDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-w-[95vw] max-h-[85vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+      <DialogContent className="sm:max-w-2xl max-w-[95vw] max-h-[85vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <ClockCounterClockwise size={20} weight="duotone" className="text-primary" />
             Audit Log
@@ -90,7 +88,7 @@ export function AuditLogDialog({ open, onOpenChange }: AuditLogDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 px-6 pb-6">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -148,7 +146,7 @@ export function AuditLogDialog({ open, onOpenChange }: AuditLogDialogProps) {
               </div>
             </div>
           )}
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   )
