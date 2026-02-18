@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <App />
-      <Toaster position="bottom-right" theme="dark" />
+      <Toaster position="bottom-right" richColors />
     </ErrorBoundary>
   </StrictMode>
 )

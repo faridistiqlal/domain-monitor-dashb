@@ -169,17 +169,24 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
                   style={{ height: `${barHeight}px` }}
                 />
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="text-xs bg-popover text-popover-foreground border border-border shadow-lg p-0">
                 {stat ? (
-                  <div className="space-y-0.5">
-                    <div className="font-semibold">{formatDate(stat.date)}</div>
-                    <div className="text-success">✅ {uptime?.toFixed(1)}% uptime</div>
-                    <div className="text-muted-foreground">
-                      {stat.successChecks}/{stat.totalChecks} checks OK
+                  <div className="px-3 py-2 space-y-1 min-w-[140px]">
+                    <div className="font-semibold text-foreground text-[13px] border-b border-border pb-1 mb-1">
+                      {formatDate(stat.date)}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="text-foreground">{uptime?.toFixed(1)}% uptime</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <span className="inline-block w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+                      <span>{stat.successChecks}/{stat.totalChecks} checks OK</span>
                     </div>
                     {stat.avgResponseTime && (
-                      <div className="text-muted-foreground">
-                        ⏱️ Avg: {Math.round(stat.avgResponseTime)}ms
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <span className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                        <span>Avg: {Math.round(stat.avgResponseTime)}ms</span>
                       </div>
                     )}
                   </div>
