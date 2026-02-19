@@ -385,6 +385,17 @@ git push origin main
 - [ ] Deploy sukses, footer versi sesuai
 - [ ] Commit/push dilakukan setelah verifikasi production selesai
 
+### Evidence Verifikasi (isi setiap rilis)
+- [ ] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-...vercel.app`
+- [ ] **Production URL:** `https://kendal-uptime.vercel.app`
+- [ ] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`
+- [ ] **Version Check:** footer app = `src/lib/version.ts` = entry rilis di `CHANGELOG.md`
+- [ ] **Rules Check (jika ubah rules):** unauth `domains/groups/tags` → `403 PERMISSION_DENIED`
+- [ ] **Role Matrix (jika ubah auth/rules):**
+  - admin: read/write `domains/groups/tags` ✅
+  - add-only: write `domains` ✅, write `groups/tags` ❌ (`403`)
+  - viewer: read ✅, write `domains/groups/tags` ❌ (`403`)
+
 ---
 
 ## 7. Commands Reference
