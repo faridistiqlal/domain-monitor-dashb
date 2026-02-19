@@ -69,6 +69,11 @@
      4) baru lakukan commit/push final.
    - Commit tetap dipisah per kategori, tetapi dilakukan setelah deploy/verifikasi selesai.
 
+8. **Sebelum commit atau deploy, wajib cek error/warning dulu.**
+  - Jalankan pengecekan minimal: diagnostics TypeScript/ESLint + `npm run build`.
+  - Jika masih ada error, **dilarang commit/deploy** sampai beres.
+  - Warning yang relevan dengan perubahan harus ditangani atau dicatat alasannya.
+
 ---
 
 ## 1. Apa Ini?
