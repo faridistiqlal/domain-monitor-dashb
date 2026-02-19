@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 18 Februari 2026  
-**Current Version:** 3.11.0 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 19 Februari 2026  
+**Current Version:** 3.11.1 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -146,6 +146,13 @@ firestore.rules               # Security rules Firestore
 
 ## 4. Release Terbaru
 
+### v3.11.1 (19 Feb 2026) — **Minor: Security Hardening + Logging Cleanup**
+- Hapus hardcoded default password `admin123` dari source code
+- Bootstrap password admin pakai `VITE_DEFAULT_ADMIN_PASSWORD` (opsional) atau localStorage
+- Firestore rules diperketat: auth guard untuk `domains/groups/tags`
+- Write guard: `domains` hanya admin/add-only, `groups/tags` hanya admin
+- Logging `App.tsx` dirouting ke dev-only logger (noise production berkurang)
+
 ### v3.11.0 (18 Feb 2026) — **Major: Dark Mode + Audit Log**
 - Dark/Light mode toggle dengan `next-themes` (persist di localStorage)
 - Audit log viewer UI (timeline, fetch dari Firestore, admin only)
@@ -215,10 +222,10 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | ID | Item | Kategori | Effort | Status | Target |
 |----|------|----------|--------|--------|--------|
 | R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | Planned | 3.12.x |
-| R-007 | Hapus console.log berlebihan (~126 statements di App.tsx) | fix | small | Planned | 3.11.x |
+| R-007 | Hapus console.log berlebihan (~126 statements di App.tsx) | fix | small | Done | 3.11.x |
 | R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Planned | 3.12.x |
-| R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Planned | 3.11.x |
-| R-009 | Hardcode default password `admin123` di source code | fix/security | small | Planned | 3.11.x |
+| R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Done | 3.11.x |
+| R-009 | Hardcode default password `admin123` di source code | fix/security | small | Done | 3.11.x |
 
 #### 🟡 Medium Priority (Improvement / Feature)
 | ID | Item | Kategori | Effort | Status | Target |
@@ -246,6 +253,9 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| R-007 | Hapus console.log berlebihan di App.tsx | 3.11.1 |
+| R-004 | Firestore rules auth guard domains/groups/tags | 3.11.1 |
+| R-009 | Hapus hardcoded default password source code | 3.11.1 |
 | D-004 | Dark/Light mode toggle | 3.11.0 |
 | D-005 | Audit log viewer UI | 3.11.0 |
 | D-006 | Landing page login + FAQ + tooltip fix | 3.11.0 |

@@ -1,5 +1,25 @@
 # Changelog
 
+## Version 3.11.1 - Security Hardening & Logging Cleanup
+**Tanggal Rilis:** 19 Februari 2026
+
+### 🔐 Security Hardening
+- Menghapus hardcoded default password `admin123` dari source code.
+- Bootstrap password admin sekarang memakai `VITE_DEFAULT_ADMIN_PASSWORD` (opsional) atau nilai yang sudah tersimpan di localStorage.
+- Fallback loader password di Firebase sync diubah agar tidak lagi memakai default statis.
+
+### 🛡️ Firestore Rules Tightening
+- Menambahkan auth guard untuk koleksi `domains`, `groups`, dan `tags`.
+- `domains` write dibatasi ke role `admin` atau `add-only`.
+- `groups` dan `tags` write dibatasi ke role `admin`.
+- Semua read untuk tiga koleksi tersebut sekarang mensyaratkan user aktif terautentikasi.
+
+### 🧹 Logging Cleanup
+- Logging di `App.tsx` dirouting ke logger scoped dev-only untuk menekan noise log di production.
+- Error/warn tetap dipertahankan untuk observability saat troubleshooting.
+
+**Status:** ✅ Ready for deployment
+
 ## Version 3.11.0 - Dark Mode, Audit Log & UI Polish
 **Tanggal Rilis:** 18 Februari 2026
 

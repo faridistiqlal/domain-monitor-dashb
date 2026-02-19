@@ -13,7 +13,7 @@
 
 ### First Time Setup:
 1. **Access App** - Buka https://kendal-uptime.vercel.app
-2. **Login** - Masukkan password (default: `admin123`)
+2. **Login** - Masukkan username + password yang diberikan admin
 3. **Setup Notifications (Optional)** - Klik Bell icon → Setup Slack webhook
 4. **Add Domain** - Klik "Tambah Domain", masukkan URL (contoh: `diskominfo.kendalkab.go.id`)
 5. **Check Status** - Klik "Check" atau aktifkan Auto-refresh
@@ -287,7 +287,7 @@ Buka tab **"Statistik"** untuk melihat:
 
 #### Login
 1. Saat buka app, dialog login muncul
-2. Masukkan password (default: `admin123`)
+2. Masukkan username + password akun Anda
 3. Klik "Login"
 4. Setelah login, semua fitur aktif
 
