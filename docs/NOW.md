@@ -152,6 +152,8 @@ firestore.rules               # Security rules Firestore
 - Firestore rules diperketat: auth guard untuk `domains/groups/tags`
 - Write guard: `domains` hanya admin/add-only, `groups/tags` hanya admin
 - Logging `App.tsx` dirouting ke dev-only logger (noise production berkurang)
+- Verifikasi backend PASS: unauth read/write ke `domains/groups/tags` ditolak (`403`)
+- Verifikasi role matrix PASS: `admin` full write, `add-only` write `domains` saja, `viewer` read-only
 
 ### v3.11.0 (18 Feb 2026) — **Major: Dark Mode + Audit Log**
 - Dark/Light mode toggle dengan `next-themes` (persist di localStorage)

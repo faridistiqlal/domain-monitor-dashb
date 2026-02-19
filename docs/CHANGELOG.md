@@ -18,6 +18,12 @@
 - Logging di `App.tsx` dirouting ke logger scoped dev-only untuk menekan noise log di production.
 - Error/warn tetap dipertahankan untuk observability saat troubleshooting.
 
+### ✅ Verifikasi Production (Post-Deploy)
+- Uji tanpa autentikasi ke `domains/default-user`, `groups/default-user`, `tags/default-user` menghasilkan `403 PERMISSION_DENIED` (read dan write).
+- Uji role `admin`: read/write `domains/groups/tags` berhasil (`200`).
+- Uji role `add-only`: read `domains/groups/tags` berhasil; write hanya `domains` (`200`), `groups/tags` ditolak (`403`).
+- Uji role `viewer`: read `domains/groups/tags` berhasil; write `domains/groups/tags` ditolak (`403`).
+
 **Status:** ✅ Ready for deployment
 
 ## Version 3.11.0 - Dark Mode, Audit Log & UI Polish
