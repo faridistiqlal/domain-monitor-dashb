@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { List, Bell, SignOut, LockKey, ClockCounterClockwise, Moon, Sun } from '@phosphor-icons/react'
+import { List, Bell, SignOut, LockKey, ClockCounterClockwise, Moon, Sun, UsersThree, Scroll } from '@phosphor-icons/react'
 import { Separator } from '@/components/ui/separator'
 import { NotificationSettingsDialog } from './NotificationSettingsDialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NotificationHistoryDialog } from './NotificationHistoryDialog'
-import type { NotificationSettings } from '@/lib/types'
+import { UserManagementDialog } from './UserManagementDialog'
+import { AuditLogDialog } from './AuditLogDialog'
+import type { NotificationSettings, ManagedUser, ManagedUserRole } from '@/lib/types'
 
 interface MobileNavProps {
   onImport: () => void
@@ -24,6 +26,11 @@ interface MobileNavProps {
   isAutoRefresh: boolean
   onToggleAutoRefresh: () => void
   canManageUsers: boolean
+  managedUsers: ManagedUser[]
+  currentUserId?: string
+  onCreateUser: (payload: { username: string; password: string; role: ManagedUserRole }) => Promise<boolean>
+  onToggleUserActive: (userId: string, isActive: boolean) => Promise<boolean>
+  onDeleteUser: (userId: string) => Promise<boolean>
 }
 
 export function MobileNav({
@@ -39,11 +46,18 @@ export function MobileNav({
   isAutoRefresh,
   onToggleAutoRefresh,
   canManageUsers,
+  managedUsers,
+  currentUserId,
+  onCreateUser,
+  onToggleUserActive,
+  onDeleteUser,
 }: MobileNavProps) {
   const [open, setOpen] = useState(false)
   const [showNotificationSettings, setShowNotificationSettings] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showUserManagement, setShowUserManagement] = useState(false)
+  const [showAuditLog, setShowAuditLog] = useState(false)
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -168,6 +182,30 @@ export function MobileNav({
                     <ClockCounterClockwise size={22} className="mr-3" />
                     Riwayat Notifikasi
                   </Button>
+                  <Button
+                    onClick={() => {
+                      setOpen(false)
+                      setShowUserManagement(true)
+                    }}
+                    variant="ghost"
+                    className="w-full justify-start h-12 text-base"
+                    size="lg"
+                  >
+                    <UsersThree size={22} className="mr-3" />
+                    Management Akun
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setOpen(false)
+                      setShowAuditLog(true)
+                    }}
+                    variant="ghost"
+                    className="w-full justify-start h-12 text-base"
+                    size="lg"
+                  >
+                    <Scroll size={22} className="mr-3" />
+                    Log History
+                  </Button>
                 </>
               )}
               <Button
@@ -237,6 +275,21 @@ export function MobileNav({
           </DialogContent>
         </Dialog>
       )}
+
+      <UserManagementDialog
+        open={showUserManagement}
+        onOpenChange={setShowUserManagement}
+        users={managedUsers}
+        currentUserId={currentUserId}
+        onCreateUser={onCreateUser}
+        onToggleUserActive={onToggleUserActive}
+        onDeleteUser={onDeleteUser}
+      />
+
+      <AuditLogDialog
+        open={showAuditLog}
+        onOpenChange={setShowAuditLog}
+      />
 
       <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
         <DialogContent className="max-w-md">

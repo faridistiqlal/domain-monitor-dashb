@@ -2476,6 +2476,11 @@ function App() {
                 isAutoRefresh={autoRefreshEnabled}
                 onToggleAutoRefresh={handleToggleAutoRefresh}
                 canManageUsers={canManageUsers}
+                managedUsers={managedUsers}
+                currentUserId={currentUser?.id}
+                onCreateUser={handleCreateUser}
+                onToggleUserActive={handleToggleUserActive}
+                onDeleteUser={handleDeleteUser}
               />
               
               <div className="flex items-center gap-2.5">
