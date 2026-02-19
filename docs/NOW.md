@@ -318,6 +318,12 @@ npm run firebase:login
 npx firebase-tools deploy --only firestore:rules --project kendal-monitor
 ```
 
+### Pilih Runbook (D3 vs D4)
+| Kondisi Perubahan | Pakai | Catatan |
+|---|---|---|
+| Ada perubahan `firestore.rules`, auth, permission, atau security policy | **D3** | Wajib deploy Firestore rules + verifikasi role/access |
+| Perubahan UI/docs/refactor internal tanpa perubahan rules/security | **D4** | Cukup deploy Vercel + smoke check |
+
 ### D3. Runbook Cepat (Copy-Paste, deploy-first)
 ```bash
 # 1) Validasi lokal
