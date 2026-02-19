@@ -396,6 +396,17 @@ git push origin main
   - add-only: write `domains` ✅, write `groups/tags` ❌ (`403`)
   - viewer: read ✅, write `domains/groups/tags` ❌ (`403`)
 
+#### Contoh Terisi — v3.11.1 (19 Feb 2026)
+- [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-ip52zj8fe-farid-istiqlals-projects.vercel.app`
+- [x] **Production URL:** `https://kendal-uptime.vercel.app`
+- [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`
+- [x] **Version Check:** bundle production memuat `3.11.1` dan metadata docs sinkron
+- [x] **Rules Check:** unauth GET/PATCH `domains/groups/tags` → `403 PERMISSION_DENIED`
+- [x] **Role Matrix:**
+  - admin (`admin`): read/write `domains/groups/tags` ✅
+  - add-only (`budi`): write `domains` ✅, write `groups/tags` ❌ (`403`)
+  - viewer (`farid`, `eek`): read ✅, write `domains/groups/tags` ❌ (`403`)
+
 ---
 
 ## 7. Commands Reference
