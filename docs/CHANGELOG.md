@@ -1,5 +1,24 @@
 # Changelog
 
+## Version 3.11.2 - Loading UX, Handler Optimization & Cleanup
+**Tanggal Rilis:** 19 Februari 2026
+
+### ⚡ Performance & Architecture
+- Deduplikasi logic loading domain Firebase (initial load + version-change reload) agar alur konsisten dan lebih mudah dipelihara.
+- Penambahan `useCallback` pada handler utama untuk menekan re-render yang tidak perlu.
+
+### 🎨 UX Improvement
+- Menambahkan loading skeleton saat initial data fetch Firebase pada state authenticated.
+
+### 🧹 Dependency Cleanup
+- Menghapus dependency yang tidak terpakai: `three` dan `@heroicons/react`.
+- Dependency `embla-carousel-react` dan `vaul` dipertahankan karena masih dipakai komponen UI.
+
+### ✅ Validation
+- Local build pass (`npm run build`) setelah perubahan.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.1 - Security Hardening & Logging Cleanup
 **Tanggal Rilis:** 19 Februari 2026
 

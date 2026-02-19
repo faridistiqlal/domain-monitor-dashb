@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 19 Februari 2026  
-**Current Version:** 3.11.1 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.2 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -156,6 +156,12 @@ firestore.rules               # Security rules Firestore
 
 ## 4. Release Terbaru
 
+### v3.11.2 (19 Feb 2026) — **Minor: Loading UX + Optimization + Cleanup**
+- Tambah loading skeleton saat initial Firebase data fetch (authenticated state)
+- Deduplikasi domain loading flow (initial + version-change) agar konsisten
+- Tambah `useCallback` pada handler utama untuk mengurangi re-render
+- Cleanup dependency tidak terpakai: `three` dan `@heroicons/react`
+
 ### v3.11.1 (19 Feb 2026) — **Minor: Security Hardening + Logging Cleanup**
 - Hapus hardcoded default password `admin123` dari source code
 - Bootstrap password admin pakai `VITE_DEFAULT_ADMIN_PASSWORD` (opsional) atau localStorage
@@ -235,18 +241,18 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 |----|------|----------|--------|--------|--------|
 | R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | Planned | 3.12.x |
 | R-007 | Hapus console.log berlebihan (~126 statements di App.tsx) | fix | small | Done | 3.11.x |
-| R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Planned | 3.12.x |
+| R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Done | 3.12.x |
 | R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Done | 3.11.x |
 | R-009 | Hardcode default password `admin123` di source code | fix/security | small | Done | 3.11.x |
 
 #### 🟡 Medium Priority (Improvement / Feature)
 | ID | Item | Kategori | Effort | Status | Target |
 |----|------|----------|--------|--------|--------|
-| R-010 | Deduplikasi domain loading logic (initial + version-change) | fix | medium | Planned | 3.12.x |
+| R-010 | Deduplikasi domain loading logic (initial + version-change) | fix | medium | Done | 3.12.x |
 | R-011 | Error boundary per section/tab (bukan hanya root) | improvement | small | Planned | 3.12.x |
 | R-012 | Accessibility: ARIA labels, keyboard nav, color-blind safe indicators | improvement | medium | Planned | 3.12.x |
 | R-013 | Konsistensi bahasa UI (campur ID/EN → pilih satu atau i18n) | improvement | medium | Planned | 3.13.x |
-| R-014 | Loading skeleton saat initial Firebase data fetch | improvement | small | Planned | 3.11.x |
+| R-014 | Loading skeleton saat initial Firebase data fetch | improvement | small | Done | 3.11.x |
 | R-015 | Public status page (read-only, tanpa auth) | feature | large | Planned | 3.13.x |
 | R-016 | Uptime percentage badge per domain (7d/30d) | feature | medium | Planned | 3.12.x |
 | R-017 | Response time trend sparkline charts per domain | feature | medium | Planned | 3.12.x |
@@ -259,12 +265,16 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | R-020 | SSL certificate expiry monitoring & warning (30/14/7 hari) | feature | large | Planned | 3.14.x |
 | R-021 | Rate limiting pada manual refresh (cooldown 30s) | improvement | small | Planned | 3.12.x |
 | R-022 | Session management: sync logout antar tab (BroadcastChannel) | improvement | medium | Planned | 3.13.x |
-| R-023 | Cleanup unused dependencies (three, embla, vaul, heroicons) | fix | small | Planned | 3.11.x |
+| R-023 | Cleanup unused dependencies (three, embla, vaul, heroicons) | fix | small | Done | 3.11.x |
 | R-005 | Governance update docs per release | improvement | small | Planned | ongoing |
 
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| R-008 | Tambah useCallback pada handler utama | 3.11.2 |
+| R-010 | Deduplikasi domain loading flow | 3.11.2 |
+| R-014 | Loading skeleton initial Firebase fetch | 3.11.2 |
+| R-023 | Cleanup dependency unused (three, heroicons) | 3.11.2 |
 | R-007 | Hapus console.log berlebihan di App.tsx | 3.11.1 |
 | R-004 | Firestore rules auth guard domains/groups/tags | 3.11.1 |
 | R-009 | Hapus hardcoded default password source code | 3.11.1 |
