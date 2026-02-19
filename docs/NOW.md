@@ -20,7 +20,9 @@
 > workflow deploy (test → vercel), dan changelog ringkas. Jika butuh detail
 > rilis lengkap baca docs/CHANGELOG.md, jika butuh panduan user baca
 > docs/GUIDES.md. Jangan buat file .md baru — semua plan & progress ditulis
-> di NOW.md bagian Roadmap.
+> di NOW.md bagian Roadmap. Untuk perubahan rule/sistem, ikuti default
+> deploy-first (deploy dulu, commit terakhir) dan pilih runbook D3/D4 sesuai
+> tabel keputusan di section workflow.
 > ```
 
 ---
