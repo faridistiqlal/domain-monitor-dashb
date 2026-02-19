@@ -318,6 +318,29 @@ npm run firebase:login
 npx firebase-tools deploy --only firestore:rules --project kendal-monitor
 ```
 
+### D3. Runbook Cepat (Copy-Paste, deploy-first)
+```bash
+# 1) Validasi lokal
+npm run build
+
+# 2) Deploy web app ke production
+npx vercel login
+npx vercel link --project monitoring-domain-bulk --yes
+npx vercel --prod --yes
+
+# 3) Deploy Firestore rules (jalankan jika firestore.rules berubah)
+npm run firebase:login
+npx firebase-tools deploy --only firestore:rules --project kendal-monitor
+
+# 4) Smoke check production
+curl -I https://kendal-uptime.vercel.app | head -n 5
+
+# 5) Commit & push setelah verifikasi
+git add -A
+git commit -m "fix: ringkas perubahan rilis"
+git push origin main
+```
+
 ### E. Post-deploy
 1. Cek https://kendal-uptime.vercel.app
 2. Verifikasi footer version == changelog terbaru
