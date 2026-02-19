@@ -1551,7 +1551,7 @@ Jika masih kosong setelah fix ini, berarti **data memang belum ada** di Firebase
 - **Smart Status Detection**: Deteksi perubahan status (Online→Offline, Offline→Online) untuk trigger notifikasi
 
 ### 🔒 Deployment & Infrastructure
-- **Vercel Production**: Live di https://kendal-uptime.vercel.app dengan auto-deploy dari Git
+- **Vercel Production**: Live di https://kendal-uptime.vercel.app (deployment saat ini via Vercel CLI)
 - **Slack Integration**: Support Incoming Webhook dari Slack API untuk team notifications
 - **Default Notification OFF**: Per-domain notifications default disabled untuk kontrol spam
 
