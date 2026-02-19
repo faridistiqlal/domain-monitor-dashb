@@ -347,6 +347,18 @@ function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        if (!isAuthenticated) {
+          const cachedUsersRaw = localStorage.getItem('managed-users-cache')
+          const cachedUsers = cachedUsersRaw ? (JSON.parse(cachedUsersRaw) as ManagedUser[]) : []
+          const fallbackUsers = cachedUsers.length > 0 ? cachedUsers : [createDefaultAdminUser()]
+
+          setManagedUsers(fallbackUsers)
+          setManagedUsersRevision(0)
+          setCurrentUser(null)
+          appConsole.log('[Init] Skipping Firebase bootstrap before authentication')
+          return
+        }
+
         // Load managed users (user directory)
         let managedSnapshot = await loadManagedUsersSnapshot()
         let loadedManagedUsers = managedSnapshot.users
@@ -448,7 +460,7 @@ function App() {
       }
     }
     loadData()
-  }, [loadAndSetDomainsFromFirebase])
+  }, [isAuthenticated, loadAndSetDomainsFromFirebase])
 
   // Sync to Firebase with debouncing (reduce writes)
   useEffect(() => {
@@ -1197,7 +1209,7 @@ function App() {
   }
 
   const handleNotificationSettingsSave = async (settings: NotificationSettings) => {
-    console.log('[Save Notification Settings] Saving:', settings)
+    console.log('[Save Notification Settings] Saving settings update')
     setNotificationSettings(settings)
     localStorage.setItem('notification-settings', JSON.stringify(settings))
     console.log('[Save Notification Settings] ✅ Saved to localStorage')
@@ -1304,7 +1316,7 @@ function App() {
       ? 'Add URL Only'
       : 'Readonly'
 
-  const checkAllDomains = async (showToast = false, batchCheckOnly = false, isAutoCheck = false) => {
+  async function checkAllDomains(showToast = false, batchCheckOnly = false, isAutoCheck = false) {
     if (!domains || domains.length === 0) return
 
     const now = new Date()
@@ -1810,26 +1822,6 @@ function App() {
     setSelectedDomains(new Set())
     toast.success(`${count} domain berhasil dihapus`)
   }
-
-  const handleSelectDomain = useCallback((id: string, selected: boolean) => {
-    setSelectedDomains(prev => {
-      const newSet = new Set(prev)
-      if (selected) {
-        newSet.add(id)
-      } else {
-        newSet.delete(id)
-      }
-      return newSet
-    })
-  }, [])
-
-  const handleSelectAll = useCallback((checked: boolean) => {
-    if (checked) {
-      setSelectedDomains(new Set(sortedDomains.map(d => d.id)))
-    } else {
-      setSelectedDomains(new Set())
-    }
-  }, [sortedDomains])
 
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true)
@@ -2349,6 +2341,26 @@ function App() {
     searchQuery: '',
     sortBy,
   })
+
+  const handleSelectDomain = useCallback((id: string, selected: boolean) => {
+    setSelectedDomains(prev => {
+      const newSet = new Set(prev)
+      if (selected) {
+        newSet.add(id)
+      } else {
+        newSet.delete(id)
+      }
+      return newSet
+    })
+  }, [])
+
+  const handleSelectAll = useCallback((checked: boolean) => {
+    if (checked) {
+      setSelectedDomains(new Set(sortedDomains.map(d => d.id)))
+    } else {
+      setSelectedDomains(new Set())
+    }
+  }, [sortedDomains])
 
   const filteredManageDomains = useMemo(() => 
     (domains || []).filter(domain => {

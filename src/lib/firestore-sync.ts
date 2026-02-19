@@ -39,6 +39,19 @@ const isRetryableFirestoreError = (error: unknown): boolean => {
     || code === 'resource-exhausted'
 }
 
+const isPermissionDeniedError = (error: unknown): boolean => {
+  const code = (error as { code?: string } | undefined)?.code
+  return code === 'permission-denied'
+}
+
+const logFirestoreReadError = (label: string, error: unknown) => {
+  if (isPermissionDeniedError(error)) {
+    console.info(`${label}: permission denied (expected before login or without profile)`)
+    return
+  }
+  console.error(label, error)
+}
+
 const runWithRetry = async <T>(task: () => Promise<T>): Promise<T> => {
   let lastError: unknown
 
@@ -197,7 +210,7 @@ export const getDomainsFromFirestore = async (): Promise<Domain[]> => {
     }
     return []
   } catch (error) {
-    console.error('Error getting domains:', error)
+    logFirestoreReadError('Error getting domains', error)
     throw error
   }
 }
@@ -256,7 +269,7 @@ export const getGroupsFromFirestore = async (): Promise<DomainGroup[]> => {
     }
     return []
   } catch (error) {
-    console.error('Error getting groups:', error)
+    logFirestoreReadError('Error getting groups', error)
     throw error
   }
 }
@@ -298,7 +311,7 @@ export const getTagsFromFirestore = async (): Promise<DomainTag[]> => {
     }
     return []
   } catch (error) {
-    console.error('Error getting tags:', error)
+    logFirestoreReadError('Error getting tags', error)
     throw error
   }
 }
@@ -437,7 +450,7 @@ export const getNotificationSettingsFromFirestore = async (): Promise<any | null
     }
     return null
   } catch (error) {
-    console.error('❌ Error getting notification settings:', error)
+    logFirestoreReadError('Error getting notification settings', error)
     return null
   }
 }
@@ -446,7 +459,6 @@ export const loadNotificationSettings = async (): Promise<any | null> => {
   console.log('[loadNotificationSettings] Starting...')
   try {
     const firebaseSettings = await getNotificationSettingsFromFirestore()
-    console.log('[loadNotificationSettings] Firebase result:', firebaseSettings)
     if (firebaseSettings) {
       // Sync to localStorage for offline access
       localStorage.setItem('notification-settings', JSON.stringify(firebaseSettings))
@@ -462,9 +474,8 @@ export const loadNotificationSettings = async (): Promise<any | null> => {
   // Fallback to localStorage
   console.log('[loadNotificationSettings] Checking localStorage...')
   const saved = localStorage.getItem('notification-settings')
-  console.log('[loadNotificationSettings] localStorage value:', saved)
   const result = saved ? JSON.parse(saved) : null
-  console.log('[loadNotificationSettings] Returning:', result)
+  console.log('[loadNotificationSettings] Loaded from localStorage:', !!result)
   return result
 }
 
@@ -491,7 +502,7 @@ export const getManagedUsersSnapshotFromFirestore = async (): Promise<ManagedUse
     const revision = typeof data.revision === 'number' ? data.revision : 0
     return { users, revision }
   } catch (error) {
-    console.error('Error getting managed users snapshot:', error)
+    logFirestoreReadError('Error getting managed users snapshot', error)
     throw error
   }
 }
