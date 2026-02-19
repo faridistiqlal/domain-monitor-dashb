@@ -84,6 +84,15 @@ type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'sta
 type ViewMode = 'all' | 'groups' | 'group-detail'
 
 function App() {
+  const DEFAULT_ADMIN_PASSWORD = (import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || '').trim()
+  const appConsole = {
+    log: import.meta.env.DEV ? globalThis.console.log.bind(globalThis.console) : () => undefined,
+    warn: globalThis.console.warn.bind(globalThis.console),
+    error: globalThis.console.error.bind(globalThis.console),
+    info: globalThis.console.info.bind(globalThis.console),
+  }
+  const console = appConsole
+
   const skipInitialDomainsSync = useRef(true)
   const skipInitialGroupsSync = useRef(true)
   const skipInitialTagsSync = useRef(true)
@@ -118,7 +127,7 @@ function App() {
   const createDefaultAdminUser = (): ManagedUser => ({
     id: 'default-user',
     username: 'admin',
-    password: localStorage.getItem('app-password') || 'admin123',
+    password: localStorage.getItem('app-password') || DEFAULT_ADMIN_PASSWORD,
     role: 'admin',
     permissions: getPermissionsByRole('admin'),
     isActive: true,
@@ -307,7 +316,7 @@ function App() {
           }
           localStorage.setItem('app-current-user-id', defaultAdmin.id)
           localStorage.setItem('app-current-username', defaultAdmin.username)
-          console.log('[Users] Bootstrap default admin user')
+          appConsole.log('[Users] Bootstrap default admin user')
         }
 
         setManagedUsers(loadedManagedUsers)
@@ -328,23 +337,23 @@ function App() {
         }
 
         // ALWAYS load tags from Firebase first (for data consistency)
-        console.log('[Tags] Loading tags directly from Firebase...')
+        appConsole.log('[Tags] Loading tags directly from Firebase...')
         const loadedTags = await loadTags()
         setTags(loadedTags)
-        console.log('[Tags] ✅ Loaded', loadedTags.length, 'tags from Firebase')
+        appConsole.log('[Tags] ✅ Loaded', loadedTags.length, 'tags from Firebase')
         
         // Load groups from Firebase (small critical data - always fresh)
-        console.log('[Groups] Loading groups from Firebase...')
+        appConsole.log('[Groups] Loading groups from Firebase...')
         const loadedGroups = await loadGroups()
         trackFirebaseRead(1)
-        console.log('[Groups] Loaded from Firebase:', loadedGroups.length, 'groups')
-        console.log('[Groups] Data:', loadedGroups.map(g => ({ id: g.id, name: g.name })))
+        appConsole.log('[Groups] Loaded from Firebase:', loadedGroups.length, 'groups')
+        appConsole.log('[Groups] Data:', loadedGroups.map(g => ({ id: g.id, name: g.name })))
         setGroups(loadedGroups)
-        console.log('[Groups] ✅ Set to state:', loadedGroups.length, 'groups')
+        appConsole.log('[Groups] ✅ Set to state:', loadedGroups.length, 'groups')
         
         // ALWAYS load domains from Firebase (no cache for pin/group state sync)
         // Cache is removed to ensure pin and group states sync across devices
-        console.log('[Domains] Loading domains from Firebase (no cache)...')
+        appConsole.log('[Domains] Loading domains from Firebase (no cache)...')
         
         try {
           const loadedDomains = await loadDomains()
@@ -376,10 +385,10 @@ function App() {
           // Groups already loaded from Firebase at the start
           
           // No localStorage cache - always load fresh from Firebase for pin/group sync
-          console.log('[Domains] ✅ Loaded', domainsWithBatch.length, 'domains from Firebase')
+          appConsole.log('[Domains] ✅ Loaded', domainsWithBatch.length, 'domains from Firebase')
           const pinnedCount = domainsWithBatch.filter(d => d.pinned).length
           const groupedCount = domainsWithBatch.filter(d => d.groupId).length
-          console.log(`[Domains] ${pinnedCount} pinned, ${groupedCount} in groups`)
+          appConsole.log(`[Domains] ${pinnedCount} pinned, ${groupedCount} in groups`)
         } catch (error: any) {
           console.error('Firebase quota exceeded or error loading data:', error)
           // If quota exceeded, show user message and use empty data temporarily
@@ -398,8 +407,8 @@ function App() {
           // First time - set version without clearing
           localStorage.setItem('app-version', APP_VERSION)
         } else if (appVersion !== APP_VERSION) {
-          console.log(`🔄 Version changed: ${appVersion} → ${APP_VERSION}`)
-          console.log('Clearing cache to load fresh data from Firebase...')
+          appConsole.log(`🔄 Version changed: ${appVersion} → ${APP_VERSION}`)
+          appConsole.log('Clearing cache to load fresh data from Firebase...')
           
           // Clear all caches to force reload from Firebase
           localStorage.removeItem('domains-cache')
@@ -433,13 +442,13 @@ function App() {
           // Groups already loaded from Firebase at the start
           
           // No localStorage cache - always use Firebase as source of truth for pin/group sync
-          console.log('✅ Fresh data loaded from Firebase after version update')
+          appConsole.log('✅ Fresh data loaded from Firebase after version update')
         }
         
         // AUTO-CLEAR: Always clear status on browser refresh
         // This prevents confusion with outdated status counts
         // User needs to manually "Check All" or enable auto-refresh to see status
-        console.log('Status cleared on browser refresh - please check domains to see current status')
+        appConsole.log('Status cleared on browser refresh - please check domains to see current status')
         localStorage.removeItem('domain-last-statuses')
         setStatuses({})
         setPreviousStatuses({})
@@ -471,7 +480,7 @@ function App() {
       // Debounce Firebase sync to reduce writes
       const timeoutId = setTimeout(() => {
         syncDomainsToFirestore(domains)
-          .then(() => console.log('[Domains Sync] ✅ Auto-synced to Firebase'))
+          .then(() => appConsole.log('[Domains Sync] ✅ Auto-synced to Firebase'))
           .catch(err => console.error('[Domains Sync] ❌ Error:', err))
       }, 2000) // Wait 2s before syncing
       return () => clearTimeout(timeoutId)
@@ -486,10 +495,10 @@ function App() {
         return
       }
 
-      console.log('[Groups Sync] Auto-syncing', groups.length, 'groups to Firebase')
+      appConsole.log('[Groups Sync] Auto-syncing', groups.length, 'groups to Firebase')
       const timeoutId = setTimeout(() => {
         syncGroupsToFirestore(groups)
-          .then(() => console.log('[Groups Sync] ✅ Synced to Firebase'))
+          .then(() => appConsole.log('[Groups Sync] ✅ Synced to Firebase'))
           .catch(err => {
             console.error('[Groups Sync] ❌ Error:', err)
             toast.error('Gagal sync groups ke Firebase')
@@ -506,11 +515,11 @@ function App() {
         return
       }
 
-      console.log('[Tags Sync] Syncing', tags.length, 'tags to Firebase')
+      appConsole.log('[Tags Sync] Syncing', tags.length, 'tags to Firebase')
       // Sync to Firebase only (no localStorage - always load from Firebase)
       const timeoutId = setTimeout(() => {
         syncTagsToFirestore(tags)
-          .then(() => console.log('[Tags Sync] ✅ Synced to Firebase'))
+          .then(() => appConsole.log('[Tags Sync] ✅ Synced to Firebase'))
           .catch(err => console.error('[Tags Sync] ❌ Error:', err))
       }, 2000)
       return () => clearTimeout(timeoutId)
@@ -520,15 +529,15 @@ function App() {
   // Load notification settings from Firebase (separate useEffect for reliability)
   useEffect(() => {
     const loadNotificationSettingsFromFirebase = async () => {
-      console.log('[Notification Settings] Starting separate load...')
+      appConsole.log('[Notification Settings] Starting separate load...')
       try {
         const loadedNotificationSettings = await loadNotificationSettings()
-        console.log('[Notification Settings] Result:', loadedNotificationSettings)
+        appConsole.log('[Notification Settings] Result:', loadedNotificationSettings)
         if (loadedNotificationSettings) {
           setNotificationSettings(loadedNotificationSettings)
-          console.log('[Notification Settings] ✅ Loaded from Firebase:', loadedNotificationSettings)
+          appConsole.log('[Notification Settings] ✅ Loaded from Firebase:', loadedNotificationSettings)
         } else {
-          console.log('[Notification Settings] ⚠️ No settings found, using default')
+          appConsole.log('[Notification Settings] ⚠️ No settings found, using default')
         }
       } catch (error) {
         console.error('[Notification Settings] ❌ Error loading:', error)
@@ -543,7 +552,7 @@ function App() {
 
   // DEBUG: Monitor notification settings changes
   useEffect(() => {
-    console.log('[notificationSettings State Changed]', notificationSettings)
+    appConsole.log('[notificationSettings State Changed]', notificationSettings)
   }, [notificationSettings])
 
   // Auto-logout after 30 minutes of inactivity
@@ -873,14 +882,14 @@ function App() {
 
     // Re-load groups and tags after login to ensure fresh data
     try {
-      console.log('[Login] Re-loading groups and tags from Firebase...')
+      appConsole.log('[Login] Re-loading groups and tags from Firebase...')
       const [freshGroups, freshTags] = await Promise.all([
         loadGroups(),
         loadTags()
       ])
       setGroups(freshGroups)
       setTags(freshTags)
-      console.log('[Login] ✅ Reloaded:', freshGroups.length, 'groups and', freshTags.length, 'tags')
+      appConsole.log('[Login] ✅ Reloaded:', freshGroups.length, 'groups and', freshTags.length, 'tags')
     } catch (error) {
       console.error('[Login] Error reloading groups/tags:', error)
     }

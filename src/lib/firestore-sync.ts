@@ -404,7 +404,7 @@ export const loadPassword = async (): Promise<string> => {
   }
   
   // Fallback to localStorage
-  return localStorage.getItem('app-password') || 'admin123'
+  return localStorage.getItem('app-password') || ''
 }
 
 // === NOTIFICATION SETTINGS ===

@@ -187,18 +187,21 @@ service cloud.firestore {
     }
 
     match /domains/{docId} {
-      allow read: if docId == 'default-user';
-      allow write: if docId == 'default-user' && validDomainsDoc();
+      allow read: if docId == 'default-user' && canReadApp();
+      allow write: if docId == 'default-user'
+        && canReadApp()
+        && (isAdmin() || currentRole() == 'add-only')
+        && validDomainsDoc();
     }
 
     match /groups/{docId} {
-      allow read: if docId == 'default-user';
-      allow write: if docId == 'default-user' && validGroupsDoc();
+      allow read: if docId == 'default-user' && canReadApp();
+      allow write: if docId == 'default-user' && isAdmin() && validGroupsDoc();
     }
 
     match /tags/{docId} {
-      allow read: if docId == 'default-user';
-      allow write: if docId == 'default-user' && validTagsDoc();
+      allow read: if docId == 'default-user' && canReadApp();
+      allow write: if docId == 'default-user' && isAdmin() && validTagsDoc();
     }
 
     match /users/user-directory {
