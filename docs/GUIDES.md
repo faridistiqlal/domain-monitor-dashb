@@ -32,6 +32,7 @@
 - **Add-only:** Bisa tambah/ubah data domain (write `domains`), tapi tidak bisa write `groups` dan `tags`
 - **Viewer:** Read-only (tidak bisa write `domains/groups/tags`)
 - Semua role aktif bisa membaca data monitoring sesuai sesi login
+- Label di UI untuk `add-only` bisa tampil sebagai **Add URL Only**
 
 ---
 
@@ -419,7 +420,7 @@ sudo systemctl reload nginx
 ### Problem: Export CSV Tidak Download
 
 **Solusi:**
-1. **Check Permission:** Pastikan sudah login
+1. **Check Permission:** Pastikan sudah login dengan role aktif (`admin`, `add-only`, atau `viewer`)
 2. **Check Status:** Pastikan sudah check domain dulu (manual mode)
 3. **Browser:** Coba browser berbeda (Chrome, Firefox, Edge)
 4. **Pop-up Blocker:** Allow pop-ups dari domain app
