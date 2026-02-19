@@ -341,6 +341,25 @@ git commit -m "fix: ringkas perubahan rilis"
 git push origin main
 ```
 
+### D4. Runbook Singkat (tanpa perubahan rules)
+```bash
+# 1) Validasi lokal
+npm run build
+
+# 2) Deploy web app ke production
+npx vercel login
+npx vercel link --project monitoring-domain-bulk --yes
+npx vercel --prod --yes
+
+# 3) Smoke check production
+curl -I https://kendal-uptime.vercel.app | head -n 5
+
+# 4) Commit & push setelah verifikasi
+git add -A
+git commit -m "chore: ringkas rilis tanpa rules"
+git push origin main
+```
+
 ### E. Post-deploy
 1. Cek https://kendal-uptime.vercel.app
 2. Verifikasi footer version == changelog terbaru
