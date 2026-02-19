@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Lock, Bell, MapPin, Clock, UserCircle } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { APP_VERSION } from '@/lib/version'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Skeleton } from '@/components/ui/skeleton'
 import { AddDomainForm } from '@/components/AddDomainForm'
 import { DomainCard } from '@/components/DomainCard'
 import { PinnedDomainCard } from '@/components/PinnedDomainCard'
@@ -211,6 +212,51 @@ function App() {
     })
   }
 
+  const normalizeDomainsForMonitoring = useCallback((loadedDomains: Domain[]) => {
+    return loadedDomains.map((domain, index) => {
+      if (!domain.checkBatch) {
+        return {
+          ...domain,
+          checkBatch: assignCheckBatch(index, loadedDomains.length),
+          lastStatusChange: domain.lastStatusChange || Date.now(),
+          consecutiveFailures: domain.consecutiveFailures || 0,
+          enabled: false,
+        }
+      }
+
+      return {
+        ...domain,
+        enabled: false,
+      }
+    })
+  }, [])
+
+  const loadAndSetDomainsFromFirebase = useCallback(async () => {
+    appConsole.log('[Domains] Loading domains from Firebase (no cache)...')
+
+    try {
+      const loadedDomains = await loadDomains()
+      trackFirebaseRead(1)
+
+      const normalizedDomains = normalizeDomainsForMonitoring(loadedDomains)
+      setDomains(normalizedDomains)
+
+      appConsole.log('[Domains] ✅ Loaded', normalizedDomains.length, 'domains from Firebase')
+      const pinnedCount = normalizedDomains.filter(d => d.pinned).length
+      const groupedCount = normalizedDomains.filter(d => d.groupId).length
+      appConsole.log(`[Domains] ${pinnedCount} pinned, ${groupedCount} in groups`)
+      return normalizedDomains
+    } catch (error: any) {
+      console.error('Firebase quota exceeded or error loading data:', error)
+      if (error?.code === 'resource-exhausted') {
+        alert('Firebase quota exceeded. Refresh halaman nanti untuk load data terbaru.')
+        setDomains([])
+        return [] as Domain[]
+      }
+      throw error
+    }
+  }, [normalizeDomainsForMonitoring])
+
   // Notification States
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     enabled: false,
@@ -353,53 +399,7 @@ function App() {
         
         // ALWAYS load domains from Firebase (no cache for pin/group state sync)
         // Cache is removed to ensure pin and group states sync across devices
-        appConsole.log('[Domains] Loading domains from Firebase (no cache)...')
-        
-        try {
-          const loadedDomains = await loadDomains()
-              
-          
-          // Track Firebase reads (1 collection - tags and groups already loaded)
-          trackFirebaseRead(1)
-            
-          // Assign batch to domains that don't have one (old domains)
-          // RESET enabled field on page load - individual monitoring is not persistent across refresh
-          const domainsWithBatch = loadedDomains.map((domain, index) => {
-            if (!domain.checkBatch) {
-              return {
-                ...domain,
-                checkBatch: assignCheckBatch(index, loadedDomains.length),
-                lastStatusChange: domain.lastStatusChange || Date.now(),
-                consecutiveFailures: domain.consecutiveFailures || 0,
-                enabled: false // Reset on page load - user must manually start monitoring
-              }
-            }
-            // Reset enabled field on page load for all domains
-            return {
-              ...domain,
-              enabled: false // Individual monitoring is not persistent across refresh
-            }
-          })
-      
-          setDomains(domainsWithBatch)
-          // Groups already loaded from Firebase at the start
-          
-          // No localStorage cache - always load fresh from Firebase for pin/group sync
-          appConsole.log('[Domains] ✅ Loaded', domainsWithBatch.length, 'domains from Firebase')
-          const pinnedCount = domainsWithBatch.filter(d => d.pinned).length
-          const groupedCount = domainsWithBatch.filter(d => d.groupId).length
-          appConsole.log(`[Domains] ${pinnedCount} pinned, ${groupedCount} in groups`)
-        } catch (error: any) {
-          console.error('Firebase quota exceeded or error loading data:', error)
-          // If quota exceeded, show user message and use empty data temporarily
-          if (error?.code === 'resource-exhausted') {
-            alert('Firebase quota exceeded. Refresh halaman nanti untuk load data terbaru.')
-            // Only set empty domains - groups and tags were already loaded successfully
-            setDomains([])
-          } else {
-            throw error // Re-throw non-quota errors
-          }
-        }
+        await loadAndSetDomainsFromFirebase()
         
         // MIGRATION: Clear old localStorage data only on version change
         const appVersion = localStorage.getItem('app-version')
@@ -418,28 +418,10 @@ function App() {
           // Update version
           localStorage.setItem('app-version', APP_VERSION)
           
-          // Force immediate Firebase load (no cache) - tags already loaded at start
-          const [loadedDomains, loadedGroups] = await Promise.all([
-            loadDomains(),
-            loadGroups()
-          ])
-          
-          // Assign batch and reset enabled field
-          const domainsWithBatch = loadedDomains.map((domain, index) => {
-            if (!domain.checkBatch) {
-              return {
-                ...domain,
-                checkBatch: assignCheckBatch(index, loadedDomains.length),
-                lastStatusChange: domain.lastStatusChange || Date.now(),
-                consecutiveFailures: domain.consecutiveFailures || 0,
-                enabled: false
-              }
-            }
-            return { ...domain, enabled: false }
-          })
-          
-          setDomains(domainsWithBatch)
-          // Groups already loaded from Firebase at the start
+          // Force immediate Firebase load (no cache)
+          await loadAndSetDomainsFromFirebase()
+          const refreshedGroups = await loadGroups()
+          setGroups(refreshedGroups)
           
           // No localStorage cache - always use Firebase as source of truth for pin/group sync
           appConsole.log('✅ Fresh data loaded from Firebase after version update')
@@ -466,7 +448,7 @@ function App() {
       }
     }
     loadData()
-  }, [])
+  }, [loadAndSetDomainsFromFirebase])
 
   // Sync to Firebase with debouncing (reduce writes)
   useEffect(() => {
@@ -1554,7 +1536,7 @@ function App() {
     }
   }
 
-  const handleAddDomain = (url: string) => {
+  const handleAddDomain = useCallback((url: string) => {
     if (!canAddDomain) {
       toast.error('Anda tidak memiliki akses untuk menambah domain')
       return
@@ -1584,9 +1566,9 @@ function App() {
     
     // No localStorage cache - useEffect will auto-sync to Firebase after 2s
     toast.success(`Domain berhasil ditambahkan (Batch ${batch})`)
-  }
+  }, [canAddDomain, domains])
 
-  const handleDeleteDomain = (id: string) => {
+  const handleDeleteDomain = useCallback((id: string) => {
     if (!canEdit) {
       toast.error('Anda tidak memiliki akses untuk menghapus domain')
       return
@@ -1608,9 +1590,9 @@ function App() {
       return newSet
     })
     toast.success('Domain dihapus dari daftar')
-  }
+  }, [canEdit, domains])
 
-  const handleEditDomain = (id: string, newUrl: string, notificationsEnabled?: boolean) => {
+  const handleEditDomain = useCallback((id: string, newUrl: string, notificationsEnabled?: boolean) => {
     if (!canEdit) {
       toast.error('Anda tidak memiliki akses untuk mengedit domain')
       return
@@ -1630,7 +1612,7 @@ function App() {
       return newStatuses
     })
     toast.success('Pengaturan domain berhasil disimpan')
-  }
+  }, [canEdit, domains])
 
   const handleTogglePin = async (id: string) => {
     if (!canEdit) {
@@ -1829,7 +1811,7 @@ function App() {
     toast.success(`${count} domain berhasil dihapus`)
   }
 
-  const handleSelectDomain = (id: string, selected: boolean) => {
+  const handleSelectDomain = useCallback((id: string, selected: boolean) => {
     setSelectedDomains(prev => {
       const newSet = new Set(prev)
       if (selected) {
@@ -1839,17 +1821,17 @@ function App() {
       }
       return newSet
     })
-  }
+  }, [])
 
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
       setSelectedDomains(new Set(sortedDomains.map(d => d.id)))
     } else {
       setSelectedDomains(new Set())
     }
-  }
+  }, [sortedDomains])
 
-  const handleManualRefresh = async () => {
+  const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true)
     setCountdown(getSecondsUntilNextBatch())
     if (autoRefreshEnabled) {
@@ -1858,9 +1840,9 @@ function App() {
     await checkAllDomains(true, false, false) // Manual check: local only, no Firebase
     setIsRefreshing(false)
     setLastCheckTime(new Date())
-  }
+  }, [autoRefreshEnabled, checkAllDomains])
 
-  const handleTogglePause = () => {
+  const handleTogglePause = useCallback(() => {
     setIsPaused(prev => {
       const newPausedState = !prev
       if (newPausedState) {
@@ -1871,9 +1853,9 @@ function App() {
       }
       return newPausedState
     })
-  }
+  }, [])
 
-  const handleToggleAutoRefresh = () => {
+  const handleToggleAutoRefresh = useCallback(() => {
     setAutoRefreshEnabled(prev => {
       const newState = !prev
       if (newState) {
@@ -1889,7 +1871,7 @@ function App() {
       }
       return newState
     })
-  }
+  }, [checkAllDomains, hasChecked])
 
   const handleExportCSV = () => {
     console.log('[Export] Starting export, domains:', domains?.length, 'statuses:', Object.keys(statuses).length)
@@ -2129,11 +2111,11 @@ function App() {
     toast.success('Domain berhasil diatur grupnya')
   }
 
-  const handleViewGroupDomains = (groupId: string) => {
+  const handleViewGroupDomains = useCallback((groupId: string) => {
     setSelectedGroupId(groupId)
     setViewMode('group-detail')
     setActiveTab('domains')
-  }
+  }, [])
 
   const handleCreateTag = (tagData: Omit<DomainTag, 'id' | 'createdAt'>) => {
     if (!canEdit) {
@@ -2453,6 +2435,19 @@ function App() {
           </div>
         ) : (
         <div className="container mx-auto px-2 md:px-4 py-4 max-w-5xl flex-1 flex flex-col overflow-hidden min-h-0">
+          {isLoadingData ? (
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full max-w-3xl" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-[420px] w-full" />
+            </div>
+          ) : (
+          <>
           <header className="mb-4">
             <div className="flex items-center justify-between gap-2">
               {/* Mobile Hamburger - Only visible on mobile */}
@@ -3569,6 +3564,8 @@ function App() {
             )}
           </TabsContent>
         </Tabs>
+          </>
+          )}
 
         <AssignDomainsDialog
           open={assignDialogOpen}
