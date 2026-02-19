@@ -72,7 +72,7 @@ Fitur inti: cek status domain (online/dns-only/offline), statistik uptime, notif
 - Monitoring terjadwal: GitHub Actions (`.github/workflows/monitor-domains.yml`)
 - Script cron: `scripts/monitor-cron.js`
 - Rules keamanan: `firestore.rules`
-- Deploy: Vercel (auto-deploy dari Git)
+- Deploy: Vercel (manual deploy via Vercel CLI)
 
 ---
 

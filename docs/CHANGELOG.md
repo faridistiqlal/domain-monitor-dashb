@@ -24,7 +24,7 @@
 - Uji role `add-only`: read `domains/groups/tags` berhasil; write hanya `domains` (`200`), `groups/tags` ditolak (`403`).
 - Uji role `viewer`: read `domains/groups/tags` berhasil; write `domains/groups/tags` ditolak (`403`).
 
-**Status:** ✅ Ready for deployment
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
 
 ## Version 3.11.0 - Dark Mode, Audit Log & UI Polish
 **Tanggal Rilis:** 18 Februari 2026
