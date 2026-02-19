@@ -2,7 +2,7 @@
 
 **App:** Domain Monitor Dashboard - Kabupaten Kendal  
 **URL:** https://kendal-uptime.vercel.app (Live on Vercel)  
-**Version:** 3.10.2  
+**Version:** 3.11.1  
 **Deployment:** Vercel Production (Auto-deploy from Git)
 
 > **Status:** Source of Truth (operasional)
@@ -26,6 +26,12 @@
 - **Search:** Ketik nama domain untuk cari cepat
 - **Export:** Download CSV untuk reporting
 - **Slack Alerts:** Otomatis dapat notifikasi saat domain down/recovery
+
+### Role Permissions Summary
+- **Admin:** Full access (read/write domains, groups, tags, manage users)
+- **Add-only:** Bisa tambah/ubah data domain (write `domains`), tapi tidak bisa write `groups` dan `tags`
+- **Viewer:** Read-only (tidak bisa write `domains/groups/tags`)
+- Semua role aktif bisa membaca data monitoring sesuai sesi login
 
 ---
 
@@ -481,7 +487,7 @@ sudo systemctl reload nginx
 - **Export Regular:** Download CSV setiap minggu untuk archive
 
 ### Security:
-- **Change Password:** Ganti password default ASAP
+- **Change Password:** Ganti password akun secara berkala
 - **Strong Password:** Min 8 karakter, mix upper/lower/number
 - **Don't Share:** Jangan share password ke banyak orang
 
