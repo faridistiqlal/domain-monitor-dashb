@@ -407,6 +407,20 @@ git push origin main
   - add-only (`budi`): write `domains` ✅, write `groups/tags` ❌ (`403`)
   - viewer (`farid`, `eek`): read ✅, write `domains/groups/tags` ❌ (`403`)
 
+#### Template Kosong (Copy-Paste per rilis)
+```markdown
+#### Contoh Terisi — vX.Y.Z (DD Mon YYYY)
+- [ ] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-...vercel.app`
+- [ ] **Production URL:** `https://kendal-uptime.vercel.app`
+- [ ] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`
+- [ ] **Version Check:** footer app = `src/lib/version.ts` = entry rilis di `CHANGELOG.md`
+- [ ] **Rules Check (jika ubah rules):** unauth GET/PATCH `domains/groups/tags` → `403 PERMISSION_DENIED`
+- [ ] **Role Matrix (jika ubah auth/rules):**
+  - admin (`<username-admin>`): read/write `domains/groups/tags` ✅
+  - add-only (`<username-add-only>`): write `domains` ✅, write `groups/tags` ❌ (`403`)
+  - viewer (`<username-viewer>`): read ✅, write `domains/groups/tags` ❌ (`403`)
+```
+
 ---
 
 ## 7. Commands Reference
