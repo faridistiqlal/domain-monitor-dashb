@@ -59,6 +59,14 @@
    
    Format: `kategori: 4-5 kata penjelasan`. Jangan commit semua file sekaligus.
 
+7. **Default eksekusi untuk perubahan rule/sistem: deploy dulu, commit terakhir.**
+   - Untuk perubahan yang menyentuh **rules/security/auth/workflow production**, urutan wajib:
+     1) implement + test lokal,
+     2) deploy (Vercel dan/atau Firebase rules sesuai scope),
+     3) verifikasi production,
+     4) baru lakukan commit/push final.
+   - Commit tetap dipisah per kategori, tetapi dilakukan setelah deploy/verifikasi selesai.
+
 ---
 
 ## 1. Apa Ini?
@@ -271,7 +279,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
-## 6. Workflow: Plan → Test → Deploy
+## 6. Workflow: Plan → Test → Deploy → Commit
 
 ### A. Sebelum coding
 1. (Opsional) Backup: `git diff > backup-pre-edit-$(date +%Y%m%d-%H%M%S).patch`
@@ -304,17 +312,30 @@ npx vercel --prod --yes                              # Deploy ke production
 
 > **Penting:** Di Codespace/session baru, `npx vercel login` wajib dijalankan ulang karena session CLI tidak persist.
 
+### D2. Deploy Firestore Rules (jika ada perubahan rule/security)
+```bash
+npm run firebase:login
+npx firebase-tools deploy --only firestore:rules --project kendal-monitor
+```
+
 ### E. Post-deploy
 1. Cek https://kendal-uptime.vercel.app
 2. Verifikasi footer version == changelog terbaru
 3. Jika gagal: cek log Vercel → rollback/redeploy
+
+### F. Commit & Push (setelah deploy/verifikasi)
+1. `git add` per kategori perubahan
+2. Commit terpisah per kategori (`fix: ...`, `docs: ...`, dst)
+3. `git push origin main`
 
 ### Release Gate Checklist
 - [ ] Kode sudah dites lokal (`npm run build` pass)
 - [ ] `src/lib/version.ts` sinkron target rilis
 - [ ] `docs/CHANGELOG.md` diupdate
 - [ ] Sesi `npx vercel login` valid
+- [ ] Jika ubah `firestore.rules`: deploy rules ke `kendal-monitor` sukses
 - [ ] Deploy sukses, footer versi sesuai
+- [ ] Commit/push dilakukan setelah verifikasi production selesai
 
 ---
 
