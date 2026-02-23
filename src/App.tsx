@@ -87,6 +87,7 @@ import { useManageSelectableDomains } from '@/hooks/use-manage-selectable-domain
 import { useAutoRefreshScheduler } from '@/hooks/use-auto-refresh-scheduler'
 import { useSessionTimeout } from '@/hooks/use-session-timeout'
 import { useNotificationSettings } from '@/hooks/use-notification-settings'
+import { useTabAutoChecks } from '@/hooks/use-tab-auto-checks'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
@@ -1180,50 +1181,6 @@ function App() {
     return true
   }
 
-  // Auto-check all domains when monitoring tab is opened/loaded
-  useEffect(() => {
-    if (activeTab === 'domains' && !isLoadingData && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
-      console.log('[Monitoring Tab] Auto-checking all domains on initial load...')
-      handleManualRefresh(false)
-    }
-  }, [activeTab, isLoadingData, autoRefreshEnabled, hasChecked, isRefreshing, domains.length])
-
-  // Auto-check pinned domains when Pin tab is opened
-  useEffect(() => {
-    if (activeTab === 'pinned' && !isLoadingData) {
-      const pinnedDomains = domains.filter(d => d.pinned)
-      if (pinnedDomains.length > 0) {
-        // Check if any pinned domain hasn't been checked yet
-        const uncheckedDomains = pinnedDomains.filter(d => {
-          const status = statuses[d.id]
-          return !status || status.status === 'checking' || !status.lastChecked
-        })
-        
-        if (uncheckedDomains.length > 0) {
-          console.log(`[Pin Tab] Auto-checking ${uncheckedDomains.length} pinned domains...`)
-          
-          // Set checking status
-          const checkingStatuses: Record<string, DomainStatus> = {}
-          uncheckedDomains.forEach(domain => {
-            checkingStatuses[domain.id] = { id: domain.id, status: 'checking' }
-          })
-          setStatuses(prev => ({ ...prev, ...checkingStatuses }))
-          
-          // Check domains
-          Promise.all(
-            uncheckedDomains.map(domain => checkDomainStatus(domain.url, domain.id))
-          ).then(results => {
-            const newStatuses: Record<string, DomainStatus> = {}
-            results.forEach(result => {
-              newStatuses[result.id] = result
-            })
-            setStatuses(prev => ({ ...prev, ...newStatuses }))
-          })
-        }
-      }
-    }
-  }, [activeTab, isLoadingData])
-
   // Capability checks based on current user permissions
   const canView = isAuthenticated && (currentUser?.permissions.canView ?? false)
   const canAddDomain = isAuthenticated && (currentUser?.permissions.canAddDomain ?? false)
@@ -1764,6 +1721,18 @@ function App() {
       setIsRefreshing(false)
     }
   }, [autoRefreshEnabled, checkAllDomains, manualRefreshRemainingSeconds, startManualRefreshCooldown])
+
+  useTabAutoChecks({
+    activeTab,
+    isLoadingData,
+    autoRefreshEnabled,
+    hasChecked,
+    isRefreshing,
+    domains,
+    statuses,
+    onManualRefresh: handleManualRefresh,
+    setStatuses,
+  })
 
   const handleTogglePause = useCallback(() => {
     setIsPaused(prev => {
