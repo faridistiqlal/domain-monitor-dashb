@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Lock, Bell, MapPin, Clock, UserCircle } from '@phosphor-icons/react'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
-import { collection, getDocs, query, where } from 'firebase/firestore'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,7 +39,6 @@ import { NotificationSettingsDialog } from '@/components/NotificationSettingsDia
 import { NotificationHistoryDialog } from '@/components/NotificationHistoryDialog'
 import { SettingsMenuDialog } from '@/components/SettingsMenuDialog'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { db } from '@/lib/firebase'
 import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings, ManagedUser, ManagedUserRole, UserPermissions, DomainInsight } from '@/lib/types'
 import { NotificationService, NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
@@ -82,6 +80,9 @@ import {
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useFilteredDomains } from '@/hooks/use-filtered-domains'
+import { useManualRefreshCooldown } from '@/hooks/use-manual-refresh-cooldown'
+import { useDomainInsights } from '@/hooks/use-domain-insights'
+import { useCrossTabLogout } from '@/hooks/use-cross-tab-logout'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
@@ -114,7 +115,6 @@ function App() {
   const skipInitialDomainsSync = useRef(true)
   const skipInitialGroupsSync = useRef(true)
   const skipInitialTagsSync = useRef(true)
-  const authChannelRef = useRef<BroadcastChannel | null>(null)
 
   const getPermissionsByRole = (role: ManagedUserRole): UserPermissions => {
     if (role === 'admin') {
@@ -197,9 +197,6 @@ function App() {
   const [manageNotificationFilter, setManageNotificationFilter] = useState<string>('all')
   const [managePinFilter, setManagePinFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
-  const [manualRefreshCooldownUntil, setManualRefreshCooldownUntil] = useState(0)
-  const [manualRefreshNowTick, setManualRefreshNowTick] = useState(() => Date.now())
-  const [domainInsights, setDomainInsights] = useState<Record<string, DomainInsight>>({})
   
   // Firebase operation tracking (for development monitoring)
   const [firebaseOps, setFirebaseOps] = useState(() => {
@@ -233,129 +230,20 @@ function App() {
     })
   }
 
-  const manualRefreshRemainingSeconds = useMemo(
-    () => Math.max(0, Math.ceil((manualRefreshCooldownUntil - manualRefreshNowTick) / 1000)),
-    [manualRefreshCooldownUntil, manualRefreshNowTick]
-  )
+  const handleDomainInsightsLoadError = useCallback((message: string, error: unknown) => {
+    appConsole.warn(message, error)
+  }, [])
 
-  useEffect(() => {
-    if (manualRefreshCooldownUntil <= Date.now()) {
-      return
-    }
+  const {
+    manualRefreshRemainingSeconds,
+    startManualRefreshCooldown,
+  } = useManualRefreshCooldown()
 
-    const intervalId = window.setInterval(() => {
-      setManualRefreshNowTick(Date.now())
-    }, 1000)
-
-    return () => window.clearInterval(intervalId)
-  }, [manualRefreshCooldownUntil])
-
-  useEffect(() => {
-    const loadDomainInsights = async () => {
-      if (!isAuthenticated || !domains || domains.length === 0) {
-        setDomainInsights({})
-        return
-      }
-
-      try {
-        const domainIds = new Set(domains.map(domain => domain.id))
-        const cutoff30 = new Date()
-        cutoff30.setDate(cutoff30.getDate() - 29)
-        const cutoff7 = new Date()
-        cutoff7.setDate(cutoff7.getDate() - 6)
-
-        const cutoff30Str = cutoff30.toISOString().split('T')[0]
-        const cutoff7Str = cutoff7.toISOString().split('T')[0]
-
-        const statsQuery = query(
-          collection(db, 'domain-stats-daily'),
-          where('date', '>=', cutoff30Str)
-        )
-
-        const snapshot = await getDocs(statsQuery)
-
-        const aggregateByDomain = new Map<string, {
-          success7: number
-          total7: number
-          success30: number
-          total30: number
-          trend: Array<{ date: string; response: number }>
-        }>()
-
-        snapshot.docs.forEach(docSnap => {
-          const data = docSnap.data() as {
-            domainId?: string
-            date?: string
-            successChecks?: number
-            totalChecks?: number
-            avgResponseTime?: number
-          }
-
-          if (!data.domainId || !domainIds.has(data.domainId) || !data.date) {
-            return
-          }
-
-          const aggregate = aggregateByDomain.get(data.domainId) || {
-            success7: 0,
-            total7: 0,
-            success30: 0,
-            total30: 0,
-            trend: [],
-          }
-
-          const successChecks = data.successChecks || 0
-          const totalChecks = data.totalChecks || 0
-
-          aggregate.success30 += successChecks
-          aggregate.total30 += totalChecks
-
-          if (data.date >= cutoff7Str) {
-            aggregate.success7 += successChecks
-            aggregate.total7 += totalChecks
-          }
-
-          if (typeof data.avgResponseTime === 'number' && data.avgResponseTime > 0) {
-            aggregate.trend.push({ date: data.date, response: data.avgResponseTime })
-          }
-
-          aggregateByDomain.set(data.domainId, aggregate)
-        })
-
-        const nextInsights: Record<string, DomainInsight> = {}
-
-        domains.forEach(domain => {
-          const aggregate = aggregateByDomain.get(domain.id)
-          if (!aggregate) {
-            nextInsights[domain.id] = {
-              uptime7d: null,
-              uptime30d: null,
-              responseTrend: [],
-            }
-            return
-          }
-
-          const uptime7d = aggregate.total7 > 0 ? (aggregate.success7 / aggregate.total7) * 100 : null
-          const uptime30d = aggregate.total30 > 0 ? (aggregate.success30 / aggregate.total30) * 100 : null
-          const responseTrend = aggregate.trend
-            .sort((left, right) => left.date.localeCompare(right.date))
-            .slice(-7)
-            .map(item => Math.round(item.response))
-
-          nextInsights[domain.id] = {
-            uptime7d,
-            uptime30d,
-            responseTrend,
-          }
-        })
-
-        setDomainInsights(nextInsights)
-      } catch (error) {
-        appConsole.warn('[Insights] Failed to load domain insights', error)
-      }
-    }
-
-    loadDomainInsights()
-  }, [domains, isAuthenticated])
+  const domainInsights = useDomainInsights({
+    domains,
+    isAuthenticated,
+    onLoadError: handleDomainInsightsLoadError,
+  })
 
   const normalizeDomainsForMonitoring = useCallback((loadedDomains: Domain[]) => {
     return loadedDomains.map((domain, index) => {
@@ -1048,41 +936,13 @@ function App() {
     }
   }, [])
 
-  const broadcastLogoutSignal = useCallback(() => {
-    const payload = { type: 'logout', at: Date.now() }
-    localStorage.setItem(LOGOUT_SYNC_KEY, JSON.stringify(payload))
-    authChannelRef.current?.postMessage(payload)
-  }, [])
-
-  useEffect(() => {
-    const handleRemoteLogout = () => {
+  const { broadcastLogoutSignal } = useCrossTabLogout({
+    storageKey: LOGOUT_SYNC_KEY,
+    channelName: AUTH_CHANNEL_NAME,
+    onRemoteLogout: useCallback(() => {
       clearLocalSession(true, 'Sesi logout tersinkron dari tab lain')
-    }
-
-    if ('BroadcastChannel' in window) {
-      const channel = new BroadcastChannel(AUTH_CHANNEL_NAME)
-      authChannelRef.current = channel
-      channel.onmessage = (event: MessageEvent<{ type?: string }>) => {
-        if (event.data?.type === 'logout') {
-          handleRemoteLogout()
-        }
-      }
-    }
-
-    const handleStorageEvent = (event: StorageEvent) => {
-      if (event.key === LOGOUT_SYNC_KEY && event.newValue) {
-        handleRemoteLogout()
-      }
-    }
-
-    window.addEventListener('storage', handleStorageEvent)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageEvent)
-      authChannelRef.current?.close()
-      authChannelRef.current = null
-    }
-  }, [clearLocalSession])
+    }, [clearLocalSession]),
+  })
 
   const handleLogout = () => {
     signOutAuth().catch(console.error)
@@ -2018,9 +1878,7 @@ function App() {
     }
 
     if (enforceCooldown) {
-      const now = Date.now()
-      setManualRefreshNowTick(now)
-      setManualRefreshCooldownUntil(now + 30_000)
+      startManualRefreshCooldown(30_000)
     }
 
     setIsRefreshing(true)
@@ -2034,7 +1892,7 @@ function App() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [autoRefreshEnabled, checkAllDomains, manualRefreshRemainingSeconds])
+  }, [autoRefreshEnabled, checkAllDomains, manualRefreshRemainingSeconds, startManualRefreshCooldown])
 
   const handleTogglePause = useCallback(() => {
     setIsPaused(prev => {
