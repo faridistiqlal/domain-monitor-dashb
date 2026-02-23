@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 23 Februari 2026  
-**Current Version:** 3.11.13 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.14 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -160,6 +160,15 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.14 (23 Feb 2026) — **Patch: Firestore 20k Optimization (R-024 Phase 2)**
+- Implementasi read-bounded query untuk jalur analytics mahal:
+  - `use-domain-insights`: query dibatasi dengan `orderBy(date desc)` + `limit`.
+  - `UptimeBar`: strategi bounded query (`orderBy+limit`) dengan fallback aman.
+  - `DomainStatisticsDialog`: bounded query untuk stats/incidents + fallback aman.
+- Backup file sebelum perubahan dibuat di folder `backups/` (`*backup-20k-phase2-*`).
+- Validasi lokal: diagnostics bersih + `npm run build` PASS.
+- Deploy production: `kendal-uptime.vercel.app` PASS.
 
 ### v3.11.13 (23 Feb 2026) — **Patch: Cron Toggle Hardening + GitHub Stats Sync**
 - Hardening save toggle Monitoring Cron di UI:
@@ -364,6 +373,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-013 | Firestore analytics read bounding (R-024 Phase 2) | 3.11.14 |
 | D-010 | Monitoring Cron toggle hardening (auth guard + error mapping) | 3.11.13 |
 | D-011 | GitHub Actions status card sync dengan toggle Monitoring Cron | 3.11.13 |
 | D-012 | Script verifikasi admin auth/write monitoring control (`verify:auth-admin`) | 3.11.13 |
@@ -443,7 +453,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
   - `scripts/monitor-cron.js`: status domain tetap di-update, tetapi write `domains/default-user` dikonsolidasikan menjadi **1x per run**.
   - `scripts/monitor-cron.js`: write stats harian ditrigger hanya saat status berubah atau heartbeat periodik.
 
-2. **Phase 2 — Analytics read bounding**
+2. **Phase 2 — Analytics read bounding** ✅
   - `use-domain-insights`, `UptimeBar`, `DomainStatisticsDialog` diubah ke query yang dibatasi period + indexed query.
 
 3. **Phase 3 — UI cost control**
@@ -473,6 +483,8 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
   - `use-domain-insights` (cache 5 menit),
   - `UptimeBar` (cache 10 menit),
   - `DomainStatisticsDialog` (cache 5 menit).
+- ✅ Implement bounded query + fallback aman pada jalur analytics berat (R-024 Phase 2):
+  - `use-domain-insights`, `UptimeBar`, `DomainStatisticsDialog`.
 - ✅ Validasi lokal: diagnostics bersih + `npm run build` pass.
 
 ---

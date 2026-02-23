@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 3.11.14 - Firestore Efficiency Stabilization (R-024 Phase 2)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ⚡ Analytics Read Bounding
+- Melanjutkan optimasi batas 20k/month dengan read-bounded strategy pada jalur analytics yang mahal:
+  - `use-domain-insights`: query dibatasi `orderBy('date', 'desc')` + `limit(3000)`.
+  - `UptimeBar`: bounded query per domain (`orderBy('date', 'desc')` + `limit(days)`) dengan fallback aman.
+  - `DomainStatisticsDialog`: bounded query stats/incidents (`orderBy + limit`) dengan fallback aman.
+- Pendekatan fallback menjaga kompatibilitas saat index belum siap, sehingga fitur tetap berjalan tanpa hard failure.
+
+### 🧪 Validation & Release
+- Backup file sebelum implementasi: `backups/*backup-20k-phase2-*`.
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`).
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.13 - Firestore Efficiency Stabilization (R-024 Phase 1.5)
 **Tanggal Rilis:** 23 Februari 2026
 
