@@ -44,12 +44,80 @@ let clientAuthUid = null
 const STATS_HEARTBEAT_HOURS = Number(process.env.STATS_HEARTBEAT_HOURS || '12')
 const STATS_HEARTBEAT_MS = Math.max(1, STATS_HEARTBEAT_HOURS) * 60 * 60 * 1000
 
+function parseBooleanEnv(value, defaultValue = false) {
+  if (value === undefined || value === null || String(value).trim() === '') {
+    return defaultValue
+  }
+
+  const normalizedValue = String(value).trim().toLowerCase()
+  if (['1', 'true', 'yes', 'on'].includes(normalizedValue)) return true
+  if (['0', 'false', 'no', 'off'].includes(normalizedValue)) return false
+
+  return defaultValue
+}
+
+function parsePauseUntilTimestamp(rawValue) {
+  if (!rawValue || String(rawValue).trim() === '') {
+    return null
+  }
+
+  const parsedMs = Date.parse(String(rawValue).trim())
+  if (Number.isNaN(parsedMs)) {
+    console.warn('[Monitor] Invalid MONITORING_PAUSE_UNTIL format. Expected ISO date/time, got:', rawValue)
+    return null
+  }
+
+  return parsedMs
+}
+
+function isQuotaExhaustedError(error) {
+  const code = String(error?.code || '').toLowerCase()
+  const message = String(error?.message || '').toLowerCase()
+
+  return code.includes('resource-exhausted')
+    || message.includes('resource_exhausted')
+    || message.includes('resource-exhausted')
+    || message.includes('quota')
+}
+
+async function getRemoteMonitoringControl() {
+  try {
+    const controlRef = fsDoc('users', 'default-user')
+    const controlSnap = await fsGetDoc(controlRef)
+
+    if (!docExists(controlSnap)) {
+      return null
+    }
+
+    const data = controlSnap.data()?.monitoringControl
+    if (!data || typeof data.enabled !== 'boolean') {
+      return null
+    }
+
+    return {
+      enabled: data.enabled,
+      updatedAt: data.updatedAt,
+      updatedBy: data.updatedBy,
+    }
+  } catch (error) {
+    console.warn('[Monitor] Failed to read remote monitoring control, fallback to env value:', error?.message || error)
+    return null
+  }
+}
+
+const MONITORING_ENABLED = parseBooleanEnv(process.env.MONITORING_ENABLED, true)
+const MONITORING_PAUSE_UNTIL_TS = parsePauseUntilTimestamp(process.env.MONITORING_PAUSE_UNTIL)
+const MONITORING_QUOTA_GRACEFUL_EXIT = parseBooleanEnv(process.env.MONITORING_QUOTA_GRACEFUL_EXIT, true)
+
 // Slack webhook URL
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL
 
 console.log('[Monitor] Starting domain monitoring cron job...')
 console.log('[Monitor] Firebase Project:', firebaseConfig.projectId)
 console.log('[Monitor] Slack Enabled:', !!SLACK_WEBHOOK_URL)
+console.log('[Monitor] Enabled:', MONITORING_ENABLED)
+console.log('[Monitor] Pause Until:', MONITORING_PAUSE_UNTIL_TS ? new Date(MONITORING_PAUSE_UNTIL_TS).toISOString() : 'none')
+console.log('[Monitor] Quota Graceful Exit:', MONITORING_QUOTA_GRACEFUL_EXIT)
 
 function parseServiceAccount(rawValue) {
   if (!rawValue) return null
@@ -490,6 +558,31 @@ async function sendSlackNotification(message) {
  */
 async function runMonitoring() {
   try {
+    if (!MONITORING_ENABLED) {
+      console.log('[Monitor] Monitoring is disabled via MONITORING_ENABLED=false. Exiting gracefully.')
+      return
+    }
+
+    if (MONITORING_PAUSE_UNTIL_TS && Date.now() < MONITORING_PAUSE_UNTIL_TS) {
+      console.log(
+        `[Monitor] Monitoring is paused until ${new Date(MONITORING_PAUSE_UNTIL_TS).toISOString()} via MONITORING_PAUSE_UNTIL. Exiting gracefully.`
+      )
+      return
+    }
+
+    const remoteControl = await getRemoteMonitoringControl()
+    if (remoteControl) {
+      console.log(
+        `[Monitor] Remote control loaded: enabled=${remoteControl.enabled} ` +
+        `(updatedBy=${remoteControl.updatedBy || 'unknown'}, updatedAt=${remoteControl.updatedAt || 'unknown'})`
+      )
+
+      if (!remoteControl.enabled) {
+        console.log('[Monitor] Monitoring disabled by admin toggle in UI. Exiting gracefully.')
+        return
+      }
+    }
+
     if (firestoreMode === 'client' && !clientAuthUid) {
       throw new Error('Client mode requires FIREBASE_CRON_EMAIL and FIREBASE_CRON_PASSWORD, or provide FIREBASE_SERVICE_ACCOUNT for admin mode')
     }
@@ -644,6 +737,12 @@ Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
     console.log('[Monitor] Monitoring cycle complete')
     
   } catch (error) {
+    if (MONITORING_QUOTA_GRACEFUL_EXIT && isQuotaExhaustedError(error)) {
+      console.warn('[Monitor] Firestore quota exhausted. Exiting gracefully (MONITORING_QUOTA_GRACEFUL_EXIT=true).')
+      console.warn('[Monitor] Details:', error?.message || error)
+      return
+    }
+
     console.error('[Monitor] Error:', error)
     
     // Write error log to Firebase

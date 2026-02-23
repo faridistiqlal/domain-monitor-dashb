@@ -18,22 +18,51 @@ jobs:
     timeout-minutes: 5
     
     steps:
+      - name: Evaluate monitoring toggle
+        id: monitor_toggle
+        env:
+          MONITORING_ENABLED: ${{ vars.MONITORING_ENABLED }}
+        run: |
+          enabled="${MONITORING_ENABLED:-true}"
+          enabled="$(echo "$enabled" | tr '[:upper:]' '[:lower:]' | xargs)"
+
+          if [ "$enabled" = "false" ] || [ "$enabled" = "0" ] || [ "$enabled" = "off" ] || [ "$enabled" = "no" ]; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Monitoring disabled by MONITORING_ENABLED=$enabled"
+          else
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "Monitoring enabled by MONITORING_ENABLED=${enabled:-true}"
+          fi
+
       - name: Checkout code
+        if: steps.monitor_toggle.outputs.should_run == 'true'
         uses: actions/checkout@v4
       
       - name: Setup Node.js
+        if: steps.monitor_toggle.outputs.should_run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
       
       - name: Install only monitoring dependencies
+        if: steps.monitor_toggle.outputs.should_run == 'true'
         run: |
           npm install --no-save firebase firebase-admin node-fetch
+
+      - name: Monitoring is disabled
+        if: steps.monitor_toggle.outputs.should_run != 'true'
+        run: |
+          echo "Skipping monitoring run. Set repository variable MONITORING_ENABLED=true to re-enable."
       
       - name: Run domain monitoring
+        if: steps.monitor_toggle.outputs.should_run == 'true'
         timeout-minutes: 4
         env:
+          MONITORING_ENABLED: ${{ vars.MONITORING_ENABLED }}
+          MONITORING_PAUSE_UNTIL: ${{ vars.MONITORING_PAUSE_UNTIL }}
+          MONITORING_QUOTA_GRACEFUL_EXIT: ${{ vars.MONITORING_QUOTA_GRACEFUL_EXIT }}
+          STATS_HEARTBEAT_HOURS: ${{ vars.STATS_HEARTBEAT_HOURS }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}

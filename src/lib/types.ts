@@ -50,6 +50,12 @@ export interface NotificationSettings {
   cooldownMinutes: number
 }
 
+export interface MonitoringControl {
+  enabled: boolean
+  updatedAt: number
+  updatedBy?: string
+}
+
 export type ManagedUserRole = 'admin' | 'viewer' | 'add-only'
 
 export interface UserPermissions {

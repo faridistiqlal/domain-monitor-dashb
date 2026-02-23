@@ -4,10 +4,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button'
 import { List, Bell, SignOut, LockKey, ClockCounterClockwise, Moon, Sun, UsersThree, Scroll } from '@phosphor-icons/react'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { NotificationSettingsDialog } from './NotificationSettingsDialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { NotificationHistoryDialog } from './NotificationHistoryDialog'
 import { UserManagementDialog } from './UserManagementDialog'
 import { AuditLogDialog } from './AuditLogDialog'
@@ -31,6 +32,8 @@ interface MobileNavProps {
   onCreateUser: (payload: { username: string; password: string; role: ManagedUserRole }) => Promise<boolean>
   onToggleUserActive: (userId: string, isActive: boolean) => Promise<boolean>
   onDeleteUser: (userId: string) => Promise<boolean>
+  monitoringEnabled: boolean
+  onToggleMonitoringEnabled: (enabled: boolean) => Promise<boolean>
 }
 
 export function MobileNav({
@@ -51,6 +54,8 @@ export function MobileNav({
   onCreateUser,
   onToggleUserActive,
   onDeleteUser,
+  monitoringEnabled,
+  onToggleMonitoringEnabled,
 }: MobileNavProps) {
   const [open, setOpen] = useState(false)
   const [showNotificationSettings, setShowNotificationSettings] = useState(false)
@@ -62,6 +67,7 @@ export function MobileNav({
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [isSavingMonitoringToggle, setIsSavingMonitoringToggle] = useState(false)
   const { theme, setTheme } = useTheme()
 
   const handlePasswordChange = async () => {
@@ -156,6 +162,30 @@ export function MobileNav({
           <div className="space-y-3">
             <p className="text-sm font-semibold text-foreground">Pengaturan</p>
             <div className="space-y-2">
+              {canManageUsers && (
+                <div className="rounded-lg border border-border px-3 py-2.5 mb-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <Label htmlFor="mobile-monitoring-enabled-switch" className="text-sm font-semibold">Monitoring Cron</Label>
+                      <p className="text-xs text-muted-foreground">Kontrol global GitHub Actions</p>
+                    </div>
+                    <Switch
+                      id="mobile-monitoring-enabled-switch"
+                      checked={monitoringEnabled}
+                      disabled={isSavingMonitoringToggle}
+                      onCheckedChange={async (checked) => {
+                        setIsSavingMonitoringToggle(true)
+                        try {
+                          await onToggleMonitoringEnabled(checked)
+                        } finally {
+                          setIsSavingMonitoringToggle(false)
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {canManageUsers && (
                 <>
                   <Button

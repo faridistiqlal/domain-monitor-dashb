@@ -10,6 +10,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { NotificationSettingsDialog } from './NotificationSettingsDialog'
 import { NotificationHistoryDialog } from './NotificationHistoryDialog'
 import { SettingsDialog } from './SettingsDialog'
@@ -31,6 +33,8 @@ interface SettingsMenuDialogProps {
   onCreateUser: (payload: { username: string; password: string; role: ManagedUserRole }) => Promise<boolean>
   onToggleUserActive: (userId: string, isActive: boolean) => Promise<boolean>
   onDeleteUser: (userId: string) => Promise<boolean>
+  monitoringEnabled: boolean
+  onToggleMonitoringEnabled: (enabled: boolean) => Promise<boolean>
 }
 
 export function SettingsMenuDialog({
@@ -47,6 +51,8 @@ export function SettingsMenuDialog({
   onCreateUser,
   onToggleUserActive,
   onDeleteUser,
+  monitoringEnabled,
+  onToggleMonitoringEnabled,
 }: SettingsMenuDialogProps) {
   const [open, setOpen] = useState(false)
   const [showNotificationSettings, setShowNotificationSettings] = useState(false)
@@ -54,6 +60,7 @@ export function SettingsMenuDialog({
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [showUserManagement, setShowUserManagement] = useState(false)
   const [showAuditLog, setShowAuditLog] = useState(false)
+  const [isSavingMonitoringToggle, setIsSavingMonitoringToggle] = useState(false)
 
   const handleLogout = () => {
     setOpen(false)
@@ -82,6 +89,30 @@ export function SettingsMenuDialog({
           <div className="space-y-2 py-2">
             {canManageUsers && (
               <>
+                <div className="px-2 pb-2">
+                  <div className="rounded-lg border border-border p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <Label htmlFor="monitoring-enabled-switch" className="text-sm font-semibold">Monitoring Cron</Label>
+                        <p className="text-xs text-muted-foreground">Aktifkan/nonaktifkan monitoring GitHub Actions global</p>
+                      </div>
+                      <Switch
+                        id="monitoring-enabled-switch"
+                        checked={monitoringEnabled}
+                        disabled={isSavingMonitoringToggle}
+                        onCheckedChange={async (checked) => {
+                          setIsSavingMonitoringToggle(true)
+                          try {
+                            await onToggleMonitoringEnabled(checked)
+                          } finally {
+                            setIsSavingMonitoringToggle(false)
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Notification Settings */}
                 <button
                   onClick={() => {

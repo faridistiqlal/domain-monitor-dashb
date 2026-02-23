@@ -46,6 +46,8 @@ import {
   loadDomains, 
   loadGroups, 
   loadTags,
+  loadMonitoringControl,
+  syncMonitoringControlToFirestore,
   syncDomainsToFirestore,
   syncGroupsToFirestore,
   syncTagsToFirestore,
@@ -200,6 +202,7 @@ function App() {
   const [manageNotificationFilter, setManageNotificationFilter] = useState<string>('all')
   const [managePinFilter, setManagePinFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
+  const [monitoringEnabled, setMonitoringEnabled] = useState(true)
 
   const {
     firebaseOps,
@@ -408,6 +411,15 @@ function App() {
 
         setManagedUsers(loadedManagedUsers)
         setManagedUsersRevision(managedSnapshot.revision)
+
+        try {
+          const monitoringControl = await loadMonitoringControl()
+          setMonitoringEnabled(monitoringControl.enabled)
+          trackFirebaseRead(1)
+        } catch (monitoringControlError) {
+          appConsole.warn('[Monitoring Control] Failed to load monitoring control, using default enabled=true', monitoringControlError)
+          setMonitoringEnabled(true)
+        }
 
         // Restore current user session context
         const storedUserId = localStorage.getItem('app-current-user-id') || 'default-user'
@@ -1180,6 +1192,27 @@ function App() {
     toast.success(`User ${targetUser.username} berhasil dihapus`)
     return true
   }
+
+  const handleToggleMonitoringEnabled = useCallback(async (enabled: boolean): Promise<boolean> => {
+    if (!currentUser?.permissions.canManageUsers) {
+      toast.error('Anda tidak memiliki akses untuk mengatur monitoring cron')
+      return false
+    }
+
+    const previousState = monitoringEnabled
+    setMonitoringEnabled(enabled)
+
+    const success = await syncMonitoringControlToFirestore(enabled)
+    if (!success) {
+      setMonitoringEnabled(previousState)
+      toast.error('Gagal menyimpan status monitoring cron')
+      return false
+    }
+
+    trackFirebaseWrite(1)
+    toast.success(enabled ? 'Monitoring cron diaktifkan' : 'Monitoring cron dinonaktifkan')
+    return true
+  }, [currentUser, monitoringEnabled, trackFirebaseWrite])
 
   // Capability checks based on current user permissions
   const canView = isAuthenticated && (currentUser?.permissions.canView ?? false)
@@ -2134,6 +2167,8 @@ function App() {
                 onCreateUser={handleCreateUser}
                 onToggleUserActive={handleToggleUserActive}
                 onDeleteUser={handleDeleteUser}
+                monitoringEnabled={monitoringEnabled}
+                onToggleMonitoringEnabled={handleToggleMonitoringEnabled}
               />
               
               <div className="flex items-center gap-2.5">
@@ -2180,6 +2215,8 @@ function App() {
                     onCreateUser={handleCreateUser}
                     onToggleUserActive={handleToggleUserActive}
                     onDeleteUser={handleDeleteUser}
+                    monitoringEnabled={monitoringEnabled}
+                    onToggleMonitoringEnabled={handleToggleMonitoringEnabled}
                   />
                 )}
 

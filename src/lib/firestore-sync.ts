@@ -13,7 +13,7 @@ import {
   Unsubscribe
 } from 'firebase/firestore'
 import { db, COLLECTIONS } from './firebase'
-import { Domain, DomainGroup, DomainTag, ManagedUser, AuditLogEntry, ManagedUserRole, UserPermissions } from './types'
+import { Domain, DomainGroup, DomainTag, ManagedUser, AuditLogEntry, ManagedUserRole, UserPermissions, MonitoringControl } from './types'
 
 // Shared data owner for domains/groups/tags
 const getSharedDataUserId = () => {
@@ -477,6 +477,91 @@ export const loadNotificationSettings = async (): Promise<any | null> => {
   const result = saved ? JSON.parse(saved) : null
   console.log('[loadNotificationSettings] Loaded from localStorage:', !!result)
   return result
+}
+
+// === GLOBAL MONITORING CONTROL ===
+
+const MONITORING_CONTROL_CACHE_KEY = 'monitoring-control'
+
+export const syncMonitoringControlToFirestore = async (enabled: boolean) => {
+  const userDocRef = doc(db, COLLECTIONS.USERS, getSharedDataUserId())
+  const payload: MonitoringControl = {
+    enabled,
+    updatedAt: Date.now(),
+    updatedBy: getCurrentUserId(),
+  }
+
+  try {
+    await setDoc(userDocRef, {
+      monitoringControl: payload,
+      updatedAt: Date.now(),
+    }, { merge: true })
+
+    localStorage.setItem(MONITORING_CONTROL_CACHE_KEY, JSON.stringify(payload))
+    console.log('✅ Monitoring control synced to Firebase')
+    return true
+  } catch (error) {
+    console.error('❌ Error syncing monitoring control:', error)
+    return false
+  }
+}
+
+export const getMonitoringControlFromFirestore = async (): Promise<MonitoringControl | null> => {
+  const userDocRef = doc(db, COLLECTIONS.USERS, getSharedDataUserId())
+
+  try {
+    const docSnap = await getDoc(userDocRef)
+    if (!docSnap.exists()) {
+      return null
+    }
+
+    const data = docSnap.data().monitoringControl
+    if (!data || typeof data.enabled !== 'boolean') {
+      return null
+    }
+
+    return {
+      enabled: data.enabled,
+      updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : Date.now(),
+      updatedBy: typeof data.updatedBy === 'string' ? data.updatedBy : undefined,
+    }
+  } catch (error) {
+    logFirestoreReadError('Error getting monitoring control', error)
+    return null
+  }
+}
+
+export const loadMonitoringControl = async (): Promise<MonitoringControl> => {
+  try {
+    const firebaseControl = await getMonitoringControlFromFirestore()
+    if (firebaseControl) {
+      localStorage.setItem(MONITORING_CONTROL_CACHE_KEY, JSON.stringify(firebaseControl))
+      return firebaseControl
+    }
+  } catch (error) {
+    console.warn('[loadMonitoringControl] Firebase unavailable, using local cache', error)
+  }
+
+  const cached = localStorage.getItem(MONITORING_CONTROL_CACHE_KEY)
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached) as MonitoringControl
+      if (typeof parsed.enabled === 'boolean') {
+        return {
+          enabled: parsed.enabled,
+          updatedAt: typeof parsed.updatedAt === 'number' ? parsed.updatedAt : Date.now(),
+          updatedBy: typeof parsed.updatedBy === 'string' ? parsed.updatedBy : undefined,
+        }
+      }
+    } catch {
+      // ignore parse errors and fallback to default
+    }
+  }
+
+  return {
+    enabled: true,
+    updatedAt: Date.now(),
+  }
 }
 
 // === USER DIRECTORY (MANAGEMENT) ===
