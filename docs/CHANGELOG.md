@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 3.11.6 - App.tsx Refactor (R-006 Phase 3)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ♻️ Refactor Internal
+- Melanjutkan pemecahan `App.tsx` tanpa mengubah behavior fitur.
+- Menambahkan hook baru `use-domain-selection` untuk manajemen state seleksi domain.
+- Menyederhanakan handler seleksi di `App.tsx` agar lebih terstruktur dan mudah dirawat.
+
+### ✅ Validation
+- TypeScript diagnostics pada file yang diubah: **no errors**.
+- Local build pass (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.5 - App.tsx Refactor (R-006 Phase 1)
 **Tanggal Rilis:** 23 Februari 2026
 
