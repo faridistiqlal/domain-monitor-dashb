@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 3.11.11 - App.tsx Refactor (R-006 Phase 9)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ♻️ Refactor Internal
+- Melanjutkan pemecahan `App.tsx` tanpa perubahan behavior fungsional.
+- Menambahkan hook `use-tab-auto-checks` untuk memisahkan logika:
+  - auto-check domain saat tab Monitoring dibuka pertama kali (manual mode),
+  - auto-check pinned domains saat tab Pin dibuka.
+- Menjaga wiring existing tetap kompatibel melalui callback `onManualRefresh` dan updater `setStatuses`.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.10 - App.tsx Refactor (R-006 Phase 8)
 **Tanggal Rilis:** 23 Februari 2026
 
