@@ -86,6 +86,7 @@ import { useDomainViewModel } from '@/hooks/use-domain-view-model'
 import { useDomainSelection } from '@/hooks/use-domain-selection'
 import { useFirebaseOpsTracker } from '@/hooks/use-firebase-ops-tracker'
 import { useManageSelectableDomains } from '@/hooks/use-manage-selectable-domains'
+import { useAutoRefreshScheduler } from '@/hooks/use-auto-refresh-scheduler'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
@@ -181,7 +182,6 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const [sortBy, setSortBy] = useState<SortType>('none')
-  const [countdown, setCountdown] = useState(60)
   const [isPaused, setIsPaused] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
@@ -227,6 +227,19 @@ function App() {
     domains,
     isAuthenticated,
     onLoadError: handleDomainInsightsLoadError,
+  })
+
+  const handleAutoBatchCheck = useCallback(() => {
+    checkAllDomains(false, true, true)
+  }, [checkAllDomains])
+
+  const {
+    countdown,
+    resetCountdownToNextBatch,
+  } = useAutoRefreshScheduler({
+    autoRefreshEnabled,
+    isPaused,
+    onAutoCheck: handleAutoBatchCheck,
   })
 
   const normalizeDomainsForMonitoring = useCallback((loadedDomains: Domain[]) => {
@@ -1866,7 +1879,7 @@ function App() {
     }
 
     setIsRefreshing(true)
-    setCountdown(getSecondsUntilNextBatch())
+    resetCountdownToNextBatch()
     if (autoRefreshEnabled) {
       setIsPaused(false)
     }
@@ -1885,11 +1898,11 @@ function App() {
         toast.info('Auto-refresh dijeda')
       } else {
         toast.info('Auto-refresh dilanjutkan')
-        setCountdown(getSecondsUntilNextBatch())
+        resetCountdownToNextBatch()
       }
       return newPausedState
     })
-  }, [])
+  }, [resetCountdownToNextBatch])
 
   const handleToggleAutoRefresh = useCallback(() => {
     setAutoRefreshEnabled(prev => {
@@ -1897,7 +1910,7 @@ function App() {
       if (newState) {
         toast.success('Mode auto-refresh diaktifkan')
         setIsPaused(false)
-        setCountdown(getSecondsUntilNextBatch())
+        resetCountdownToNextBatch()
         if (!hasChecked) {
           checkAllDomains(true, false, true) // Auto check: write to Firebase
         }
@@ -1907,7 +1920,7 @@ function App() {
       }
       return newState
     })
-  }, [checkAllDomains, hasChecked])
+  }, [checkAllDomains, hasChecked, resetCountdownToNextBatch])
 
   const handleExportCSV = () => {
     console.log('[Export] Starting export, domains:', domains?.length, 'statuses:', Object.keys(statuses).length)
@@ -2225,22 +2238,6 @@ function App() {
     toast.success(`Tag berhasil ditambahkan ke ${domainIds.length} domain`)
   }
 
-  // Initial auto-check delay when auto-refresh enabled
-  useEffect(() => {
-    if (!autoRefreshEnabled || isPaused) return
-
-    // Delay initial check by 10 seconds to avoid Firebase quota on app load
-    const initialDelay = setTimeout(() => {
-      console.log('[Auto-Check] Initial check after 10s delay')
-      checkAllDomains(false, true, true) // Initial batch check with Firebase
-      setCountdown(getSecondsUntilNextBatch())
-    }, 10000)
-
-    return () => {
-      clearTimeout(initialDelay)
-    }
-  }, [autoRefreshEnabled, isPaused])
-
   // Auto-cleanup old stats (runs once per day)
   useEffect(() => {
     const checkAndCleanup = async () => {
@@ -2263,65 +2260,6 @@ function App() {
     const cleanupTimer = setTimeout(checkAndCleanup, 60000)
     return () => clearTimeout(cleanupTimer)
   }, [])
-
-  // Calculate seconds until next batch check
-  const getSecondsUntilNextBatch = () => {
-    const now = new Date()
-    const currentMinute = now.getMinutes()
-    const currentSecond = now.getSeconds()
-    
-    // Find next batch time (every 5 minutes: 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55)
-    const nextBatchMinute = Math.ceil((currentMinute + 1) / 5) * 5
-    const minutesUntilNext = nextBatchMinute - currentMinute
-    const secondsUntilNext = (minutesUntilNext * 60) - currentSecond
-    
-    return secondsUntilNext
-  }
-
-  // Web Worker for background auto-checking (not affected by browser tab throttling)
-  useEffect(() => {
-    if (!autoRefreshEnabled || isPaused) return
-
-    console.log('[Worker] Initializing background worker for auto-check...')
-    
-    // Create Web Worker
-    const worker = new Worker(new URL('@/lib/background-worker.ts', import.meta.url), {
-      type: 'module'
-    })
-
-    // Initialize countdown to next batch
-    setCountdown(getSecondsUntilNextBatch())
-
-    // Countdown UI updater (runs every second in main thread)
-    const countdownInterval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          return 300 // Reset to 5 minutes
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    // Handle messages from worker
-    worker.onmessage = (e: MessageEvent) => {
-      if (e.data.type === 'CHECK') {
-        console.log('[Worker] Received CHECK signal from worker, triggering batch check...')
-        checkAllDomains(false, true, true) // Batch check with Firebase write
-        setCountdown(getSecondsUntilNextBatch()) // Reset countdown
-      }
-    }
-
-    // Start worker interval
-    worker.postMessage({ type: 'START' })
-    console.log('[Worker] Background worker started')
-
-    return () => {
-      console.log('[Worker] Cleaning up background worker')
-      worker.postMessage({ type: 'STOP' })
-      worker.terminate()
-      clearInterval(countdownInterval)
-    }
-  }, [isPaused, autoRefreshEnabled])
 
   useEffect(() => {
     setSelectedDomains(new Set())
