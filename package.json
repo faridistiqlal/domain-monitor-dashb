@@ -12,6 +12,7 @@
         "preview": "vite preview",
         "monitor": "node scripts/monitor-cron.js",
         "verify:auth-admin": "node scripts/verify-admin-auth.mjs",
+        "check:docs-version": "node scripts/check-doc-version-consistency.mjs",
         "firebase:login": "npx firebase-tools login",
         "firebase:rules:deploy": "npx firebase-tools deploy --only firestore:rules"
     },
