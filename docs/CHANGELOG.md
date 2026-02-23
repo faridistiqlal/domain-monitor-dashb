@@ -13,11 +13,23 @@
   - `DomainStatisticsDialog` (5 menit).
 - Menambahkan metadata budget harian pada tracker Firebase ops (`dailyBudget`, `totalOps`, `remainingOps`, `usagePercent`, `isOverBudget`).
 
+### 🔐 Cron Toggle Hardening + Rules Sync
+- Menambahkan validasi sesi auth aktif pada handler toggle Monitoring Cron di `App.tsx` (`authUid` wajib ada).
+- Error Firestore saat save toggle dipetakan ke pesan spesifik (`permission-denied`, `unauthenticated`) agar troubleshooting lebih cepat.
+- `syncMonitoringControlToFirestore` kini mengembalikan structured result (`ok`, `code`, `message`) untuk handling error yang lebih presisi.
+- Rules Firestore untuk dokumen `users/{userId}` disinkronkan agar menerima field `monitoringControl` dengan skema aman.
+- Verifikasi auth/admin ditambahkan lewat script `scripts/verify-admin-auth.mjs` + command `npm run verify:auth-admin`.
+
+### 📊 GitHub Statistics Sync
+- Kartu status GitHub Actions sekarang menerima state `monitoringEnabled` dari root app.
+- Saat toggle Monitoring Cron OFF, indikator status berganti ke mode disabled (bukan “Running normally”), termasuk copy/status badge yang konsisten.
+
 ### ✅ Validation
 - TypeScript diagnostics file yang diubah: **no errors**.
 - Local build pass (`npm run build`).
+- Verifikasi admin auth & write-path `monitoringControl`: **PASS**.
 
-**Status:** ✅ Ready for deploy
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
 
 ## Version 3.11.12 - App.tsx Refactor (R-006 Phase 10)
 **Tanggal Rilis:** 23 Februari 2026

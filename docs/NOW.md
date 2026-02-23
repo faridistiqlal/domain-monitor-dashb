@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 23 Februari 2026  
-**Current Version:** 3.11.12 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.13 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -160,6 +160,20 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.13 (23 Feb 2026) — **Patch: Cron Toggle Hardening + GitHub Stats Sync**
+- Hardening save toggle Monitoring Cron di UI:
+  - guard sesi Firebase Auth (`authUid`) wajib ada,
+  - mapping error Firestore (`permission-denied` / `unauthenticated`) menjadi toast yang lebih jelas.
+- Sinkronisasi status tab Statistik GitHub dengan toggle Monitoring Cron global:
+  - saat toggle OFF, kartu menampilkan status disabled (bukan lagi “Running normally”).
+- Penambahan util verifikasi admin auth untuk diagnosis cepat:
+  - script `scripts/verify-admin-auth.mjs`,
+  - command `npm run verify:auth-admin`.
+- Validasi end-to-end:
+  - Firestore rules deploy ulang dan verifikasi write `monitoringControl` PASS,
+  - local diagnostics bersih + `npm run build` PASS,
+  - deploy Vercel production PASS (`kendal-uptime.vercel.app`).
 
 ### v3.11.12 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 10)**
 - Ekstraksi logic export CSV dari `App.tsx` ke hook `use-domain-export`
@@ -350,6 +364,9 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-010 | Monitoring Cron toggle hardening (auth guard + error mapping) | 3.11.13 |
+| D-011 | GitHub Actions status card sync dengan toggle Monitoring Cron | 3.11.13 |
+| D-012 | Script verifikasi admin auth/write monitoring control (`verify:auth-admin`) | 3.11.13 |
 | R-006 | Refactor App.tsx phase 10 (domain export hook) | 3.11.12 |
 | R-006 | Refactor App.tsx phase 9 (tab auto-checks hook) | 3.11.11 |
 | R-006 | Refactor App.tsx phase 8 (notification-settings hook) | 3.11.10 |
