@@ -12,6 +12,13 @@ import { DomainDailyStats, DomainIncident } from '@/lib/types'
 import { UptimeBar } from './UptimeBar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
+const DOMAIN_STATS_CACHE_TTL_MS = 5 * 60 * 1000
+const domainStatisticsCache = new Map<string, {
+  timestamp: number
+  stats: DomainDailyStats[]
+  incidents: DomainIncident[]
+}>()
+
 interface DomainStatisticsDialogProps {
   domainId: string
   domainUrl: string
@@ -39,6 +46,14 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
     try {
       const db = getFirestore()
       const days = parseInt(period)
+      const cacheKey = `${domainId}::${period}`
+      const cached = domainStatisticsCache.get(cacheKey)
+      if (cached && Date.now() - cached.timestamp < DOMAIN_STATS_CACHE_TTL_MS) {
+        setStats(cached.stats)
+        setIncidents(cached.incidents)
+        setLoading(false)
+        return
+      }
 
       // Load daily stats - without orderBy to avoid composite index requirement
       const statsQuery = query(
@@ -70,6 +85,11 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
         .sort((a, b) => b.startTime - a.startTime) // Sort in memory
 
       setIncidents(loadedIncidents)
+      domainStatisticsCache.set(cacheKey, {
+        timestamp: Date.now(),
+        stats: loadedStats,
+        incidents: loadedIncidents,
+      })
 
     } catch (err) {
       console.error('Error loading statistics:', err)

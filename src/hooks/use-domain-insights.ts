@@ -3,6 +3,9 @@ import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Domain, DomainInsight } from '@/lib/types'
 
+const INSIGHTS_CACHE_TTL_MS = 5 * 60 * 1000
+const insightsCache = new Map<string, { timestamp: number; insights: Record<string, DomainInsight> }>()
+
 interface UseDomainInsightsParams {
   domains: Domain[]
   isAuthenticated: boolean
@@ -25,6 +28,7 @@ export function useDomainInsights({
 
       try {
         const domainIds = new Set(domains.map(domain => domain.id))
+        const domainIdsKey = Array.from(domainIds).sort().join('|')
         const cutoff30 = new Date()
         cutoff30.setDate(cutoff30.getDate() - 29)
         const cutoff7 = new Date()
@@ -32,6 +36,13 @@ export function useDomainInsights({
 
         const cutoff30Str = cutoff30.toISOString().split('T')[0]
         const cutoff7Str = cutoff7.toISOString().split('T')[0]
+        const cacheKey = `${domainIdsKey}::${cutoff30Str}::${cutoff7Str}`
+
+        const cached = insightsCache.get(cacheKey)
+        if (cached && Date.now() - cached.timestamp < INSIGHTS_CACHE_TTL_MS) {
+          setDomainInsights(cached.insights)
+          return
+        }
 
         const statsQuery = query(
           collection(db, 'domain-stats-daily'),
@@ -115,6 +126,10 @@ export function useDomainInsights({
         })
 
         setDomainInsights(nextInsights)
+        insightsCache.set(cacheKey, {
+          timestamp: Date.now(),
+          insights: nextInsights,
+        })
       } catch (error) {
         onLoadError?.('[Insights] Failed to load domain insights', error)
       }

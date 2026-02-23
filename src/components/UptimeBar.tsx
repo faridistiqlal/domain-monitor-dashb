@@ -14,6 +14,13 @@ interface UptimeBarProps {
   compact?: boolean // Compact mode for inline display
 }
 
+const UPTIME_CACHE_TTL_MS = 10 * 60 * 1000
+const uptimeCache = new Map<string, {
+  timestamp: number
+  stats: DomainDailyStats[]
+  overallUptime: number
+}>()
+
 export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarProps) {
   const [stats, setStats] = useState<DomainDailyStats[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,6 +36,15 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
 
     async function loadStats() {
       try {
+        const cacheKey = `${domainId}::${days}`
+        const cached = uptimeCache.get(cacheKey)
+        if (cached && Date.now() - cached.timestamp < UPTIME_CACHE_TTL_MS) {
+          setStats(cached.stats)
+          setOverallUptime(cached.overallUptime)
+          setLoading(false)
+          return
+        }
+
         setLoading(true)
         const statsRef = collection(db, 'domain-stats-daily')
         
@@ -57,6 +73,11 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
 
         setStats(sortedData)
         setOverallUptime(uptime)
+        uptimeCache.set(cacheKey, {
+          timestamp: Date.now(),
+          stats: sortedData,
+          overallUptime: uptime,
+        })
       } catch (error) {
         console.error('[UptimeBar] Error loading stats:', error)
 

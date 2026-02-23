@@ -41,6 +41,9 @@ let firestoreMode = 'client'
 let adminServerTimestampFactory = null
 let clientAuthUid = null
 
+const STATS_HEARTBEAT_HOURS = Number(process.env.STATS_HEARTBEAT_HOURS || '12')
+const STATS_HEARTBEAT_MS = Math.max(1, STATS_HEARTBEAT_HOURS) * 60 * 60 * 1000
+
 // Slack webhook URL
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL
 
@@ -422,33 +425,46 @@ async function updateDailyStats(domainId, checkResult) {
   }
 }
 
-/**
- * Update domain status in domains collection
- */
-async function updateDomainStatus(domainId, checkResult, allDomains) {
-  try {
-    // Find the domain in the array
-    const domainIndex = allDomains.findIndex(d => d.id === domainId)
-    if (domainIndex === -1) return
-    
-    // Update the domain object
-    allDomains[domainIndex].status = checkResult.status
-    allDomains[domainIndex].responseTime = checkResult.responseTime
-    allDomains[domainIndex].ipAddress = checkResult.ipAddress
-    allDomains[domainIndex].lastChecked = Date.now()
-    allDomains[domainIndex].error = checkResult.error
-    
-    // Write back to Firebase (default-user document)
-    const domainsRef = fsDoc('domains', 'default-user')
-    await fsSetDoc(domainsRef, {
-      domains: allDomains,
-      updatedAt: Date.now()
-    }, { merge: true })
-    
-    console.log(`[Domain] Updated domain status: ${allDomains[domainIndex].url} -> ${checkResult.status}`)
-  } catch (error) {
-    console.error(`[Domain] Error updating domain status:`, error.message)
+function shouldWriteDomainStats(domain, checkResult) {
+  const previousStatus = domain?.lastStatsStatus || domain?.status || null
+  const currentStatus = checkResult?.status || null
+  const statusChanged = !!previousStatus && !!currentStatus && previousStatus !== currentStatus
+
+  const lastStatsWrite = Number(domain?.lastStatsWrite || 0)
+  const elapsedMs = Date.now() - lastStatsWrite
+  const heartbeatDue = !lastStatsWrite || elapsedMs >= STATS_HEARTBEAT_MS
+
+  return {
+    shouldWrite: statusChanged || heartbeatDue,
+    statusChanged,
+    heartbeatDue,
+    elapsedMs,
   }
+}
+
+function applyCheckResultToDomainInMemory(allDomains, domainId, checkResult, options = {}) {
+  const domainIndex = allDomains.findIndex(d => d.id === domainId)
+  if (domainIndex === -1) {
+    return null
+  }
+
+  const now = Date.now()
+  allDomains[domainIndex] = {
+    ...allDomains[domainIndex],
+    status: checkResult.status,
+    responseTime: checkResult.responseTime,
+    ipAddress: checkResult.ipAddress,
+    lastChecked: now,
+    error: checkResult.error,
+    ...(options.markStatsWritten
+      ? {
+          lastStatsWrite: now,
+          lastStatsStatus: checkResult.status,
+        }
+      : {}),
+  }
+
+  return allDomains[domainIndex]
 }
 
 /**
@@ -543,30 +559,56 @@ async function runMonitoring() {
         batch.map(async domain => {
           console.log(`[Monitor] Checking: ${domain.url}`)
           const result = await checkDomain(domain)
-          
-          // Update daily stats
-          await updateDailyStats(domain.id, result)
+
+          const statsDecision = shouldWriteDomainStats(domain, result)
+          if (statsDecision.shouldWrite) {
+            console.log(
+              `[Stats] Write scheduled for ${domain.url} ` +
+              `(statusChanged=${statsDecision.statusChanged}, heartbeatDue=${statsDecision.heartbeatDue}, ` +
+              `elapsedMin=${Math.round(statsDecision.elapsedMs / 60000)})`
+            )
+            await updateDailyStats(domain.id, result)
+          } else {
+            console.log(
+              `[Stats] Skip write for ${domain.url} ` +
+              `(status stable & heartbeat not due, elapsedMin=${Math.round(statsDecision.elapsedMs / 60000)})`
+            )
+          }
+
+          applyCheckResultToDomainInMemory(allDomains, domain.id, result, {
+            markStatsWritten: statsDecision.shouldWrite,
+          })
           
           return {
             domain,
-            result
+            result,
+            statsWritten: statsDecision.shouldWrite,
           }
         })
       )
       results.push(...batchResults)
     }
-    
-    // Update domain statuses in batch
-    for (const { domain, result } of results) {
-      await updateDomainStatus(domain.id, result, allDomains)
+
+    // Write back domain statuses once per run (avoid per-domain write amplification)
+    try {
+      const domainsRef = fsDoc('domains', 'default-user')
+      await fsSetDoc(domainsRef, {
+        domains: allDomains,
+        updatedAt: Date.now()
+      }, { merge: true })
+      console.log(`[Domain] Persisted ${results.length} domain status updates in single write`)
+    } catch (domainWriteError) {
+      console.error('[Domain] Failed to persist consolidated domain updates:', domainWriteError.message)
     }
     
     // Count results
     const online = results.filter(r => r.result.status === 'online').length
     const dnsOnly = results.filter(r => r.result.status === 'dns-only').length
     const offline = results.filter(r => r.result.status === 'offline').length
+    const statsWrites = results.filter(r => r.statsWritten).length
     
     console.log(`[Monitor] Results: ${online} online, ${dnsOnly} DNS-only, ${offline} offline`)
+    console.log(`[Monitor] Stats writes this run: ${statsWrites}/${results.length} (heartbeat=${STATS_HEARTBEAT_HOURS}h)`)
     
     // Send summary to Slack
     const summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
