@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 23 Februari 2026  
-**Current Version:** 3.11.8 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.9 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,12 @@ firestore.rules               # Security rules Firestore
 
 ## 4. Release Terbaru
 
+### v3.11.9 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 7)**
+- Ekstraksi logic session inactivity timeout dari `App.tsx` ke hook `use-session-timeout`
+- Hook menangani warning auto-logout, timeout trigger, dan cleanup event listeners/interval
+- Tidak ada perubahan behavior fungsional (refactor internal)
+- Validasi lokal: diagnostics bersih + `npm run build` PASS
+
 ### v3.11.8 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 6)**
 - Ekstraksi scheduler auto-refresh dari `App.tsx` ke hook `use-auto-refresh-scheduler`
 - Scheduler mencakup initial delay 10 detik, worker lifecycle, dan reset countdown batch
@@ -293,7 +299,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 #### 🔴 High Priority (Fix / Security)
 | ID | Item | Kategori | Effort | Status | Target |
 |----|------|----------|--------|--------|--------|
-| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | In Progress (Phase 6 done) | 3.12.x |
+| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | In Progress (Phase 7 done) | 3.12.x |
 | R-007 | Hapus console.log berlebihan (~126 statements di App.tsx) | fix | small | Done | 3.11.x |
 | R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Done | 3.12.x |
 | R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Done | 3.11.x |
@@ -325,6 +331,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| R-006 | Refactor App.tsx phase 7 (session-timeout hook) | 3.11.9 |
 | R-006 | Refactor App.tsx phase 6 (auto-refresh scheduler hook) | 3.11.8 |
 | R-022 | Sync logout antar tab (BroadcastChannel + storage fallback) | 3.11.3 |
 | R-011 | Error boundary per tab/section | 3.11.2 |
@@ -530,6 +537,13 @@ git push origin main
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
 - [x] **Version Check:** production memuat `3.11.8` (sinkron dengan `src/lib/version.ts`, NOW, CHANGELOG, GUIDES)
 - [x] **Feature Check:** refactor `App.tsx` phase 6 live (`use-auto-refresh-scheduler`)
+
+#### Contoh Terisi — v3.11.9 (23 Feb 2026)
+- [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-ogv1flj9k-farid-istiqlals-projects.vercel.app`
+- [x] **Production URL:** `https://kendal-uptime.vercel.app`
+- [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
+- [x] **Version Check:** production memuat `3.11.9` (sinkron dengan `src/lib/version.ts`, NOW, CHANGELOG, GUIDES)
+- [x] **Feature Check:** refactor `App.tsx` phase 7 live (`use-session-timeout`)
 
 #### Template Kosong (Copy-Paste per rilis)
 ```markdown

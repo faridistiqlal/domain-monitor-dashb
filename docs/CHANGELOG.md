@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 3.11.9 - App.tsx Refactor (R-006 Phase 7)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ♻️ Refactor Internal
+- Melanjutkan pemecahan `App.tsx` tanpa perubahan behavior fungsional.
+- Menambahkan hook `use-session-timeout` untuk memisahkan logika:
+  - deteksi inactivity session,
+  - warning auto-logout,
+  - cleanup listener/interval terkait session timeout.
+- Menjaga wiring timeout logout tetap kompatibel melalui callback `onTimeout`.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.8 - App.tsx Refactor (R-006 Phase 6)
 **Tanggal Rilis:** 23 Februari 2026
 
