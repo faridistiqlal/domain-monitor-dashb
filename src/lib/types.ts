@@ -133,6 +133,12 @@ export interface DomainDailyStats {
   incidentIds: string[] // references to DomainIncident
 }
 
+export interface DomainInsight {
+  uptime7d: number | null
+  uptime30d: number | null
+  responseTrend: number[]
+}
+
 export interface CheckSchedule {
   batch: number // 1-4
   nextCheckTime: number

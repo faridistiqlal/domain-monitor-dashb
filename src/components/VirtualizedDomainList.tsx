@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback, useRef } from 'react'
-import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag, DomainInsight } from '@/lib/types'
 import { DomainCard } from './DomainCard'
 import { Button } from './ui/button'
 import { CaretDown } from '@phosphor-icons/react'
@@ -7,6 +7,7 @@ import { CaretDown } from '@phosphor-icons/react'
 interface OptimizedDomainListProps {
   domains: Domain[]
   statuses: Record<string, DomainStatus>
+  domainInsights?: Record<string, DomainInsight>
   groups?: DomainGroup[]
   tags?: DomainTag[]
   onDelete?: (id: string) => void
@@ -30,6 +31,9 @@ const DomainCardMemo = memo(DomainCard, (prev, next) => {
     prev.status.status === next.status.status &&
     prev.status.ipAddress === next.status.ipAddress &&
     prev.status.dnsResolvable === next.status.dnsResolvable &&
+    prev.insight?.uptime7d === next.insight?.uptime7d &&
+    prev.insight?.uptime30d === next.insight?.uptime30d &&
+    prev.insight?.responseTrend.join(',') === next.insight?.responseTrend.join(',') &&
     prev.isSelected === next.isSelected &&
     prev.group?.id === next.group?.id &&
     prev.domain.tags?.join(',') === next.domain.tags?.join(',') &&
@@ -43,6 +47,7 @@ DomainCardMemo.displayName = 'DomainCardMemo'
 export const OptimizedDomainList = memo(({
   domains,
   statuses,
+  domainInsights,
   groups,
   tags,
   onDelete,
@@ -105,6 +110,7 @@ export const OptimizedDomainList = memo(({
             key={domain.id}
             domain={domain}
             status={status}
+            insight={domainInsights?.[domain.id]}
             onDelete={onDelete}
             onEdit={onEdit}
             onToggleMonitoring={onToggleMonitoring}

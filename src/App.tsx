@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { Globe, ArrowClockwise, DownloadSimple, MagnifyingGlass, X, SortAscending, Pause, Play, FolderOpen, Tag, Monitor, Trash, CheckSquare, Toolbox, Info, ChartBar, ChartLine, SignOut, LockKey, Lock, Bell, MapPin, Clock, UserCircle } from '@phosphor-icons/react'
+import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,7 +40,8 @@ import { NotificationSettingsDialog } from '@/components/NotificationSettingsDia
 import { NotificationHistoryDialog } from '@/components/NotificationHistoryDialog'
 import { SettingsMenuDialog } from '@/components/SettingsMenuDialog'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings, ManagedUser, ManagedUserRole, UserPermissions } from '@/lib/types'
+import { db } from '@/lib/firebase'
+import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings, ManagedUser, ManagedUserRole, UserPermissions, DomainInsight } from '@/lib/types'
 import { NotificationService, NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
@@ -84,8 +87,22 @@ type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
 type ViewMode = 'all' | 'groups' | 'group-detail'
 
+function TabSectionFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 space-y-3" role="alert" aria-live="assertive">
+      <p className="text-sm font-semibold text-destructive">Bagian ini mengalami error runtime.</p>
+      <p className="text-xs text-muted-foreground">{error.message}</p>
+      <Button size="sm" variant="outline" onClick={resetErrorBoundary}>
+        Coba Muat Ulang Bagian Ini
+      </Button>
+    </div>
+  )
+}
+
 function App() {
   const DEFAULT_ADMIN_PASSWORD = (import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || '').trim()
+  const LOGOUT_SYNC_KEY = 'app-logout-sync'
+  const AUTH_CHANNEL_NAME = 'domain-monitor-auth'
   const appConsole = {
     log: import.meta.env.DEV ? globalThis.console.log.bind(globalThis.console) : () => undefined,
     warn: globalThis.console.warn.bind(globalThis.console),
@@ -97,6 +114,7 @@ function App() {
   const skipInitialDomainsSync = useRef(true)
   const skipInitialGroupsSync = useRef(true)
   const skipInitialTagsSync = useRef(true)
+  const authChannelRef = useRef<BroadcastChannel | null>(null)
 
   const getPermissionsByRole = (role: ManagedUserRole): UserPermissions => {
     if (role === 'admin') {
@@ -179,6 +197,9 @@ function App() {
   const [manageNotificationFilter, setManageNotificationFilter] = useState<string>('all')
   const [managePinFilter, setManagePinFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
+  const [manualRefreshCooldownUntil, setManualRefreshCooldownUntil] = useState(0)
+  const [manualRefreshNowTick, setManualRefreshNowTick] = useState(() => Date.now())
+  const [domainInsights, setDomainInsights] = useState<Record<string, DomainInsight>>({})
   
   // Firebase operation tracking (for development monitoring)
   const [firebaseOps, setFirebaseOps] = useState(() => {
@@ -211,6 +232,130 @@ function App() {
       return newOps
     })
   }
+
+  const manualRefreshRemainingSeconds = useMemo(
+    () => Math.max(0, Math.ceil((manualRefreshCooldownUntil - manualRefreshNowTick) / 1000)),
+    [manualRefreshCooldownUntil, manualRefreshNowTick]
+  )
+
+  useEffect(() => {
+    if (manualRefreshCooldownUntil <= Date.now()) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      setManualRefreshNowTick(Date.now())
+    }, 1000)
+
+    return () => window.clearInterval(intervalId)
+  }, [manualRefreshCooldownUntil])
+
+  useEffect(() => {
+    const loadDomainInsights = async () => {
+      if (!isAuthenticated || !domains || domains.length === 0) {
+        setDomainInsights({})
+        return
+      }
+
+      try {
+        const domainIds = new Set(domains.map(domain => domain.id))
+        const cutoff30 = new Date()
+        cutoff30.setDate(cutoff30.getDate() - 29)
+        const cutoff7 = new Date()
+        cutoff7.setDate(cutoff7.getDate() - 6)
+
+        const cutoff30Str = cutoff30.toISOString().split('T')[0]
+        const cutoff7Str = cutoff7.toISOString().split('T')[0]
+
+        const statsQuery = query(
+          collection(db, 'domain-stats-daily'),
+          where('date', '>=', cutoff30Str)
+        )
+
+        const snapshot = await getDocs(statsQuery)
+
+        const aggregateByDomain = new Map<string, {
+          success7: number
+          total7: number
+          success30: number
+          total30: number
+          trend: Array<{ date: string; response: number }>
+        }>()
+
+        snapshot.docs.forEach(docSnap => {
+          const data = docSnap.data() as {
+            domainId?: string
+            date?: string
+            successChecks?: number
+            totalChecks?: number
+            avgResponseTime?: number
+          }
+
+          if (!data.domainId || !domainIds.has(data.domainId) || !data.date) {
+            return
+          }
+
+          const aggregate = aggregateByDomain.get(data.domainId) || {
+            success7: 0,
+            total7: 0,
+            success30: 0,
+            total30: 0,
+            trend: [],
+          }
+
+          const successChecks = data.successChecks || 0
+          const totalChecks = data.totalChecks || 0
+
+          aggregate.success30 += successChecks
+          aggregate.total30 += totalChecks
+
+          if (data.date >= cutoff7Str) {
+            aggregate.success7 += successChecks
+            aggregate.total7 += totalChecks
+          }
+
+          if (typeof data.avgResponseTime === 'number' && data.avgResponseTime > 0) {
+            aggregate.trend.push({ date: data.date, response: data.avgResponseTime })
+          }
+
+          aggregateByDomain.set(data.domainId, aggregate)
+        })
+
+        const nextInsights: Record<string, DomainInsight> = {}
+
+        domains.forEach(domain => {
+          const aggregate = aggregateByDomain.get(domain.id)
+          if (!aggregate) {
+            nextInsights[domain.id] = {
+              uptime7d: null,
+              uptime30d: null,
+              responseTrend: [],
+            }
+            return
+          }
+
+          const uptime7d = aggregate.total7 > 0 ? (aggregate.success7 / aggregate.total7) * 100 : null
+          const uptime30d = aggregate.total30 > 0 ? (aggregate.success30 / aggregate.total30) * 100 : null
+          const responseTrend = aggregate.trend
+            .sort((left, right) => left.date.localeCompare(right.date))
+            .slice(-7)
+            .map(item => Math.round(item.response))
+
+          nextInsights[domain.id] = {
+            uptime7d,
+            uptime30d,
+            responseTrend,
+          }
+        })
+
+        setDomainInsights(nextInsights)
+      } catch (error) {
+        appConsole.warn('[Insights] Failed to load domain insights', error)
+      }
+    }
+
+    loadDomainInsights()
+  }, [domains, isAuthenticated])
 
   const normalizeDomainsForMonitoring = useCallback((loadedDomains: Domain[]) => {
     return loadedDomains.map((domain, index) => {
@@ -889,8 +1034,7 @@ function App() {
     }
   }
 
-  const handleLogout = () => {
-    signOutAuth().catch(console.error)
+  const clearLocalSession = useCallback((showToastMessage: boolean, toastMessage: string) => {
     setIsAuthenticated(false)
     setCurrentUser(null)
     localStorage.setItem('app-authenticated', 'false')
@@ -899,7 +1043,51 @@ function App() {
     localStorage.removeItem('app-current-user-id')
     localStorage.removeItem('app-current-username')
     setShowLoginDialog(true)
-    toast.info('Anda telah logout')
+    if (showToastMessage) {
+      toast.info(toastMessage)
+    }
+  }, [])
+
+  const broadcastLogoutSignal = useCallback(() => {
+    const payload = { type: 'logout', at: Date.now() }
+    localStorage.setItem(LOGOUT_SYNC_KEY, JSON.stringify(payload))
+    authChannelRef.current?.postMessage(payload)
+  }, [])
+
+  useEffect(() => {
+    const handleRemoteLogout = () => {
+      clearLocalSession(true, 'Sesi logout tersinkron dari tab lain')
+    }
+
+    if ('BroadcastChannel' in window) {
+      const channel = new BroadcastChannel(AUTH_CHANNEL_NAME)
+      authChannelRef.current = channel
+      channel.onmessage = (event: MessageEvent<{ type?: string }>) => {
+        if (event.data?.type === 'logout') {
+          handleRemoteLogout()
+        }
+      }
+    }
+
+    const handleStorageEvent = (event: StorageEvent) => {
+      if (event.key === LOGOUT_SYNC_KEY && event.newValue) {
+        handleRemoteLogout()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageEvent)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageEvent)
+      authChannelRef.current?.close()
+      authChannelRef.current = null
+    }
+  }, [clearLocalSession])
+
+  const handleLogout = () => {
+    signOutAuth().catch(console.error)
+    clearLocalSession(true, 'Anda telah logout')
+    broadcastLogoutSignal()
   }
 
   const handlePasswordChange = async (oldPassword: string, newPassword: string): Promise<boolean> => {
@@ -1265,7 +1453,7 @@ function App() {
   useEffect(() => {
     if (activeTab === 'domains' && !isLoadingData && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
       console.log('[Monitoring Tab] Auto-checking all domains on initial load...')
-      handleManualRefresh()
+      handleManualRefresh(false)
     }
   }, [activeTab, isLoadingData, autoRefreshEnabled, hasChecked, isRefreshing, domains.length])
 
@@ -1823,16 +2011,30 @@ function App() {
     toast.success(`${count} domain berhasil dihapus`)
   }
 
-  const handleManualRefresh = useCallback(async () => {
+  const handleManualRefresh = useCallback(async (enforceCooldown: boolean = true) => {
+    if (enforceCooldown && manualRefreshRemainingSeconds > 0) {
+      toast.info(`Tunggu ${manualRefreshRemainingSeconds} detik sebelum check manual berikutnya`)
+      return
+    }
+
+    if (enforceCooldown) {
+      const now = Date.now()
+      setManualRefreshNowTick(now)
+      setManualRefreshCooldownUntil(now + 30_000)
+    }
+
     setIsRefreshing(true)
     setCountdown(getSecondsUntilNextBatch())
     if (autoRefreshEnabled) {
       setIsPaused(false)
     }
-    await checkAllDomains(true, false, false) // Manual check: local only, no Firebase
-    setIsRefreshing(false)
-    setLastCheckTime(new Date())
-  }, [autoRefreshEnabled, checkAllDomains])
+    try {
+      await checkAllDomains(true, false, false) // Manual check: local only, no Firebase
+      setLastCheckTime(new Date())
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [autoRefreshEnabled, checkAllDomains, manualRefreshRemainingSeconds])
 
   const handleTogglePause = useCallback(() => {
     setIsPaused(prev => {
@@ -2581,16 +2783,20 @@ function App() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleManualRefresh}
-                  disabled={isRefreshing}
+                  onClick={() => handleManualRefresh(true)}
+                  disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
                   className="h-8"
-                  title="Check Sekarang"
+                  title={manualRefreshRemainingSeconds > 0 ? `Tunggu ${manualRefreshRemainingSeconds} detik` : 'Check Sekarang'}
+                  aria-label={manualRefreshRemainingSeconds > 0 ? `Manual check cooldown ${manualRefreshRemainingSeconds} detik` : 'Check domain sekarang'}
                 >
                   <ArrowClockwise 
                     size={14} 
                     className={isRefreshing ? 'animate-spin' : ''} 
                   />
                   {isRefreshing && <span className="text-xs ml-1.5">Checking...</span>}
+                  {!isRefreshing && manualRefreshRemainingSeconds > 0 && (
+                    <span className="text-xs ml-1.5">{manualRefreshRemainingSeconds}s</span>
+                  )}
                 </Button>
               </div>
               
@@ -2599,10 +2805,11 @@ function App() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleManualRefresh}
-                  disabled={isRefreshing}
+                  onClick={() => handleManualRefresh(true)}
+                  disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
                   className="h-10 w-10 p-0"
-                  title="Check Sekarang"
+                  title={manualRefreshRemainingSeconds > 0 ? `Tunggu ${manualRefreshRemainingSeconds} detik` : 'Check Sekarang'}
+                  aria-label={manualRefreshRemainingSeconds > 0 ? `Manual check cooldown ${manualRefreshRemainingSeconds} detik` : 'Check domain sekarang'}
                 >
                   <ArrowClockwise 
                     size={18} 
@@ -2621,37 +2828,38 @@ function App() {
           }
           // Auto-check domains when opening monitoring tab for the first time
           if (val === 'domains' && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
-            handleManualRefresh()
+            handleManualRefresh(false)
           }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
           <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-8 md:mb-6 gap-1 md:gap-0 h-10 p-1 mt-2">
-            <TabsTrigger value="pinned" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+            <TabsTrigger value="pinned" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab Pin domain">
               <MapPin size={18} weight="fill" className="md:size-4" />
               <span className="hidden md:inline">Pin</span>
             </TabsTrigger>
-            <TabsTrigger value="domains" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+            <TabsTrigger value="domains" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab monitoring domain">
               <Monitor size={18} className="md:size-4" />
               <span className="hidden md:inline">Monitoring</span>
             </TabsTrigger>
-            <TabsTrigger value="statistics" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+            <TabsTrigger value="statistics" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab statistik">
               <ChartBar size={18} className="md:size-4" />
               <span className="hidden md:inline">Statistik</span>
             </TabsTrigger>
-            <TabsTrigger value="groups" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+            <TabsTrigger value="groups" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab grup">
               <FolderOpen size={18} className="md:size-4" />
               <span className="hidden md:inline">Grup</span>
             </TabsTrigger>
-            <TabsTrigger value="tags" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+            <TabsTrigger value="tags" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab tag">
               <Tag size={18} className="md:size-4" />
               <span className="hidden md:inline">Tag</span>
             </TabsTrigger>
-            <TabsTrigger value="manage" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3">
+            <TabsTrigger value="manage" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab kelola data">
               <Toolbox size={18} className="md:size-4" />
               <span className="hidden md:inline">Kelola</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="domains" className="space-y-4 flex-1 flex flex-col overflow-hidden">
+            <ErrorBoundary FallbackComponent={TabSectionFallback} resetKeys={[activeTab]}>
             {!autoRefreshEnabled && hasChecked && !isRefreshing && totalCount > 0 && (
               <div className="space-y-3">
                 <div className="bg-success/10 border border-success/30 rounded-lg p-2.5">
@@ -2950,16 +3158,21 @@ function App() {
                       Setelah selesai, Anda dapat langsung export hasilnya.
                     </p>
                     <Button
-                      onClick={handleManualRefresh}
-                      disabled={isRefreshing}
+                      onClick={() => handleManualRefresh(true)}
+                      disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
                       size="lg"
                       className="mt-4"
+                      aria-label={manualRefreshRemainingSeconds > 0 ? `Manual check cooldown ${manualRefreshRemainingSeconds} detik` : 'Check all domains sekarang'}
                     >
                       <ArrowClockwise 
                         size={20} 
                         className={isRefreshing ? 'animate-spin mr-2' : 'mr-2'} 
                       />
-                      {isRefreshing ? 'Checking...' : `Check All Domains (${totalCount})`}
+                      {isRefreshing
+                        ? 'Checking...'
+                        : manualRefreshRemainingSeconds > 0
+                          ? `Tunggu ${manualRefreshRemainingSeconds}s`
+                          : `Check All Domains (${totalCount})`}
                     </Button>
                   </div>
                 </div>
@@ -3019,6 +3232,7 @@ function App() {
                     <OptimizedDomainList
                       domains={sortedDomains}
                       statuses={statuses}
+                      domainInsights={domainInsights}
                       groups={groups}
                       tags={tags}
                       onToggleMonitoring={canEdit ? handleToggleDomainMonitoring : undefined}
@@ -3030,9 +3244,11 @@ function App() {
                 </ScrollArea>
               </>
             )}
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="manage" className="space-y-4 flex-1 flex flex-col overflow-hidden">
+            <ErrorBoundary FallbackComponent={TabSectionFallback} resetKeys={[activeTab]}>
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Kelola domain - tambah, hapus, dan edit data domain
@@ -3285,6 +3501,7 @@ function App() {
                       <OptimizedDomainList
                         domains={filteredManageDomains}
                         statuses={statuses}
+                        domainInsights={domainInsights}
                         groups={groups}
                         tags={tags}
                         onDelete={canEdit ? handleDeleteDomain : undefined}
@@ -3301,9 +3518,11 @@ function App() {
                   </ScrollArea>
                 </div>
               )}
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="pinned" className="space-y-4 flex-1 flex flex-col overflow-hidden">
+            <ErrorBoundary FallbackComponent={TabSectionFallback} resetKeys={[activeTab]}>
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
@@ -3379,6 +3598,7 @@ function App() {
                         key={domain.id}
                         domain={domain}
                         status={domainStatus}
+                        insight={domainInsights[domain.id]}
                         onUnpin={canEdit ? handleTogglePin : undefined}
                       />
                     )
@@ -3386,9 +3606,11 @@ function App() {
                 </div>
               </ScrollArea>
             )}
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="statistics" className="space-y-4 flex-1 flex flex-col overflow-hidden">
+            <ErrorBoundary FallbackComponent={TabSectionFallback} resetKeys={[activeTab]}>
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">GitHub Actions Monitoring</h2>
@@ -3408,9 +3630,11 @@ function App() {
               hasChecked={hasChecked}
               autoRefreshEnabled={autoRefreshEnabled}
             />
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-4 flex-1 flex flex-col overflow-hidden">
+            <ErrorBoundary FallbackComponent={TabSectionFallback} resetKeys={[activeTab]}>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs px-1">
                 <div className="flex items-center gap-3">
@@ -3505,9 +3729,11 @@ function App() {
                 </div>
               </ScrollArea>
             )}
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="tags" className="space-y-4 flex-1 flex flex-col overflow-hidden">
+            <ErrorBoundary FallbackComponent={TabSectionFallback} resetKeys={[activeTab]}>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs px-1">
                 <div className="flex items-center gap-3">
@@ -3579,6 +3805,7 @@ function App() {
                 </div>
               </ScrollArea>
             )}
+            </ErrorBoundary>
           </TabsContent>
         </Tabs>
           </>

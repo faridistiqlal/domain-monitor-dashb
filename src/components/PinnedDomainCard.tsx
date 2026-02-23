@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Globe, DotsThree, Trash, Clock } from '@phosphor-icons/react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from './StatusIndicator'
 import { UptimeBar } from './UptimeBar'
 import { DomainStatisticsDialog } from './DomainStatisticsDialog'
-import { Domain, DomainStatus } from '@/lib/types'
+import { Domain, DomainInsight, DomainStatus } from '@/lib/types'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +17,41 @@ import {
 interface PinnedDomainCardProps {
   domain: Domain
   status: DomainStatus
+  insight?: DomainInsight
   onUnpin?: (id: string) => void
 }
 
-export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardProps) {
+const ResponseSparkline = ({ values }: { values: number[] }) => {
+  if (!values || values.length < 2) return null
+
+  const width = 72
+  const height = 20
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min || 1
+  const points = values
+    .map((value, index) => {
+      const x = (index / (values.length - 1)) * width
+      const y = height - ((value - min) / range) * height
+      return `${x},${y}`
+    })
+    .join(' ')
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden>
+      <polyline
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  )
+}
+
+export function PinnedDomainCard({ domain, status, insight, onUnpin }: PinnedDomainCardProps): JSX.Element {
   const [showStats, setShowStats] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -69,8 +100,8 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
                 {domain.url}
               </CardTitle>
               <div className="flex items-center gap-2 mt-0.5">
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className="text-[10px] h-4 px-1.5 font-semibold"
                   style={{ backgroundColor: `${getStatusColor()}20`, color: getStatusColor() }}
                 >
@@ -91,7 +122,7 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" aria-label={`Open actions for ${domain.url}`}>
                 <DotsThree size={16} weight="bold" />
               </Button>
             </DropdownMenuTrigger>
@@ -101,7 +132,7 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
                 Buka di tab baru
               </DropdownMenuItem>
               {onUnpin && (
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={handleUnpin}
                   disabled={isDeleting}
                   className="text-destructive focus:text-destructive"
@@ -115,7 +146,6 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
         </div>
       </CardHeader>
       <CardContent className="pt-0 pb-3 space-y-2">
-        {/* Uptime Bar - Simplified */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[10px]">
             <span className="text-muted-foreground">90-day uptime</span>
@@ -129,13 +159,12 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
           <UptimeBar domainId={domain.id} days={90} compact={false} />
         </div>
 
-        {/* Last Check - Compact */}
         {status.lastChecked && (
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <Clock size={12} />
             <span>{formatLastChecked()}</span>
             <span className="text-muted-foreground/50">
-              • {new Date(status.lastChecked).toLocaleString('id-ID', { 
+              • {new Date(status.lastChecked).toLocaleString('id-ID', {
                 day: 'numeric',
                 month: 'short',
                 hour: '2-digit',
@@ -145,15 +174,29 @@ export function PinnedDomainCard({ domain, status, onUnpin }: PinnedDomainCardPr
           </div>
         )}
 
-        {/* Error Message - Compact */}
         {status.error && (
           <div className="text-[10px] text-destructive bg-destructive/10 rounded p-1.5 leading-tight">
             {status.error}
           </div>
         )}
+
+        {insight && (
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap" aria-label="Pinned domain insights">
+            {insight.uptime7d !== null && (
+              <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-mono">7d {insight.uptime7d.toFixed(0)}%</Badge>
+            )}
+            {insight.uptime30d !== null && (
+              <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-mono">30d {insight.uptime30d.toFixed(0)}%</Badge>
+            )}
+            {insight.responseTrend.length > 1 && (
+              <div className="text-primary/80" title="Trend response time 7 hari" aria-label="Response time trend 7 days">
+                <ResponseSparkline values={insight.responseTrend} />
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
 
-      {/* Statistics Dialog */}
       <DomainStatisticsDialog
         domainId={domain.id}
         domainUrl={domain.url}

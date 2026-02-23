@@ -25,6 +25,15 @@ async function getIPAddress(domain: string): Promise<string | undefined> {
 async function checkHTTPAccess(url: string, timeout: number = 6000): Promise<{ accessible: boolean; responseTime?: number; error?: string; statusCode?: number }> {
   const startTime = Date.now()
   const fullUrl = url.startsWith('http') ? url : `https://${url}`
+  const isHttpsPage = typeof window !== 'undefined' && window.location.protocol === 'https:'
+
+  if (isHttpsPage && fullUrl.startsWith('http://')) {
+    return {
+      accessible: false,
+      error: 'HTTP blocked on HTTPS page (mixed content)',
+      responseTime: 0,
+    }
+  }
   
   try {
     const controller = new AbortController()
@@ -104,6 +113,7 @@ async function checkHTTPAccess(url: string, timeout: number = 6000): Promise<{ a
 
 async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; responseTime?: number; error?: string; protocol?: string; sslIssue?: boolean }> {
   const cleanUrl = url.replace(/^https?:\/\//, '')
+  const isHttpsPage = typeof window !== 'undefined' && window.location.protocol === 'https:'
   
   // Try HTTPS first
   const httpsResult = await checkHTTPAccess(`https://${cleanUrl}`, 6000)
@@ -116,6 +126,15 @@ async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; re
   const isSSLError = httpsResult.error?.toLowerCase().includes('ssl') ||
                      httpsResult.error?.toLowerCase().includes('cert') ||
                      httpsResult.error?.toLowerCase().includes('sertifikat')
+
+  if (isHttpsPage) {
+    return {
+      accessible: false,
+      error: httpsResult.error || 'HTTPS tidak dapat diakses',
+      responseTime: httpsResult.responseTime,
+      sslIssue: isSSLError,
+    }
+  }
   
   // Try HTTP as fallback
   const httpResult = await checkHTTPAccess(`http://${cleanUrl}`, 6000)
@@ -146,7 +165,6 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
   
   // Retry once if timeout occurred
   if (!httpResult.accessible && httpResult.error === 'Timeout') {
-    console.log(`Retrying ${url} after timeout...`)
     await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry
     httpResult = await checkHTTPSandHTTP(url)
   }

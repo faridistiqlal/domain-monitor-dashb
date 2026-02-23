@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from './StatusIndicator'
 import { EditDomainDialog } from './EditDomainDialog'
 import { DomainStatisticsDialog } from './DomainStatisticsDialog'
-import { Domain, DomainStatus, DomainGroup, DomainTag } from '@/lib/types'
+import { Domain, DomainStatus, DomainGroup, DomainTag, DomainInsight } from '@/lib/types'
 import {
   Tooltip,
   TooltipContent,
@@ -26,6 +26,7 @@ import { toast } from 'sonner'
 interface DomainCardProps {
   domain: Domain
   status: DomainStatus
+  insight?: DomainInsight
   onDelete?: (id: string) => void
   onEdit?: (id: string, newUrl: string) => void
   onToggleMonitoring?: (id: string) => void
@@ -39,7 +40,37 @@ interface DomainCardProps {
   simpleMode?: boolean
 }
 
-export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitoring, onTogglePin, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
+const ResponseSparkline = ({ values }: { values: number[] }) => {
+  if (!values || values.length < 2) return null
+
+  const width = 64
+  const height = 18
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min || 1
+  const points = values
+    .map((value, index) => {
+      const x = (index / (values.length - 1)) * width
+      const y = height - ((value - min) / range) * height
+      return `${x},${y}`
+    })
+    .join(' ')
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible" aria-hidden>
+      <polyline
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  )
+}
+
+export function DomainCard({ domain, status, insight, onDelete, onEdit, onToggleMonitoring, onTogglePin, existingUrls, group, tags, isSelected, onSelect, showCheckbox, simpleMode }: DomainCardProps) {
   const [showStats, setShowStats] = useState(false)
   
   const handleCopyUrl = async (format: 'plain' | 'https' | 'http') => {
@@ -216,6 +247,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   onClick={handleToggleMonitoring}
                   className="h-9 w-9 md:h-7 md:w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
                   title={isEnabled ? 'Pause' : 'Play'}
+                  aria-label={isEnabled ? `Pause monitoring ${domain.url}` : `Start monitoring ${domain.url}`}
                 >
                   {isEnabled ? <Pause size={18} weight="fill" className="md:hidden" /> : <Play size={18} weight="fill" className="md:hidden" />}
                   {isEnabled ? <Pause size={16} weight="fill" className="hidden md:block" /> : <Play size={16} weight="fill" className="hidden md:block" />}
@@ -238,6 +270,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   onClick={() => onTogglePin(domain.id)}
                   className={`h-9 w-9 md:h-7 md:w-7 ${domain.pinned ? 'text-primary' : 'text-muted-foreground'} hover:text-primary hover:bg-primary/10`}
                   title={domain.pinned ? 'Unpin' : 'Pin'}
+                  aria-label={domain.pinned ? `Unpin ${domain.url}` : `Pin ${domain.url}`}
                 >
                   {domain.pinned ? <MapPin size={18} weight="fill" className="md:hidden" /> : <MapPin size={18} className="md:hidden" />}
                   {domain.pinned ? <MapPin size={16} weight="fill" className="hidden md:block" /> : <MapPin size={16} className="hidden md:block" />}
@@ -251,6 +284,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   onClick={() => onDelete(domain.id)}
                   className="h-9 w-9 md:h-7 md:w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                   title="Delete"
+                  aria-label={`Delete ${domain.url}`}
                 >
                   <Trash size={18} className="md:hidden" />
                   <Trash size={16} className="hidden md:block" />
@@ -394,6 +428,26 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                     </span>
                   </span>
                 )}
+
+                {insight && (
+                  <div className="flex items-center gap-1.5 flex-wrap" aria-label="Domain health insights">
+                    {insight.uptime7d !== null && (
+                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono">
+                        7d {insight.uptime7d.toFixed(0)}%
+                      </Badge>
+                    )}
+                    {insight.uptime30d !== null && (
+                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono">
+                        30d {insight.uptime30d.toFixed(0)}%
+                      </Badge>
+                    )}
+                    {insight.responseTrend.length > 1 && (
+                      <div className="text-primary/80" title="Trend response time 7 hari" aria-label="Response time trend 7 days">
+                        <ResponseSparkline values={insight.responseTrend} />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
               {/* Action Buttons */}
@@ -403,6 +457,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   size="icon"
                   onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
                   className="h-6 w-6 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                  aria-label={`Open ${domain.url} in new tab`}
                 >
                   <Globe size={14} />
                 </Button>
@@ -411,6 +466,7 @@ export function DomainCard({ domain, status, onDelete, onEdit, onToggleMonitorin
                   size="icon"
                   onClick={() => handleCopyUrl('plain')}
                   className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  aria-label={`Copy domain ${domain.url}`}
                 >
                   <Copy size={14} />
                 </Button>
