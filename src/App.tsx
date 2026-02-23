@@ -87,6 +87,7 @@ import { useDomainSelection } from '@/hooks/use-domain-selection'
 import { useFirebaseOpsTracker } from '@/hooks/use-firebase-ops-tracker'
 import { useManageSelectableDomains } from '@/hooks/use-manage-selectable-domains'
 import { useAutoRefreshScheduler } from '@/hooks/use-auto-refresh-scheduler'
+import { useSessionTimeout } from '@/hooks/use-session-timeout'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
@@ -579,55 +580,6 @@ function App() {
     appConsole.log('[notificationSettings State Changed]', notificationSettings)
   }, [notificationSettings])
 
-  // Auto-logout after 30 minutes of inactivity
-  useEffect(() => {
-    if (!isAuthenticated) return
-
-    const TIMEOUT_DURATION = 30 * 60 * 1000 // 30 minutes in milliseconds
-    const WARNING_DURATION = 2 * 60 * 1000 // 2 minutes before logout
-
-    // Update activity time on user interactions
-    const updateActivity = () => {
-      const now = Date.now()
-      setLastActivityTime(now)
-      localStorage.setItem('app-last-activity', now.toString())
-    }
-
-    // Add event listeners for user activity
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click']
-    events.forEach(event => window.addEventListener(event, updateActivity))
-
-    // Check for timeout every minute
-    const timeoutChecker = setInterval(() => {
-      const lastActivity = parseInt(localStorage.getItem('app-last-activity') || Date.now().toString())
-      const now = Date.now()
-      const timeSinceActivity = now - lastActivity
-
-      // Show warning 2 minutes before logout
-      if (timeSinceActivity >= TIMEOUT_DURATION - WARNING_DURATION && timeSinceActivity < TIMEOUT_DURATION) {
-        const minutesLeft = Math.ceil((TIMEOUT_DURATION - timeSinceActivity) / 60000)
-        toast.warning(`Session akan berakhir dalam ${minutesLeft} menit karena tidak ada aktivitas`)
-      }
-
-      // Auto-logout if timeout reached
-      if (timeSinceActivity >= TIMEOUT_DURATION) {
-        handleLogout()
-        toast.error('Session berakhir karena tidak ada aktivitas selama 30 menit')
-      }
-    }, 60000) // Check every minute
-
-    // Cleanup
-    return () => {
-      events.forEach(event => window.removeEventListener(event, updateActivity))
-      clearInterval(timeoutChecker)
-      
-      // Clear all individual monitoring intervals on unmount
-      Object.values(individualMonitorIntervals).forEach(intervalId => {
-        clearInterval(intervalId)
-      })
-    }
-  }, [isAuthenticated, individualMonitorIntervals])
-
   useEffect(() => {
     const unsubscribe = onAuthUserChanged(async (authUser) => {
       if (!authUser) {
@@ -946,6 +898,13 @@ function App() {
     clearLocalSession(true, 'Anda telah logout')
     broadcastLogoutSignal()
   }
+
+  useSessionTimeout({
+    isAuthenticated,
+    individualMonitorIntervals,
+    onUpdateActivity: setLastActivityTime,
+    onTimeout: handleLogout,
+  })
 
   const handlePasswordChange = async (oldPassword: string, newPassword: string): Promise<boolean> => {
     if (!currentUser) {
