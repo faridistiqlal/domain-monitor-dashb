@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 3.11.5 - App.tsx Refactor (R-006 Phase 1)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ♻️ Refactor Internal
+- Memecah sebagian logic dari `App.tsx` ke custom hooks tanpa mengubah perilaku fitur:
+  - `use-manual-refresh-cooldown`
+  - `use-domain-insights`
+  - `use-cross-tab-logout`
+- Menjaga fungsi existing tetap berjalan sama (non-functional refactor).
+
+### ✅ Validation
+- Build lokal PASS (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.4 - Rollback Public Status Route
 **Tanggal Rilis:** 23 Februari 2026
 

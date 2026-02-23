@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 23 Februari 2026  
-**Current Version:** 3.11.4 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.5 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,15 @@ firestore.rules               # Security rules Firestore
 
 ## 4. Release Terbaru
 
+### v3.11.5 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 1)**
+- Backup file dibuat sebelum refactor (`backups/App.tsx.backup-...`)
+- Ekstraksi logic dari `App.tsx` ke hooks:
+  - `use-manual-refresh-cooldown`
+  - `use-domain-insights`
+  - `use-cross-tab-logout`
+- Tidak ada perubahan behavior fungsional (refactor internal)
+- Validasi lokal: diagnostics bersih + `npm run build` PASS
+
 ### v3.11.4 (23 Feb 2026) — **Patch: Rollback Public Status Route**
 - Hapus fitur **public status page** dan route `/status`
 - Hapus fallback query `?view=status`
@@ -265,7 +274,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 #### 🔴 High Priority (Fix / Security)
 | ID | Item | Kategori | Effort | Status | Target |
 |----|------|----------|--------|--------|--------|
-| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | Planned | 3.12.x |
+| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | In Progress (Phase 1 done) | 3.12.x |
 | R-007 | Hapus console.log berlebihan (~126 statements di App.tsx) | fix | small | Done | 3.11.x |
 | R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Done | 3.12.x |
 | R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Done | 3.11.x |
@@ -473,6 +482,13 @@ git push origin main
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
 - [x] **Version Check:** production memuat `3.11.4` (sinkron dengan `src/lib/version.ts`, NOW, CHANGELOG, GUIDES)
 - [x] **Feature Check:** route publik `/status` dinonaktifkan (rollback), dashboard utama tetap normal
+
+#### Contoh Terisi — v3.11.5 (23 Feb 2026)
+- [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-oa6m97lq6-farid-istiqlals-projects.vercel.app`
+- [x] **Production URL:** `https://kendal-uptime.vercel.app`
+- [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
+- [x] **Version Check:** production memuat `3.11.5` (sinkron dengan `src/lib/version.ts`, NOW, CHANGELOG, GUIDES)
+- [x] **Feature Check:** refactor `App.tsx` phase 1 live, perpindahan tab lebih responsif (query insights tidak ter-trigger berulang)
 
 #### Template Kosong (Copy-Paste per rilis)
 ```markdown
