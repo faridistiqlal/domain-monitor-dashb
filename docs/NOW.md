@@ -345,7 +345,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Done | 3.12.x |
 | R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Done | 3.11.x |
 | R-009 | Hardcode default password `admin123` di source code | fix/security | small | Done | 3.11.x |
-| R-024 | Firestore 20k efficiency stabilization (read/write budget hardening) | fix | large | In Progress (Phase 1 implemented) | 3.12.x |
+| R-024 | Firestore 20k efficiency stabilization (read/write budget hardening) | fix | large | In Progress (Phase 2 implemented) | 3.12.x |
 
 #### 🟡 Medium Priority (Improvement / Feature)
 | ID | Item | Kategori | Effort | Status | Target |
