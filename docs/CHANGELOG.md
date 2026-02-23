@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 3.11.12 - App.tsx Refactor (R-006 Phase 10)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ♻️ Refactor Internal
+- Melanjutkan pemecahan `App.tsx` tanpa perubahan behavior fungsional.
+- Menambahkan hook `use-domain-export` untuk memisahkan logika export CSV:
+  - export semua domain,
+  - export domain terfilter,
+  - export domain per grup.
+- Menjaga validasi export existing tetap sama (guard status check, duplicate handling, dan toast result).
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.11 - App.tsx Refactor (R-006 Phase 9)
 **Tanggal Rilis:** 23 Februari 2026
 
