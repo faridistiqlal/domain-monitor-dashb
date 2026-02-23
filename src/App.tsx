@@ -84,6 +84,8 @@ import { useDomainInsights } from '@/hooks/use-domain-insights'
 import { useCrossTabLogout } from '@/hooks/use-cross-tab-logout'
 import { useDomainViewModel } from '@/hooks/use-domain-view-model'
 import { useDomainSelection } from '@/hooks/use-domain-selection'
+import { useFirebaseOpsTracker } from '@/hooks/use-firebase-ops-tracker'
+import { useManageSelectableDomains } from '@/hooks/use-manage-selectable-domains'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
@@ -197,38 +199,12 @@ function App() {
   const [manageNotificationFilter, setManageNotificationFilter] = useState<string>('all')
   const [managePinFilter, setManagePinFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
-  
-  // Firebase operation tracking (for development monitoring)
-  const [firebaseOps, setFirebaseOps] = useState(() => {
-    const saved = localStorage.getItem('firebase-ops-today')
-    const today = new Date().toISOString().split('T')[0]
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      if (parsed.date === today) {
-        return { reads: parsed.reads || 0, writes: parsed.writes || 0 }
-      }
-    }
-    return { reads: 0, writes: 0 }
-  })
-  
-  // Track Firebase operations
-  const trackFirebaseRead = (count: number = 1) => {
-    setFirebaseOps(prev => {
-      const newOps = { reads: prev.reads + count, writes: prev.writes }
-      const today = new Date().toISOString().split('T')[0]
-      localStorage.setItem('firebase-ops-today', JSON.stringify({ ...newOps, date: today }))
-      return newOps
-    })
-  }
-  
-  const trackFirebaseWrite = (count: number = 1) => {
-    setFirebaseOps(prev => {
-      const newOps = { reads: prev.reads, writes: prev.writes + count }
-      const today = new Date().toISOString().split('T')[0]
-      localStorage.setItem('firebase-ops-today', JSON.stringify({ ...newOps, date: today }))
-      return newOps
-    })
-  }
+
+  const {
+    firebaseOps,
+    trackFirebaseRead,
+    trackFirebaseWrite,
+  } = useFirebaseOpsTracker()
 
   const handleDomainInsightsLoadError = useCallback((message: string, error: unknown) => {
     appConsole.warn(message, error)
@@ -2382,6 +2358,12 @@ function App() {
     managePinFilter,
   })
 
+  const { selectableIds: manageSelectableIds } = useManageSelectableDomains({
+    domains: domains || [],
+    manageSearchQuery,
+    manageGroupFilter,
+  })
+
   const handleSelectDomain = useCallback((id: string, selected: boolean) => {
     toggleDomainSelection(id, selected)
   }, [toggleDomainSelection])
@@ -3179,32 +3161,10 @@ function App() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <Checkbox
-                          checked={selectedDomains.size === (() => {
-                            const filtered = (domains || []).filter(domain => {
-                              const matchesSearch = manageSearchQuery === '' || 
-                                domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
-                              
-                              const matchesGroup = manageGroupFilter === 'all' || 
-                                (manageGroupFilter === 'ungrouped' && !domain.groupId) ||
-                                domain.groupId === manageGroupFilter
-                              
-                              return matchesSearch && matchesGroup
-                            })
-                            return filtered.length
-                          })()}
+                          checked={selectedDomains.size === manageSelectableIds.length}
                           onCheckedChange={(checked) => {
-                            const filtered = (domains || []).filter(domain => {
-                              const matchesSearch = manageSearchQuery === '' || 
-                                domain.url.toLowerCase().includes(manageSearchQuery.toLowerCase())
-                              
-                              const matchesGroup = manageGroupFilter === 'all' || 
-                                (manageGroupFilter === 'ungrouped' && !domain.groupId) ||
-                                domain.groupId === manageGroupFilter
-                              
-                              return matchesSearch && matchesGroup
-                            })
                             if (checked) {
-                              setSelectedDomains(new Set(filtered.map(d => d.id)))
+                              setSelectedDomains(new Set(manageSelectableIds))
                             } else {
                               setSelectedDomains(new Set())
                             }
