@@ -538,5 +538,5 @@ sudo systemctl reload nginx
 ---
 
 **Last Updated:** 23 Februari 2026  
-**App Version:** 3.11.12  
+**App Version:** 3.11.14  
 **Guide Status:** ✅ Complete & Up-to-date
