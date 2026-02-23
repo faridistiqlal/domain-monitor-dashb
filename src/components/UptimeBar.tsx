@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { DomainDailyStats } from '@/lib/types'
 import {
@@ -47,22 +47,39 @@ export function UptimeBar({ domainId, days = 90, compact = false }: UptimeBarPro
 
         setLoading(true)
         const statsRef = collection(db, 'domain-stats-daily')
-        
-        // Query without orderBy to avoid composite index requirement
-        // We'll sort in memory after fetching
-        const q = query(
-          statsRef,
-          where('domainId', '==', domainId)
-        )
-        
-        const snapshot = await getDocs(q)
-        const data = snapshot.docs.map(doc => doc.data() as DomainDailyStats)
-        
-        // Sort by date descending and take last N days
-        const sortedData = data
-          .sort((a, b) => b.date.localeCompare(a.date))
-          .slice(0, days)
-          .reverse() // Reverse to get chronological order (oldest first)
+        const boundedDays = Math.min(days, 90)
+        const fallbackLimit = Math.max(boundedDays * 4, 180)
+
+        let sortedData: DomainDailyStats[] = []
+
+        try {
+          const boundedQuery = query(
+            statsRef,
+            where('domainId', '==', domainId),
+            orderBy('date', 'desc'),
+            limit(boundedDays)
+          )
+
+          const boundedSnapshot = await getDocs(boundedQuery)
+          sortedData = boundedSnapshot.docs
+            .map(doc => doc.data() as DomainDailyStats)
+            .sort((a, b) => a.date.localeCompare(b.date))
+        } catch (boundedQueryError) {
+          console.warn('[UptimeBar] Falling back to legacy query strategy:', boundedQueryError)
+
+          const fallbackQuery = query(
+            statsRef,
+            where('domainId', '==', domainId),
+            limit(fallbackLimit)
+          )
+
+          const fallbackSnapshot = await getDocs(fallbackQuery)
+          const fallbackData = fallbackSnapshot.docs.map(doc => doc.data() as DomainDailyStats)
+          sortedData = fallbackData
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .slice(0, boundedDays)
+            .reverse()
+        }
         
         // Calculate overall uptime
         const totalChecks = sortedData.reduce((sum, stat) => sum + (stat.totalChecks || 0), 0)

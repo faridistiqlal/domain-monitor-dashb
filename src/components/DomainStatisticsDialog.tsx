@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts'
 import { ChartLine, Clock, TrendUp, Warning, CheckCircle } from '@phosphor-icons/react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getFirestore, collection, query, where, orderBy, getDocs } from 'firebase/firestore'
+import { getFirestore, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore'
 import { DomainDailyStats, DomainIncident } from '@/lib/types'
 import { UptimeBar } from './UptimeBar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -55,34 +55,72 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
         return
       }
 
-      // Load daily stats - without orderBy to avoid composite index requirement
-      const statsQuery = query(
-        collection(db, 'domain-stats-daily'),
-        where('domainId', '==', domainId)
-      )
+      let loadedStats: DomainDailyStats[] = []
 
-      const statsSnapshot = await getDocs(statsQuery)
-      const loadedStats = statsSnapshot.docs
-        .map(doc => doc.data() as DomainDailyStats)
-        .sort((a, b) => a.date.localeCompare(b.date)) // Sort in memory
-        .slice(-days) // Take last N days
+      try {
+        const boundedStatsQuery = query(
+          collection(db, 'domain-stats-daily'),
+          where('domainId', '==', domainId),
+          orderBy('date', 'desc'),
+          limit(days)
+        )
+
+        const boundedStatsSnapshot = await getDocs(boundedStatsQuery)
+        loadedStats = boundedStatsSnapshot.docs
+          .map(doc => doc.data() as DomainDailyStats)
+          .sort((a, b) => a.date.localeCompare(b.date))
+      } catch (boundedStatsError) {
+        console.warn('[DomainStatisticsDialog] Falling back to legacy stats query:', boundedStatsError)
+
+        const fallbackStatsQuery = query(
+          collection(db, 'domain-stats-daily'),
+          where('domainId', '==', domainId),
+          limit(Math.max(days * 4, 180))
+        )
+
+        const fallbackStatsSnapshot = await getDocs(fallbackStatsQuery)
+        loadedStats = fallbackStatsSnapshot.docs
+          .map(doc => doc.data() as DomainDailyStats)
+          .sort((a, b) => a.date.localeCompare(b.date))
+          .slice(-days)
+      }
 
       setStats(loadedStats)
 
-      // Load incidents - without orderBy to avoid composite index
+      // Load incidents (bounded first, fallback legacy)
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - days)
-      
-      const incidentsQuery = query(
-        collection(db, 'domain-incidents'),
-        where('domainId', '==', domainId)
-      )
 
-      const incidentsSnapshot = await getDocs(incidentsQuery)
-      const loadedIncidents = incidentsSnapshot.docs
-        .map(doc => doc.data() as DomainIncident)
-        .filter(inc => inc.startTime >= startDate.getTime()) // Filter in memory
-        .sort((a, b) => b.startTime - a.startTime) // Sort in memory
+      let loadedIncidents: DomainIncident[] = []
+
+      try {
+        const boundedIncidentsQuery = query(
+          collection(db, 'domain-incidents'),
+          where('domainId', '==', domainId),
+          orderBy('startTime', 'desc'),
+          limit(Math.max(days * 3, 120))
+        )
+
+        const boundedIncidentsSnapshot = await getDocs(boundedIncidentsQuery)
+        loadedIncidents = boundedIncidentsSnapshot.docs
+          .map(doc => doc.data() as DomainIncident)
+          .filter(inc => inc.startTime >= startDate.getTime())
+          .sort((a, b) => b.startTime - a.startTime)
+      } catch (boundedIncidentsError) {
+        console.warn('[DomainStatisticsDialog] Falling back to legacy incidents query:', boundedIncidentsError)
+
+        const fallbackIncidentsQuery = query(
+          collection(db, 'domain-incidents'),
+          where('domainId', '==', domainId),
+          limit(Math.max(days * 8, 240))
+        )
+
+        const fallbackIncidentsSnapshot = await getDocs(fallbackIncidentsQuery)
+        loadedIncidents = fallbackIncidentsSnapshot.docs
+          .map(doc => doc.data() as DomainIncident)
+          .filter(inc => inc.startTime >= startDate.getTime())
+          .sort((a, b) => b.startTime - a.startTime)
+      }
 
       setIncidents(loadedIncidents)
       domainStatisticsCache.set(cacheKey, {

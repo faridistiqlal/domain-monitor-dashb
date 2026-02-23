@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Domain, DomainInsight } from '@/lib/types'
 
 const INSIGHTS_CACHE_TTL_MS = 5 * 60 * 1000
+const INSIGHTS_MAX_STATS_DOCS = 3000
 const insightsCache = new Map<string, { timestamp: number; insights: Record<string, DomainInsight> }>()
 
 interface UseDomainInsightsParams {
@@ -46,7 +47,9 @@ export function useDomainInsights({
 
         const statsQuery = query(
           collection(db, 'domain-stats-daily'),
-          where('date', '>=', cutoff30Str)
+          where('date', '>=', cutoff30Str),
+          orderBy('date', 'desc'),
+          limit(INSIGHTS_MAX_STATS_DOCS)
         )
 
         const snapshot = await getDocs(statsQuery)
