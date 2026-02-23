@@ -1,5 +1,37 @@
 # Changelog
 
+## Version 3.11.4 - Rollback Public Status Route
+**Tanggal Rilis:** 23 Februari 2026
+
+### 🩹 Rollback
+- Menghapus fitur **Public Status Page** beserta route publik `/status`.
+- Menghapus fallback akses `?view=status` pada mode aplikasi.
+- Mengembalikan konfigurasi Vercel ke mode sebelumnya (tanpa rewrite khusus route publik).
+
+### 🔧 Stability
+- Menghapus komponen `PublicStatusPage` dan wiring di `App.tsx`.
+- Build lokal tervalidasi PASS setelah rollback.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
+## Version 3.11.3 - Public Status MVP & Session Sync
+**Tanggal Rilis:** 23 Februari 2026
+
+### ✨ Fitur Baru
+- Menambahkan **Public Status Page (MVP)** read-only untuk visualisasi status layanan tanpa login.
+- Mode publik bisa diakses via path **`/status`** atau query **`?view=status`**.
+- Menambahkan mode **Preview** otomatis saat data live belum tersedia.
+
+### 🔐 Session Management
+- Menambahkan sinkronisasi logout antar tab browser menggunakan **BroadcastChannel**.
+- Menambahkan fallback sinkronisasi via event `storage` agar tetap kompatibel jika channel tidak tersedia.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.2 - Loading UX, Handler Optimization & Cleanup
 **Tanggal Rilis:** 19 Februari 2026
 
@@ -8,6 +40,13 @@
 - Hardening fase pre-login: bootstrap Firebase ditunda sampai autentikasi valid, sehingga noise `permission-denied` berkurang.
 - Hardening logging: menghapus log detail notification settings yang dapat mengekspos webhook URL di console.
 - Mobile settings parity: menambahkan menu `Management Akun` dan `Log History` pada mobile navigation.
+
+### 🩹 Patch Update (Post-deploy, 23 Februari 2026)
+- Menambahkan **error boundary per tab/section** untuk isolasi error agar kegagalan satu panel tidak menjatuhkan seluruh dashboard.
+- Menambahkan **manual refresh cooldown 30 detik** untuk menahan spam check manual beruntun.
+- Menambahkan **accessibility baseline**: ARIA labels pada tabs, tombol manual check, dan action icon penting.
+- Menambahkan **domain insights** di UI: badge uptime **7d/30d** dan **response-time sparkline** pada list monitoring dan pin cards.
+- Perbaikan wiring mobile/desktop agar action yang sama tetap konsisten setelah penambahan insight + cooldown state.
 
 ### ⚡ Performance & Architecture
 - Deduplikasi logic loading domain Firebase (initial load + version-change reload) agar alur konsisten dan lebih mudah dipelihara.
@@ -22,6 +61,7 @@
 
 ### ✅ Validation
 - Local build pass (`npm run build`) setelah perubahan.
+- TypeScript diagnostics untuk file yang diubah: **no errors**.
 
 **Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
 

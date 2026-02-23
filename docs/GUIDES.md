@@ -2,7 +2,7 @@
 
 **App:** Domain Monitor Dashboard - Kabupaten Kendal  
 **URL:** https://kendal-uptime.vercel.app (Live on Vercel)  
-**Version:** 3.11.2  
+**Version:** 3.11.4  
 **Deployment:** Vercel Production (Manual deploy via Vercel CLI)
 
 > **Status:** Source of Truth (operasional)
@@ -21,12 +21,13 @@
 
 ### Daily Usage:
 - **Auto-refresh:** Toggle ON untuk monitoring real-time (60 detik)
-- **Manual Check:** Toggle OFF dan klik "Check" untuk on-demand
+- **Manual Check:** Toggle OFF dan klik "Check" untuk on-demand (ada cooldown 30 detik antar check)
 - **Filter:** Gunakan filter status (Online/DNS Only/Offline)
 - **Search:** Ketik nama domain untuk cari cepat
 - **Export:** Download CSV untuk reporting
 - **Slack Alerts:** Otomatis dapat notifikasi saat domain down/recovery
 - **Mobile Settings:** Menu mobile sekarang mendukung Pengaturan Notifikasi, Riwayat Notifikasi, Management Akun, dan Log History (admin).
+- **Insights Cepat:** Domain card menampilkan uptime 7d/30d dan sparkline tren response time.
 
 ### Role Permissions Summary
 - **Admin:** Full access (read/write domains, groups, tags, manage users)
@@ -176,9 +177,15 @@ https://domain.kendalkab.go.id,online,103.X.X.X,245ms,HTTPS,2026-01-07 10:30:15
 #### Manual Check Mode
 1. Toggle **Auto-refresh** OFF
 2. Klik tombol **"Check"** untuk mulai
-3. Progress indicator muncul
-4. Setelah selesai: Summary toast + export button
-5. Klik **"Clear"** untuk reset hasil
+3. Setelah check, tombol akan cooldown ±30 detik sebelum bisa dipakai lagi
+4. Progress indicator muncul
+5. Setelah selesai: Summary toast + export button
+6. Klik **"Clear"** untuk reset hasil
+
+#### Domain Insights (Baru)
+- Setiap domain menampilkan ringkasan uptime **7d** dan **30d** (jika data tersedia).
+- Sparkline kecil menampilkan tren response time terbaru untuk baca pola naik/turun secara cepat.
+- Insight tampil di list Monitoring dan juga di card pada tab Pin.
 
 ---
 
@@ -317,6 +324,10 @@ Buka tab **"Statistik"** untuk melihat:
 - Klik tombol **"Logout"** di header
 - Session langsung berakhir
 - Kembali ke login screen
+
+#### Sinkron Logout Antar Tab (Baru)
+- Jika logout di satu tab, tab lain akan ikut logout otomatis.
+- Mekanisme ini menjaga konsistensi sesi dan mengurangi risiko sesi tertinggal aktif.
 
 ---
 

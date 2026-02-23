@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 19 Februari 2026  
-**Current Version:** 3.11.2 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 23 Februari 2026  
+**Current Version:** 3.11.4 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,19 @@ firestore.rules               # Security rules Firestore
 
 ## 4. Release Terbaru
 
+### v3.11.4 (23 Feb 2026) — **Patch: Rollback Public Status Route**
+- Hapus fitur **public status page** dan route `/status`
+- Hapus fallback query `?view=status`
+- Konfigurasi `vercel.json` dikembalikan tanpa rewrite khusus route publik
+- Validasi lokal: diagnostics bersih + `npm run build` PASS
+
+### v3.11.3 (23 Feb 2026) — **Minor: Public Status MVP + Session Sync**
+- Tambah **public status page** read-only (MVP) untuk visualisasi status layanan tanpa login
+- Akses mode publik via path `/status` atau query `?view=status`
+- Tambah mode **Preview** jika data live belum tersedia
+- Tambah sinkronisasi logout antar tab via **BroadcastChannel** + fallback event `storage`
+- Validasi lokal: diagnostics bersih + `npm run build` PASS
+
 ### v3.11.2 (19 Feb 2026) — **Minor: Loading UX + Optimization + Cleanup**
 - Tambah loading skeleton saat initial Firebase data fetch (authenticated state)
 - Deduplikasi domain loading flow (initial + version-change) agar konsisten
@@ -170,6 +183,10 @@ firestore.rules               # Security rules Firestore
 - Hardening login phase: skip bootstrap Firebase sebelum autentikasi agar tidak spam `permission-denied` di console
 - Hardening logging: hapus log sensitif yang menampilkan payload notification settings (termasuk webhook URL)
 - Mobile settings parity: tambah menu **Management Akun** dan **Log History** di mobile view
+- Error boundary per tab/section untuk isolasi error UI agar tidak menjatuhkan seluruh halaman
+- Manual refresh cooldown 30 detik untuk menahan spam check beruntun
+- Accessibility baseline: tambah ARIA labels pada kontrol utama (tabs/manual refresh/action icons)
+- Insight per domain: badge uptime 7d/30d + response-time sparkline (list monitoring & pin card)
 
 ### v3.11.1 (19 Feb 2026) — **Minor: Security Hardening + Logging Cleanup**
 - Hapus hardcoded default password `admin123` dari source code
@@ -258,13 +275,13 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | ID | Item | Kategori | Effort | Status | Target |
 |----|------|----------|--------|--------|--------|
 | R-010 | Deduplikasi domain loading logic (initial + version-change) | fix | medium | Done | 3.12.x |
-| R-011 | Error boundary per section/tab (bukan hanya root) | improvement | small | Planned | 3.12.x |
-| R-012 | Accessibility: ARIA labels, keyboard nav, color-blind safe indicators | improvement | medium | Planned | 3.12.x |
+| R-011 | Error boundary per section/tab (bukan hanya root) | improvement | small | Done | 3.11.x |
+| R-012 | Accessibility: ARIA labels, keyboard nav, color-blind safe indicators | improvement | medium | Done (baseline) | 3.11.x |
 | R-013 | Konsistensi bahasa UI (campur ID/EN → pilih satu atau i18n) | improvement | medium | Planned | 3.13.x |
 | R-014 | Loading skeleton saat initial Firebase data fetch | improvement | small | Done | 3.11.x |
 | R-015 | Public status page (read-only, tanpa auth) | feature | large | Planned | 3.13.x |
-| R-016 | Uptime percentage badge per domain (7d/30d) | feature | medium | Planned | 3.12.x |
-| R-017 | Response time trend sparkline charts per domain | feature | medium | Planned | 3.12.x |
+| R-016 | Uptime percentage badge per domain (7d/30d) | feature | medium | Done | 3.11.x |
+| R-017 | Response time trend sparkline charts per domain | feature | medium | Done | 3.11.x |
 
 #### 🟢 Low Priority (Nice to Have)
 | ID | Item | Kategori | Effort | Status | Target |
@@ -272,14 +289,20 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | R-018 | Keyboard shortcuts (R=refresh, /=search, 1-6=tab, Esc=close) | feature | small | Planned | 3.13.x |
 | R-019 | Bulk operations: pin, enable notif, assign tag dari manage tab | improvement | medium | Planned | 3.13.x |
 | R-020 | SSL certificate expiry monitoring & warning (30/14/7 hari) | feature | large | Planned | 3.14.x |
-| R-021 | Rate limiting pada manual refresh (cooldown 30s) | improvement | small | Planned | 3.12.x |
-| R-022 | Session management: sync logout antar tab (BroadcastChannel) | improvement | medium | Planned | 3.13.x |
+| R-021 | Rate limiting pada manual refresh (cooldown 30s) | improvement | small | Done | 3.11.x |
+| R-022 | Session management: sync logout antar tab (BroadcastChannel) | improvement | medium | Done | 3.11.x |
 | R-023 | Cleanup unused dependencies (three, embla, vaul, heroicons) | fix | small | Done | 3.11.x |
 | R-005 | Governance update docs per release | improvement | small | Planned | ongoing |
 
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| R-022 | Sync logout antar tab (BroadcastChannel + storage fallback) | 3.11.3 |
+| R-011 | Error boundary per tab/section | 3.11.2 |
+| R-012 | Accessibility baseline (ARIA labels kontrol utama) | 3.11.2 |
+| R-016 | Uptime badge 7d/30d per domain | 3.11.2 |
+| R-017 | Response-time sparkline per domain | 3.11.2 |
+| R-021 | Manual refresh cooldown 30 detik | 3.11.2 |
 | R-008 | Tambah useCallback pada handler utama | 3.11.2 |
 | R-010 | Deduplikasi domain loading flow | 3.11.2 |
 | R-014 | Loading skeleton initial Firebase fetch | 3.11.2 |
@@ -428,7 +451,28 @@ git push origin main
 - [x] **Role Matrix:**
   - admin (`admin`): read/write `domains/groups/tags` ✅
   - add-only (`budi`): write `domains` ✅, write `groups/tags` ❌ (`403`)
+
+#### Contoh Terisi — v3.11.2 update (23 Feb 2026)
+- [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-gf713v8fs-farid-istiqlals-projects.vercel.app`
+- [x] **Production URL:** `https://kendal-uptime.vercel.app`
+- [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`
+- [x] **Version Check:** production masih `3.11.2` (sinkron dengan `src/lib/version.ts` dan changelog)
+- [x] **Feature Check:** tab-level boundary, cooldown 30s, insight badge/sparkline tampil normal
+
+#### Contoh Terisi — v3.11.3 (23 Feb 2026)
+- [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-cc44zn4do-farid-istiqlals-projects.vercel.app`
+- [x] **Production URL:** `https://kendal-uptime.vercel.app`
+- [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app`, `curl -I https://kendal-uptime.vercel.app/status`, `curl -I 'https://kendal-uptime.vercel.app/?view=status'` → semuanya `HTTP 200`
+- [x] **Version Check:** production memuat `3.11.3` (sinkron dengan `src/lib/version.ts`, NOW, CHANGELOG, GUIDES)
+- [x] **Feature Check:** public status page `/status` tampil, logout sync antar tab aktif
   - viewer (`farid`, `eek`): read ✅, write `domains/groups/tags` ❌ (`403`)
+
+#### Contoh Terisi — v3.11.4 (23 Feb 2026)
+- [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-a9ezpscea-farid-istiqlals-projects.vercel.app`
+- [x] **Production URL:** `https://kendal-uptime.vercel.app`
+- [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
+- [x] **Version Check:** production memuat `3.11.4` (sinkron dengan `src/lib/version.ts`, NOW, CHANGELOG, GUIDES)
+- [x] **Feature Check:** route publik `/status` dinonaktifkan (rollback), dashboard utama tetap normal
 
 #### Template Kosong (Copy-Paste per rilis)
 ```markdown
