@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 3.11.10 - App.tsx Refactor (R-006 Phase 8)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ♻️ Refactor Internal
+- Melanjutkan pemecahan `App.tsx` tanpa perubahan behavior fungsional.
+- Menambahkan hook `use-notification-settings` untuk memisahkan logika:
+  - state `notificationSettings` + instance `NotificationService`,
+  - load settings dari Firebase setelah initial data load,
+  - handler save settings + test notification.
+- Menjaga wiring notifikasi existing tetap kompatibel di `App.tsx` melalui API hook.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.9 - App.tsx Refactor (R-006 Phase 7)
 **Tanggal Rilis:** 23 Februari 2026
 
