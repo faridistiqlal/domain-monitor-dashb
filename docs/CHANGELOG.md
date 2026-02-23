@@ -1,5 +1,26 @@
 # Changelog
 
+## Version 3.11.8 - App.tsx Refactor (R-006 Phase 6)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ♻️ Refactor Internal
+- Melanjutkan pemecahan `App.tsx` tanpa perubahan behavior fungsional.
+- Menambahkan hook `use-auto-refresh-scheduler` untuk memisahkan:
+  - initial delay auto-check,
+  - lifecycle Web Worker auto-refresh,
+  - countdown reset ke batch berikutnya.
+- Menjaga wiring handler auto-refresh/manual-refresh agar tetap kompatibel melalui API `onAutoCheck`.
+
+### 🛠️ Stabilization
+- Membersihkan konflik implementasi duplikat pada hook scheduler yang sempat memicu error compile.
+- Menyelaraskan kontrak parameter hook agar konsisten dengan penggunaan di `App.tsx`.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.7 - App.tsx Refactor (R-006 Phase 4+5)
 **Tanggal Rilis:** 23 Februari 2026
 
