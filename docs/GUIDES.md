@@ -2,7 +2,7 @@
 
 **App:** Domain Monitor Dashboard - Kabupaten Kendal  
 **URL:** https://kendal-uptime.vercel.app (Live on Vercel)  
-**Version:** 3.11.12  
+**Version:** 3.11.14  
 **Deployment:** Vercel Production (Manual deploy via Vercel CLI)
 
 > **Status:** Source of Truth (operasional)
@@ -28,6 +28,8 @@
 - **Slack Alerts:** Otomatis dapat notifikasi saat domain down/recovery
 - **Mobile Settings:** Menu mobile sekarang mendukung Pengaturan Notifikasi, Riwayat Notifikasi, Management Akun, dan Log History (admin).
 - **Insights Cepat:** Domain card menampilkan uptime 7d/30d dan sparkline tren response time.
+- **Cron Global Toggle (Admin):** Settings → "Monitoring Cron" untuk ON/OFF eksekusi cron global.
+- **Statistik GitHub Sinkron:** Jika Monitoring Cron OFF, kartu status GitHub menampilkan mode disabled (bukan running normally).
 
 ### Role Permissions Summary
 - **Admin:** Full access (read/write domains, groups, tags, manage users)
