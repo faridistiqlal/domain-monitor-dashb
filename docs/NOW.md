@@ -166,6 +166,10 @@ firestore.rules               # Security rules Firestore
 - Deduplikasi domain loading flow (initial + version-change) agar konsisten
 - Tambah `useCallback` pada handler utama untuk mengurangi re-render
 - Cleanup dependency tidak terpakai: `three` dan `@heroicons/react`
+- Patch stabilitas runtime: perbaikan inisialisasi `checkAllDomains` untuk mencegah error `Cannot access ... before initialization`
+- Hardening login phase: skip bootstrap Firebase sebelum autentikasi agar tidak spam `permission-denied` di console
+- Hardening logging: hapus log sensitif yang menampilkan payload notification settings (termasuk webhook URL)
+- Mobile settings parity: tambah menu **Management Akun** dan **Log History** di mobile view
 
 ### v3.11.1 (19 Feb 2026) — **Minor: Security Hardening + Logging Cleanup**
 - Hapus hardcoded default password `admin123` dari source code
@@ -280,6 +284,8 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | R-010 | Deduplikasi domain loading flow | 3.11.2 |
 | R-014 | Loading skeleton initial Firebase fetch | 3.11.2 |
 | R-023 | Cleanup dependency unused (three, heroicons) | 3.11.2 |
+| D-008 | Mobile menu settings: Management Akun + Log History | 3.11.2 |
+| D-009 | Login-phase hardening + safe logging (no webhook dump) | 3.11.2 |
 | R-007 | Hapus console.log berlebihan di App.tsx | 3.11.1 |
 | R-004 | Firestore rules auth guard domains/groups/tags | 3.11.1 |
 | R-009 | Hapus hardcoded default password source code | 3.11.1 |

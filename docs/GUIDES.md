@@ -2,7 +2,7 @@
 
 **App:** Domain Monitor Dashboard - Kabupaten Kendal  
 **URL:** https://kendal-uptime.vercel.app (Live on Vercel)  
-**Version:** 3.11.1  
+**Version:** 3.11.2  
 **Deployment:** Vercel Production (Manual deploy via Vercel CLI)
 
 > **Status:** Source of Truth (operasional)
@@ -26,6 +26,7 @@
 - **Search:** Ketik nama domain untuk cari cepat
 - **Export:** Download CSV untuk reporting
 - **Slack Alerts:** Otomatis dapat notifikasi saat domain down/recovery
+- **Mobile Settings:** Menu mobile sekarang mendukung Pengaturan Notifikasi, Riwayat Notifikasi, Management Akun, dan Log History (admin).
 
 ### Role Permissions Summary
 - **Admin:** Full access (read/write domains, groups, tags, manage users)
@@ -524,5 +525,5 @@ sudo systemctl reload nginx
 ---
 
 **Last Updated:** 19 Februari 2026  
-**App Version:** 3.11.1  
+**App Version:** 3.11.2  
 **Guide Status:** ✅ Complete & Up-to-date

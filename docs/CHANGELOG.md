@@ -3,6 +3,12 @@
 ## Version 3.11.2 - Loading UX, Handler Optimization & Cleanup
 **Tanggal Rilis:** 19 Februari 2026
 
+### 🩹 Patch Update (Post-deploy, 19 Februari 2026)
+- Fix runtime initialization order untuk mencegah error `Cannot access ... before initialization` pada `checkAllDomains`.
+- Hardening fase pre-login: bootstrap Firebase ditunda sampai autentikasi valid, sehingga noise `permission-denied` berkurang.
+- Hardening logging: menghapus log detail notification settings yang dapat mengekspos webhook URL di console.
+- Mobile settings parity: menambahkan menu `Management Akun` dan `Log History` pada mobile navigation.
+
 ### ⚡ Performance & Architecture
 - Deduplikasi logic loading domain Firebase (initial load + version-change reload) agar alur konsisten dan lebih mudah dipelihara.
 - Penambahan `useCallback` pada handler utama untuk menekan re-render yang tidak perlu.
