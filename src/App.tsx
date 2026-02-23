@@ -40,7 +40,7 @@ import { NotificationHistoryDialog } from '@/components/NotificationHistoryDialo
 import { SettingsMenuDialog } from '@/components/SettingsMenuDialog'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings, ManagedUser, ManagedUserRole, UserPermissions, DomainInsight } from '@/lib/types'
-import { NotificationService, NotificationDetails } from '@/lib/notifications'
+import { NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus } from '@/lib/monitoring'
 import { exportDomainsToCSV } from '@/lib/csv-export'
 import { 
@@ -50,8 +50,6 @@ import {
   syncDomainsToFirestore,
   syncGroupsToFirestore,
   syncTagsToFirestore,
-  loadNotificationSettings,
-  syncNotificationSettingsToFirestore,
   loadManagedUsersSnapshot,
   syncManagedUsersWithRevision,
   writeAuditLog,
@@ -88,6 +86,7 @@ import { useFirebaseOpsTracker } from '@/hooks/use-firebase-ops-tracker'
 import { useManageSelectableDomains } from '@/hooks/use-manage-selectable-domains'
 import { useAutoRefreshScheduler } from '@/hooks/use-auto-refresh-scheduler'
 import { useSessionTimeout } from '@/hooks/use-session-timeout'
+import { useNotificationSettings } from '@/hooks/use-notification-settings'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
@@ -224,6 +223,16 @@ function App() {
     startManualRefreshCooldown,
   } = useManualRefreshCooldown()
 
+  const {
+    notificationSettings,
+    notificationService,
+    handleNotificationSettingsSave,
+    handleTestNotification,
+  } = useNotificationSettings({
+    isLoadingData,
+    logger: appConsole,
+  })
+
   const domainInsights = useDomainInsights({
     domains,
     isAuthenticated,
@@ -288,18 +297,6 @@ function App() {
     }
   }, [normalizeDomainsForMonitoring])
 
-  // Notification States
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    enabled: false,
-    webhookUrl: '',
-    notifyOnDown: true,
-    notifyOnRecovery: true,
-    notifyOnSlow: false,
-    slowThreshold: 5,
-    cooldownMinutes: 5
-  })
-  const [notificationService] = useState(() => new NotificationService())
-  
   // Track previous statuses for incident detection
   const [previousStatuses, setPreviousStatuses] = useState<Record<string, 'online' | 'offline' | 'dns-only'>>({})
   const [activeIncidents, setActiveIncidents] = useState<Record<string, string>>({}) // domainId -> incidentId
@@ -550,35 +547,6 @@ function App() {
       return () => clearTimeout(timeoutId)
     }
   }, [tags, isLoadingData])
-
-  // Load notification settings from Firebase (separate useEffect for reliability)
-  useEffect(() => {
-    const loadNotificationSettingsFromFirebase = async () => {
-      appConsole.log('[Notification Settings] Starting separate load...')
-      try {
-        const loadedNotificationSettings = await loadNotificationSettings()
-        appConsole.log('[Notification Settings] Result:', loadedNotificationSettings)
-        if (loadedNotificationSettings) {
-          setNotificationSettings(loadedNotificationSettings)
-          appConsole.log('[Notification Settings] ✅ Loaded from Firebase:', loadedNotificationSettings)
-        } else {
-          appConsole.log('[Notification Settings] ⚠️ No settings found, using default')
-        }
-      } catch (error) {
-        console.error('[Notification Settings] ❌ Error loading:', error)
-      }
-    }
-    
-    // Load after initial data loading is done
-    if (!isLoadingData) {
-      loadNotificationSettingsFromFirebase()
-    }
-  }, [isLoadingData])
-
-  // DEBUG: Monitor notification settings changes
-  useEffect(() => {
-    appConsole.log('[notificationSettings State Changed]', notificationSettings)
-  }, [notificationSettings])
 
   useEffect(() => {
     const unsubscribe = onAuthUserChanged(async (authUser) => {
@@ -1210,59 +1178,6 @@ function App() {
 
     toast.success(`User ${targetUser.username} berhasil dihapus`)
     return true
-  }
-
-  const handleNotificationSettingsSave = async (settings: NotificationSettings) => {
-    console.log('[Save Notification Settings] Saving settings update')
-    setNotificationSettings(settings)
-    localStorage.setItem('notification-settings', JSON.stringify(settings))
-    console.log('[Save Notification Settings] ✅ Saved to localStorage')
-    
-    // Sync to Firebase
-    const synced = await syncNotificationSettingsToFirestore(settings)
-    console.log('[Save Notification Settings] Firebase sync result:', synced)
-    if (synced) {
-      toast.success('Notification settings saved successfully')
-    } else {
-      toast.warning('Settings saved locally, but failed to sync to Firebase')
-    }
-  }
-
-  const handleTestNotification = async () => {
-    if (!notificationSettings.webhookUrl) {
-      toast.error('Please enter a webhook URL first')
-      return
-    }
-
-    // Clear cooldown for test domain before sending
-    notificationService.clearCooldown('example.com')
-
-    const testSettings: NotificationSettings = {
-      ...notificationSettings,
-      enabled: true,
-      notifyOnDown: true
-    }
-
-    const testDetails: NotificationDetails = {
-      domain: 'example.com',
-      status: 'down',
-      error: 'This is a test notification from Domain Monitor Dashboard',
-      groupName: 'Test Group',
-      tags: ['test', 'demo'],
-      ipAddress: '93.184.216.34',
-      protocol: 'https'
-    }
-
-    const success = await notificationService.sendSlackNotification(
-      testSettings,
-      testDetails
-    )
-
-    if (success) {
-      toast.success('Test notification sent! Check your Slack channel.')
-    } else {
-      toast.error('Failed to send test notification. Please check your webhook URL.')
-    }
   }
 
   // Auto-check all domains when monitoring tab is opened/loaded
