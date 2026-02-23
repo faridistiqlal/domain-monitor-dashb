@@ -1,5 +1,24 @@
 # Changelog
 
+## Version 3.11.13 - Firestore Efficiency Stabilization (R-024 Phase 1.5)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ⚡ Firebase Efficiency (Safe Pass)
+- Monitoring cron dioptimalkan agar lebih hemat write tanpa mengubah alur monitoring user-facing:
+  - update status domain dikonsolidasikan menjadi satu write per run,
+  - write stats di-gate berdasarkan status change / heartbeat periodik (`STATS_HEARTBEAT_HOURS`, default `12`).
+- Menambahkan cache TTL untuk jalur read analytics yang mahal:
+  - `use-domain-insights` (5 menit),
+  - `UptimeBar` (10 menit),
+  - `DomainStatisticsDialog` (5 menit).
+- Menambahkan metadata budget harian pada tracker Firebase ops (`dailyBudget`, `totalOps`, `remainingOps`, `usagePercent`, `isOverBudget`).
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`).
+
+**Status:** ✅ Ready for deploy
+
 ## Version 3.11.12 - App.tsx Refactor (R-006 Phase 10)
 **Tanggal Rilis:** 23 Februari 2026
 

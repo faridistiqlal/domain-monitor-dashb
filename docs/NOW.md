@@ -322,6 +322,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Done | 3.12.x |
 | R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Done | 3.11.x |
 | R-009 | Hardcode default password `admin123` di source code | fix/security | small | Done | 3.11.x |
+| R-024 | Firestore 20k efficiency stabilization (read/write budget hardening) | fix | large | In Progress (Phase 1 implemented) | 3.12.x |
 
 #### 🟡 Medium Priority (Improvement / Feature)
 | ID | Item | Kategori | Effort | Status | Target |
@@ -414,6 +415,48 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 - Diagnostics workspace harus clean (no error)
 - `src/lib/version.ts`, `docs/NOW.md`, `docs/CHANGELOG.md`, `docs/GUIDES.md` harus sinkron
 - Tidak ada perubahan behavior fungsional tanpa catatan rilis eksplisit
+
+### R-024 Plan — Firestore 20k Efficiency Stabilization
+
+#### Tujuan
+- Menurunkan konsumsi Firestore read/write agar operasional lebih aman terhadap limit free-tier internal (20k/bulan), tanpa menghapus fitur monitoring yang sudah berjalan.
+
+#### Phase Plan
+1. **Phase 1 — Cron write amplification reduction** ✅
+  - `scripts/monitor-cron.js`: status domain tetap di-update, tetapi write `domains/default-user` dikonsolidasikan menjadi **1x per run**.
+  - `scripts/monitor-cron.js`: write stats harian ditrigger hanya saat status berubah atau heartbeat periodik.
+
+2. **Phase 2 — Analytics read bounding**
+  - `use-domain-insights`, `UptimeBar`, `DomainStatisticsDialog` diubah ke query yang dibatasi period + indexed query.
+
+3. **Phase 3 — UI cost control**
+  - Lazy-load + cache TTL untuk panel statistik/insight agar read berulang dari tab aktif turun.
+
+4. **Phase 4 — Data model hardening (opsional)**
+  - Pecah dokumen array besar menjadi struktur lebih granular jika kebutuhan skala domain terus naik.
+
+#### Before vs After (Phase 1)
+- **Before:**
+  - Cron menulis `domains/default-user` per domain yang dicek (`~6D write/hari`, D = total domain).
+  - Cron menulis stats hampir setiap kali check domain.
+
+- **After:**
+  - Cron menulis `domains/default-user` sekali per run (`~24 write/hari`).
+  - Stats write ditrigger saat status berubah atau heartbeat due (`STATS_HEARTBEAT_HOURS`, default `12`).
+  - Dampak: write harian turun signifikan pada domain dengan status stabil.
+
+#### Dampak ke Behavior User
+- Tidak ada perubahan fitur inti (check domain, status, notifikasi, dashboard).
+- Perubahan fokus di efisiensi internal write/read; statistik detail tetap tersedia, namun write saat status stabil dibuat lebih hemat.
+
+#### Progress Implementasi (Aman)
+- ✅ Backup file sebelum perubahan (`backups/*backup-safe-opt-*`).
+- ✅ Tambah budget metadata di `use-firebase-ops-tracker` (daily budget, usage %, remaining ops, over-budget flag).
+- ✅ Tambah TTL cache untuk jalur read mahal:
+  - `use-domain-insights` (cache 5 menit),
+  - `UptimeBar` (cache 10 menit),
+  - `DomainStatisticsDialog` (cache 5 menit).
+- ✅ Validasi lokal: diagnostics bersih + `npm run build` pass.
 
 ---
 
