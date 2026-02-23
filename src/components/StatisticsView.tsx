@@ -18,6 +18,7 @@ interface StatisticsViewProps {
   tags: DomainTag[]
   hasChecked: boolean
   autoRefreshEnabled: boolean
+  monitoringEnabled: boolean
 }
 
 export function StatisticsView({
@@ -27,6 +28,7 @@ export function StatisticsView({
   tags,
   hasChecked,
   autoRefreshEnabled,
+  monitoringEnabled,
 }: StatisticsViewProps) {
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null)
   const [activeTab, setActiveTab] = useState<'manual' | 'firebase' | 'github-actions'>('manual')
@@ -538,7 +540,7 @@ export function StatisticsView({
 
           {/* Tab Content: GitHub Actions Status */}
           <TabsContent value="github-actions" className="space-y-4 mt-4">
-            <GitHubActionsStatusCard />
+            <GitHubActionsStatusCard monitoringEnabled={monitoringEnabled} />
           </TabsContent>
         </Tabs>
       </div>

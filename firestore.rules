@@ -77,6 +77,7 @@ service cloud.firestore {
           'permissions',
           'isActive',
           'notificationSettings',
+          'monitoringControl',
           'updatedAt',
           'password'
         ])
@@ -87,6 +88,13 @@ service cloud.firestore {
         && (!("permissions" in request.resource.data) || request.resource.data.permissions is map)
         && (!("isActive" in request.resource.data) || request.resource.data.isActive is bool)
         && (!("notificationSettings" in request.resource.data) || request.resource.data.notificationSettings is map)
+        && (!("monitoringControl" in request.resource.data) || (
+          request.resource.data.monitoringControl is map
+          && request.resource.data.monitoringControl.keys().hasOnly(['enabled', 'updatedAt', 'updatedBy'])
+          && request.resource.data.monitoringControl.enabled is bool
+          && isNumber(request.resource.data.monitoringControl.updatedAt)
+          && (!("updatedBy" in request.resource.data.monitoringControl) || request.resource.data.monitoringControl.updatedBy is string)
+        ))
         && isOptionalStringField('password')
         && isOptionalNumberField('updatedAt');
     }

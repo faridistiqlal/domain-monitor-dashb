@@ -1199,12 +1199,28 @@ function App() {
       return false
     }
 
+    if (!currentUser.authUid) {
+      toast.error('Monitoring cron butuh sesi Firebase Auth aktif. Login ulang dengan akun yang sudah terhubung Firebase Auth.')
+      return false
+    }
+
     const previousState = monitoringEnabled
     setMonitoringEnabled(enabled)
 
-    const success = await syncMonitoringControlToFirestore(enabled)
-    if (!success) {
+    const syncResult = await syncMonitoringControlToFirestore(enabled)
+    if (!syncResult.ok) {
       setMonitoringEnabled(previousState)
+
+      if (syncResult.code === 'permission-denied') {
+        toast.error('Gagal menyimpan: akses Firestore ditolak. Pastikan akun Firebase Anda punya profile admin aktif di users/{authUid}.')
+        return false
+      }
+
+      if (syncResult.code === 'unauthenticated') {
+        toast.error('Gagal menyimpan: sesi Firebase Auth tidak aktif. Silakan login ulang.')
+        return false
+      }
+
       toast.error('Gagal menyimpan status monitoring cron')
       return false
     }
@@ -3095,6 +3111,7 @@ function App() {
               tags={tags || []}
               hasChecked={hasChecked}
               autoRefreshEnabled={autoRefreshEnabled}
+              monitoringEnabled={monitoringEnabled}
             />
             </ErrorBoundary>
           </TabsContent>

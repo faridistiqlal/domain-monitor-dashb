@@ -499,10 +499,17 @@ export const syncMonitoringControlToFirestore = async (enabled: boolean) => {
 
     localStorage.setItem(MONITORING_CONTROL_CACHE_KEY, JSON.stringify(payload))
     console.log('✅ Monitoring control synced to Firebase')
-    return true
+    return {
+      ok: true as const,
+    }
   } catch (error) {
-    console.error('❌ Error syncing monitoring control:', error)
-    return false
+    const firestoreError = error as { code?: string; message?: string } | undefined
+    console.error('❌ Error syncing monitoring control:', firestoreError)
+    return {
+      ok: false as const,
+      code: firestoreError?.code,
+      message: firestoreError?.message,
+    }
   }
 }
 

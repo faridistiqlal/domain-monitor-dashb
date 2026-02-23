@@ -32,7 +32,11 @@ interface UsageData {
   isManual?: boolean
 }
 
-export function GitHubActionsStatusCard() {
+interface GitHubActionsStatusCardProps {
+  monitoringEnabled: boolean
+}
+
+export function GitHubActionsStatusCard({ monitoringEnabled }: GitHubActionsStatusCardProps) {
   const [lastRun, setLastRun] = useState<GitHubActionsLog | null>(null)
   const [recentRuns, setRecentRuns] = useState<GitHubActionsLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +79,8 @@ export function GitHubActionsStatusCard() {
   
   const usage = calculateUsage()
   // Cron runs every 1 hour, so consider disabled if > 90 minutes without run (1.5x interval)
-  const isCronDisabled = !lastRun || (Date.now() - lastRun.timestamp.getTime()) > 90 * 60 * 1000
+  const isCronDelayed = !lastRun || (Date.now() - lastRun.timestamp.getTime()) > 90 * 60 * 1000
+  const isCronDisabled = !monitoringEnabled || isCronDelayed
 
   useEffect(() => {
     const logsRef = collection(db, 'github-actions-logs')
@@ -122,6 +127,7 @@ export function GitHubActionsStatusCard() {
   }, [lastRun])
 
   const getStatusColor = () => {
+    if (!monitoringEnabled) return 'bg-yellow-500'
     if (!lastRun) return 'bg-gray-500'
     
     const minutesSinceLastRun = lastRun.timestamp 
@@ -134,6 +140,7 @@ export function GitHubActionsStatusCard() {
   }
 
   const getStatusText = () => {
+    if (!monitoringEnabled) return 'Disabled by admin toggle'
     if (!lastRun) return 'No runs detected'
     
     const minutesSinceLastRun = lastRun.timestamp 
@@ -146,6 +153,7 @@ export function GitHubActionsStatusCard() {
   }
 
   const getStatusIcon = () => {
+    if (!monitoringEnabled) return <Pause className="w-5 h-5" />
     if (!lastRun) return <Warning className="w-5 h-5" />
     
     const minutesSinceLastRun = lastRun.timestamp 
@@ -193,10 +201,12 @@ export function GitHubActionsStatusCard() {
                 <Pause className="h-4 w-4 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
                 <div className="text-xs space-y-1">
                   <div className="font-semibold text-yellow-800 dark:text-yellow-400">
-                    No Recent Activity
+                    {monitoringEnabled ? 'No Recent Activity' : 'Monitoring Cron Disabled'}
                   </div>
                   <div className="text-yellow-700 dark:text-yellow-500/90">
-                    No runs detected in last 90 minutes. Check GitHub Actions status.
+                    {monitoringEnabled
+                      ? 'No runs detected in last 90 minutes. Check GitHub Actions status.'
+                      : 'Cron dimatikan dari Settings (toggle Monitoring Cron = OFF).'}
                   </div>
                 </div>
               </div>
@@ -267,8 +277,8 @@ export function GitHubActionsStatusCard() {
             {nextRunIn && (
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-primary" />
-                <span className="text-foreground">Next run in: </span>
-                <span className="font-semibold text-primary">{nextRunIn}</span>
+                <span className="text-foreground">{monitoringEnabled ? 'Next run in: ' : 'Expected next run: '}</span>
+                <span className="font-semibold text-primary">{monitoringEnabled ? nextRunIn : 'Paused (admin toggle OFF)'}</span>
               </div>
             )}
 
