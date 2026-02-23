@@ -83,6 +83,7 @@ import { useManualRefreshCooldown } from '@/hooks/use-manual-refresh-cooldown'
 import { useDomainInsights } from '@/hooks/use-domain-insights'
 import { useCrossTabLogout } from '@/hooks/use-cross-tab-logout'
 import { useDomainViewModel } from '@/hooks/use-domain-view-model'
+import { useDomainSelection } from '@/hooks/use-domain-selection'
 
 type FilterType = 'all' | 'online' | 'dns-only' | 'offline'
 type SortType = 'none' | 'name-asc' | 'name-desc' | 'status-online-first' | 'status-offline-first'
@@ -189,7 +190,6 @@ function App() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<DomainGroup | null>(null)
-  const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set())
   const [manageSearchQuery, setManageSearchQuery] = useState('')
   const debouncedManageSearchQuery = useDebounce(manageSearchQuery, 300)
   const [manageGroupFilter, setManageGroupFilter] = useState<string>('all')
@@ -233,6 +233,14 @@ function App() {
   const handleDomainInsightsLoadError = useCallback((message: string, error: unknown) => {
     appConsole.warn(message, error)
   }, [])
+
+  const {
+    selectedDomains,
+    setSelectedDomains,
+    toggleDomainSelection,
+    replaceSelection,
+    clearSelection,
+  } = useDomainSelection()
 
   const {
     manualRefreshRemainingSeconds,
@@ -2375,24 +2383,16 @@ function App() {
   })
 
   const handleSelectDomain = useCallback((id: string, selected: boolean) => {
-    setSelectedDomains(prev => {
-      const newSet = new Set(prev)
-      if (selected) {
-        newSet.add(id)
-      } else {
-        newSet.delete(id)
-      }
-      return newSet
-    })
-  }, [])
+    toggleDomainSelection(id, selected)
+  }, [toggleDomainSelection])
 
   const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
-      setSelectedDomains(new Set(sortedDomains.map(d => d.id)))
+      replaceSelection(sortedDomains.map(d => d.id))
     } else {
-      setSelectedDomains(new Set())
+      clearSelection()
     }
-  }, [sortedDomains])
+  }, [clearSelection, replaceSelection, sortedDomains])
 
   return (
     <TooltipProvider>
