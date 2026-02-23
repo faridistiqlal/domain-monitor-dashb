@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 3.11.7 - App.tsx Refactor (R-006 Phase 4+5)
+**Tanggal Rilis:** 23 Februari 2026
+
+### ♻️ Refactor Internal
+- Melanjutkan pemecahan `App.tsx` tanpa perubahan behavior fungsional.
+- Menambahkan `use-firebase-ops-tracker` untuk memisahkan tracking Firebase reads/writes.
+- Menambahkan `use-manage-selectable-domains` untuk menyederhanakan kalkulasi seleksi domain pada tab Kelola.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`) sebelum deploy.
+
+**Status:** ✅ Deployed ke `kendal-uptime.vercel.app`
+
 ## Version 3.11.6 - App.tsx Refactor (R-006 Phase 3)
 **Tanggal Rilis:** 23 Februari 2026
 

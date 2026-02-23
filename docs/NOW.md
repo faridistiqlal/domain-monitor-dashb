@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 23 Februari 2026  
-**Current Version:** 3.11.6 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.7 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,12 @@ firestore.rules               # Security rules Firestore
 
 ## 4. Release Terbaru
 
+### v3.11.7 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 4+5)**
+- Ekstraksi tracking Firebase ops ke hook `use-firebase-ops-tracker`
+- Ekstraksi kalkulasi seleksi domain tab Kelola ke hook `use-manage-selectable-domains`
+- Tidak ada perubahan behavior fungsional (refactor internal)
+- Validasi lokal: diagnostics bersih + `npm run build` PASS
+
 ### v3.11.6 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 3)**
 - Ekstraksi manajemen seleksi domain ke hook `use-domain-selection`
 - Penyederhanaan handler select domain/select all di `App.tsx`
@@ -280,7 +286,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 #### 🔴 High Priority (Fix / Security)
 | ID | Item | Kategori | Effort | Status | Target |
 |----|------|----------|--------|--------|--------|
-| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | In Progress (Phase 3 done) | 3.12.x |
+| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | In Progress (Phase 5 done) | 3.12.x |
 | R-007 | Hapus console.log berlebihan (~126 statements di App.tsx) | fix | small | Done | 3.11.x |
 | R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Done | 3.12.x |
 | R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Done | 3.11.x |
@@ -502,6 +508,13 @@ git push origin main
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
 - [x] **Version Check:** production memuat `3.11.6` (sinkron dengan `src/lib/version.ts`, NOW, CHANGELOG, GUIDES)
 - [x] **Feature Check:** refactor `App.tsx` phase 3 live (state seleksi domain dipindah ke hook `use-domain-selection`)
+
+#### Contoh Terisi — v3.11.7 (23 Feb 2026)
+- [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-agkxjfrw6-farid-istiqlals-projects.vercel.app`
+- [x] **Production URL:** `https://kendal-uptime.vercel.app`
+- [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
+- [x] **Version Check:** production memuat `3.11.7` (sinkron dengan `src/lib/version.ts`, NOW, CHANGELOG, GUIDES)
+- [x] **Feature Check:** refactor `App.tsx` phase 4+5 live (`use-firebase-ops-tracker`, `use-manage-selectable-domains`)
 
 #### Template Kosong (Copy-Paste per rilis)
 ```markdown

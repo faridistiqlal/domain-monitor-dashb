@@ -2,7 +2,7 @@
 
 **App:** Domain Monitor Dashboard - Kabupaten Kendal  
 **URL:** https://kendal-uptime.vercel.app (Live on Vercel)  
-**Version:** 3.11.6  
+**Version:** 3.11.7  
 **Deployment:** Vercel Production (Manual deploy via Vercel CLI)
 
 > **Status:** Source of Truth (operasional)
@@ -536,5 +536,5 @@ sudo systemctl reload nginx
 ---
 
 **Last Updated:** 23 Februari 2026  
-**App Version:** 3.11.6  
+**App Version:** 3.11.7  
 **Guide Status:** ✅ Complete & Up-to-date
