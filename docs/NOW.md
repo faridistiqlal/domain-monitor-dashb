@@ -380,6 +380,41 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | D-002 | Read-only/add-only action lock | 3.10.1 |
 | D-003 | Firebase rules deploy & E2E | 3.10.2 |
 
+### R-006 Master Checklist (s/d Phase 10)
+
+#### Status per Phase
+- [x] Phase 1 — baseline pemecahan handler awal dari `App.tsx` (rilis `3.11.5`)
+- [x] Phase 3 — ekstraksi state seleksi domain ke `use-domain-selection` (rilis `3.11.6`)
+- [x] Phase 4+5 — ekstraksi tracker operasi Firebase + selectable domains logic (rilis `3.11.7`)
+- [x] Phase 6 — ekstraksi scheduler auto-refresh ke `use-auto-refresh-scheduler` (rilis `3.11.8`)
+- [x] Phase 7 — ekstraksi session timeout ke `use-session-timeout` (rilis `3.11.9`)
+- [x] Phase 8 — ekstraksi notification settings ke `use-notification-settings` (rilis `3.11.10`)
+- [x] Phase 9 — ekstraksi tab auto-check logic ke `use-tab-auto-checks` (rilis `3.11.11`)
+- [x] Phase 10 — ekstraksi CSV export handlers ke `use-domain-export` (rilis `3.11.12`)
+
+#### Analisis Kandidat Refactor Berikutnya (Phase 11+)
+1. **Dialog/UI state orchestration hook**
+  - Kandidat: state buka/tutup dialog (settings, import/export, assignment, info dialog) yang masih tersebar di `App.tsx`
+  - Dampak: menurunkan coupling UI orchestration dan mempermudah testing perilaku modal
+
+2. **Data refresh & fetch orchestration hook**
+  - Kandidat: alur initial load + manual refresh + auto refresh trigger agar satu jalur konsisten
+  - Dampak: mengurangi duplikasi guard/loading/error path dan risiko race condition
+
+3. **Domain action handlers hook**
+  - Kandidat: handler domain-level action (pin, tag/group assignment, update status) yang masih berat di root component
+  - Dampak: memadatkan `App.tsx` ke role container/composition, bukan business logic executor
+
+4. **Derived view-model selectors**
+  - Kandidat: kalkulasi/filter/sorting dataset untuk tab/list/charts dipusatkan ke selector util/hook
+  - Dampak: mengurangi re-computation inline dan memudahkan audit performa render
+
+#### Exit Criteria sebelum lanjut ke phase berikutnya
+- `npm run build` harus PASS tanpa TypeScript error
+- Diagnostics workspace harus clean (no error)
+- `src/lib/version.ts`, `docs/NOW.md`, `docs/CHANGELOG.md`, `docs/GUIDES.md` harus sinkron
+- Tidak ada perubahan behavior fungsional tanpa catatan rilis eksplisit
+
 ---
 
 ## 6. Workflow: Plan → Test → Deploy → Commit
