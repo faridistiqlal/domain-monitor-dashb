@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.18 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.19 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,13 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.19 (2 Mar 2026) — **Patch: Compact Page-1 PDF Layout**
+- Halaman 1 laporan PDF dibuat lebih compact agar informasi mudah dipindai tanpa terasa penuh.
+- Ringkasan copy pada KPI cards, legend, dan recommendation panel disederhanakan.
+- Penyesuaian tinggi blok dan spacing antar section agar judul/chart tidak mepet.
+- Menambahkan guard panel rekomendasi agar tidak overlap dengan footer pada konten panjang.
+- Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.18 (2 Mar 2026) — **Patch: PDF Spacing Polish + Uptime Bar Chart**
 - Perapian spacing pada halaman 1 laporan PDF:
@@ -412,6 +419,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-018 | Compact page-1 laporan PDF (copy + spacing + overflow guard) | 3.11.19 |
 | D-017 | Perapian spacing PDF premium + uptime bar chart | 3.11.18 |
 | D-016 | Perbaikan layout overlap laporan PDF premium (section spacing + text wrap) | 3.11.17 |
 | D-015 | Polish premium laporan PDF monitoring (branding + insight + rekomendasi) | 3.11.16 |

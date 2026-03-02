@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 3.11.19 - Compact Page-1 PDF Layout
+**Tanggal Rilis:** 2 Maret 2026
+
+### ✍️ Compact Information Layout
+- Merapikan kepadatan teks pada halaman 1 laporan PDF agar lebih ringkas dan mudah dipindai.
+- Menyederhanakan copy/hint pada kartu KPI serta legend grafik.
+- Mengurangi tinggi beberapa blok (KPI cards, SLA indicator, legend, recommendation text) agar ruang halaman lebih efisien.
+
+### 🧱 Spacing & Overflow Guard
+- Menambah penyelarasan jarak antar section untuk mencegah area judul dan chart saling mepet.
+- Menambahkan guard tinggi panel rekomendasi agar tidak menabrak footer pada data/teks panjang.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`).
+
+**Status:** ✅ Ready for deploy
+
 ## Version 3.11.18 - PDF Spacing Polish & Uptime Bar Chart
 **Tanggal Rilis:** 2 Maret 2026
 
