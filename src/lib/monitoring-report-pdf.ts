@@ -490,12 +490,12 @@ const drawMetaPanel = (pdf: jsPDF, domainUrl: string, periodDays: ReportPeriodDa
 
 const drawExecutiveNotes = (pdf: jsPDF, summary: MonitoringReportSummary, y: number) => {
   pdf.setDrawColor(...COLORS.border)
-  pdf.roundedRect(14, y, 182, 24, 2, 2)
+  pdf.roundedRect(14, y, 182, 20, 2, 2)
 
   pdf.setFont('helvetica', 'bold')
   pdf.setFontSize(10)
   pdf.setTextColor(...COLORS.ink)
-  pdf.text('Catatan Eksekutif', 18, y + 6)
+  pdf.text('Catatan Eksekutif', 18, y + 5.5)
 
   const slaStatus = summary.uptimePercent >= SLA_TARGET_PERCENT ? 'MENCAPAI TARGET SLA' : 'DI BAWAH TARGET SLA'
   const worstDayText = summary.worstUptimeDate
@@ -503,16 +503,18 @@ const drawExecutiveNotes = (pdf: jsPDF, summary: MonitoringReportSummary, y: num
     : 'Tidak tersedia'
 
   pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(8.5)
+  pdf.setFontSize(8)
   pdf.setTextColor(...COLORS.muted)
-  pdf.text(`Status SLA: ${slaStatus}`, 18, y + 12)
-  pdf.text(`Hari terburuk: ${worstDayText} • Total incident: ${summary.incidentCount}`, 18, y + 17)
-  pdf.text(`MTTR: ${formatSeconds(summary.mttrSeconds)} • Downtime total: ${formatSeconds(summary.totalDowntimeSeconds)}`, 18, y + 22)
+  pdf.text(`Status SLA: ${slaStatus}`, 18, y + 10.5)
+  pdf.text(`Hari terburuk: ${worstDayText} • Total incident: ${summary.incidentCount}`, 18, y + 15)
+  pdf.text(`MTTR: ${formatSeconds(summary.mttrSeconds)} • Downtime total: ${formatSeconds(summary.totalDowntimeSeconds)}`, 18, y + 19)
 }
 
-const drawRecommendationPanel = (pdf: jsPDF, summary: MonitoringReportSummary, y: number) => {
+const drawRecommendationPanel = (pdf: jsPDF, summary: MonitoringReportSummary, y: number): number => {
   const recommendations = makeRecommendationLines(summary)
-  const panelHeight = 30
+  const wrappedLines = recommendations.map((line) => pdf.splitTextToSize(`• ${line}`, 172))
+  const textHeight = wrappedLines.reduce((total, line) => total + (Array.isArray(line) ? line.length : 1) * 4.1 + 0.9, 0)
+  const panelHeight = Math.max(24, 10 + textHeight + 3)
 
   pdf.setDrawColor(...COLORS.border)
   pdf.setFillColor(...COLORS.softGreen)
@@ -524,19 +526,17 @@ const drawRecommendationPanel = (pdf: jsPDF, summary: MonitoringReportSummary, y
   pdf.text('Rekomendasi Tindak Lanjut', 18, y + 6)
 
   pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(8.2)
+  pdf.setFontSize(7.8)
   pdf.setTextColor(...COLORS.muted)
 
-  recommendations.forEach((line, index) => {
-    const bulletText = `• ${line}`
-    const wrapped = pdf.splitTextToSize(bulletText, 174)
-    const lineY = y + 11 + index * 6
-    if (Array.isArray(wrapped)) {
-      pdf.text(wrapped.slice(0, 1), 18, lineY)
-    } else {
-      pdf.text(wrapped, 18, lineY)
-    }
+  let cursorY = y + 10.5
+  wrappedLines.forEach((wrapped) => {
+    const lines = Array.isArray(wrapped) ? wrapped : [wrapped]
+    pdf.text(lines, 18, cursorY)
+    cursorY += lines.length * 4.1 + 0.9
   })
+
+  return panelHeight
 }
 
 const drawDailySummaryTable = (pdf: jsPDF, rows: DailyPerformanceRow[], createdAt: Date): number => {
@@ -761,34 +761,34 @@ export const generateMonitoringReportPdf = async ({
     x: 14,
     y: cursorY,
     width: 182,
-    height: 32,
+    height: 28,
     title: 'Uptime Trend Harian',
     lineColor: COLORS.success,
     fillColor: [227, 251, 241],
     yLabelSuffix: '%',
   })
 
-  cursorY += 42
+  cursorY += 37
 
   drawLineChart(pdf, responseSeries, dayLabels, {
     x: 14,
     y: cursorY,
     width: 182,
-    height: 32,
+    height: 28,
     title: 'Response Time Trend Harian',
     lineColor: COLORS.primary,
     fillColor: [232, 242, 255],
     yLabelSuffix: 'ms',
   })
 
-  cursorY += 40
+  cursorY += 34
   drawChartLegend(pdf, cursorY - 2)
-  cursorY += 12
+  cursorY += 10
 
   drawSectionTitle(pdf, 'Executive Interpretation', 14, cursorY)
-  cursorY += 2
+  cursorY += 1.5
   drawExecutiveNotes(pdf, summary, cursorY)
-  cursorY += 28
+  cursorY += 23
   drawRecommendationPanel(pdf, summary, cursorY)
 
   addFooter(pdf, 1, 3, createdAt)
