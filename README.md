@@ -32,7 +32,7 @@ npm run preview
 - Auto-refresh + manual check
 - Statistik daily/hourly + incident tracking
 - Toggle global **Monitoring Cron** (admin) tersinkron ke Firebase + workflow
-- Export laporan monitoring **PDF per domain** dari menu titik-tiga (periode 1/15/30 hari + grafik)
+- Export laporan monitoring **PDF per domain** (periode 1/15/30 hari) — dari pin menu, dialog Statistik, atau halaman Analytics
 
 ### User & Permission (MVP)
 - Login username + password

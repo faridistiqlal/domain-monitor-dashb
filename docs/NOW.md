@@ -109,7 +109,7 @@ Fitur inti: cek status domain (online/dns-only/offline), statistik uptime, notif
 - Batch staggered checking (B1-B4)
 - Statistik harian/jam + incident tracking
 - Auto-refresh (60 detik) + manual check
-- Export laporan monitoring PDF per domain (periode 1/15/30 hari, KPI uptime, grafik, timeline incident)
+- Export laporan monitoring PDF per domain (periode 1/15/30 hari, KPI uptime, grafik, timeline incident) — 3 entry point: Pin menu, Dialog Statistik, halaman Analytics
 - Sinkronisasi domain/group/tag ke Firebase
 - Import/export CSV
 - Pin domain (sync antar device)
@@ -172,7 +172,7 @@ firestore.rules               # Security rules Firestore
 - Menambahkan tombol **Export PDF** di header dialog Statistik domain.
 - Dropdown pilihan periode: 1 hari, 15 hari, 30 hari — menggunakan report generator yang sama.
 - Tombol disabled saat loading atau belum ada data, dengan spinner saat proses export.
-- User tidak perlu lagi kembali ke pin menu untuk export — langsung dari halaman analytics.
+- User bisa export langsung dari popup statistik tanpa kembali ke pin menu.
 
 ### v3.11.20 (2 Mar 2026) — **Fix: Title & Chart Spacing Overlap**
 - Memindahkan label nilai maks/min ke dalam area chart agar tidak menabrak judul/label seksi berikutnya.
