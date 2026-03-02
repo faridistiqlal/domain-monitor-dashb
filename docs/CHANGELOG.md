@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 3.11.20 - Fix Title & Chart Spacing Overlap
+**Tanggal Rilis:** 2 Maret 2026
+
+### 🔧 Layout Spacing Fix
+- Memindahkan label nilai maks/min chart ke dalam area chart (tidak lagi di luar yang menabrak elemen lain).
+- Memperbesar jarak vertikal antar chart uptime–response dari 29mm → 33mm.
+- Memperbesar gap chart → legend → Executive Interpretation → recommendation.
+- Mengurangi tinggi chart 21mm → 19mm agar ruang halaman lebih lega.
+- Memperkecil font label chart dari 8pt → 7pt untuk meminimalkan tabrakan teks.
+
 ## Version 3.11.19 - Compact Page-1 PDF Layout
 **Tanggal Rilis:** 2 Maret 2026
 

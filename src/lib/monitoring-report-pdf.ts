@@ -412,15 +412,15 @@ const drawLineChart = (
   }
 
   pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(8)
+  pdf.setFontSize(7)
   pdf.setTextColor(...COLORS.muted)
-  pdf.text(`${maxValue.toFixed(1)}${yLabelSuffix}`, chartRight - 2, chartTop - 1, { align: 'right' })
-  pdf.text(`${minValue.toFixed(1)}${yLabelSuffix}`, chartRight - 2, chartBottom + 3, { align: 'right' })
+  pdf.text(`${maxValue.toFixed(1)}${yLabelSuffix}`, chartRight - 1.5, chartTop + 3, { align: 'right' })
+  pdf.text(`${minValue.toFixed(1)}${yLabelSuffix}`, chartRight - 1.5, chartBottom - 1, { align: 'right' })
 
   const firstLabel = labels[0]
   const lastLabel = labels[labels.length - 1]
-  if (firstLabel) pdf.text(firstLabel, chartLeft, chartBottom + 6)
-  if (lastLabel) pdf.text(lastLabel, chartRight, chartBottom + 6, { align: 'right' })
+  if (firstLabel) pdf.text(firstLabel, chartLeft, chartBottom + 3.5)
+  if (lastLabel) pdf.text(lastLabel, chartRight, chartBottom + 3.5, { align: 'right' })
 
   pdf.setTextColor(...COLORS.ink)
 }
@@ -487,15 +487,15 @@ const drawBarChart = (
   })
 
   pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(8)
+  pdf.setFontSize(7)
   pdf.setTextColor(...COLORS.muted)
-  pdf.text(`${maxValue.toFixed(1)}${yLabelSuffix}`, chartRight - 2, chartTop - 1, { align: 'right' })
-  pdf.text(`${minValue.toFixed(1)}${yLabelSuffix}`, chartRight - 2, chartBottom + 3, { align: 'right' })
+  pdf.text(`${maxValue.toFixed(1)}${yLabelSuffix}`, chartRight - 1.5, chartTop + 3, { align: 'right' })
+  pdf.text(`${minValue.toFixed(1)}${yLabelSuffix}`, chartRight - 1.5, chartBottom - 1, { align: 'right' })
 
   const firstLabel = labels[0]
   const lastLabel = labels[labels.length - 1]
-  if (firstLabel) pdf.text(firstLabel, chartLeft, chartBottom + 6)
-  if (lastLabel) pdf.text(lastLabel, chartRight, chartBottom + 6, { align: 'right' })
+  if (firstLabel) pdf.text(firstLabel, chartLeft, chartBottom + 3.5)
+  if (lastLabel) pdf.text(lastLabel, chartRight, chartBottom + 3.5, { align: 'right' })
 
   pdf.setTextColor(...COLORS.ink)
 }
@@ -830,46 +830,46 @@ export const generateMonitoringReportPdf = async ({
   pdf.setTextColor(...COLORS.muted)
   pdf.text(`Actual ${formatPercent(summary.uptimePercent)} vs SLA ${formatPercent(SLA_TARGET_PERCENT)}`, 142, cursorY + 9.2, { align: 'left' })
 
-  cursorY += 16
+  cursorY += 18
   drawSectionTitle(pdf, 'Performance Trend', 14, cursorY - 1.5)
 
   const dayLabels = stats.map((stat) => stat.date.slice(5))
   const uptimeSeries = stats.map((stat) => Number(stat.uptimePercent.toFixed(2)))
   const responseSeries = stats.map((stat) => Number((stat.avgResponseTime ?? 0).toFixed(2)))
 
-  const uptimeChartY = cursorY + 6
+  const uptimeChartY = cursorY + 5
   drawBarChart(pdf, uptimeSeries, dayLabels, {
     x: 14,
     y: uptimeChartY,
     width: 182,
-    height: 21,
+    height: 19,
     title: 'Uptime Trend Harian (Bar)',
     barColor: COLORS.success,
     yLabelSuffix: '%',
     baselineMin: 40,
   })
 
-  const responseChartY = uptimeChartY + 29
+  const responseChartY = uptimeChartY + 33
 
   drawLineChart(pdf, responseSeries, dayLabels, {
     x: 14,
     y: responseChartY,
     width: 182,
-    height: 21,
+    height: 19,
     title: 'Response Time Trend Harian',
     lineColor: COLORS.primary,
     fillColor: [232, 242, 255],
     yLabelSuffix: 'ms',
   })
 
-  cursorY = responseChartY + 26
-  drawChartLegend(pdf, cursorY - 1)
-  cursorY += 10
+  cursorY = responseChartY + 31
+  drawChartLegend(pdf, cursorY)
+  cursorY += 13
 
   drawSectionTitle(pdf, 'Executive Interpretation', 14, cursorY)
-  cursorY += 4
+  cursorY += 6
   drawExecutiveNotes(pdf, summary, cursorY)
-  cursorY += 25
+  cursorY += 27
   drawRecommendationPanel(pdf, summary, cursorY)
 
   addFooter(pdf, 1, 3, createdAt)

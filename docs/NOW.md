@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.19 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.20 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,13 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.20 (2 Mar 2026) — **Fix: Title & Chart Spacing Overlap**
+- Memindahkan label nilai maks/min ke dalam area chart agar tidak menabrak judul/label seksi berikutnya.
+- Memperbesar jarak antar chart (uptime bar → response line) dari 29mm → 33mm.
+- Memperbesar jarak chart ke legend, legend ke Executive Interpretation, dan antar seksi bawah.
+- Mengurangi tinggi chart dari 21mm → 19mm untuk memberi ruang nafas lebih pada halaman 1.
+- Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.19 (2 Mar 2026) — **Patch: Compact Page-1 PDF Layout**
 - Halaman 1 laporan PDF dibuat lebih compact agar informasi mudah dipindai tanpa terasa penuh.
@@ -419,6 +426,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-019 | Fix overlap judul & chart pada laporan PDF (label inside + spacing) | 3.11.20 |
 | D-018 | Compact page-1 laporan PDF (copy + spacing + overflow guard) | 3.11.19 |
 | D-017 | Perapian spacing PDF premium + uptime bar chart | 3.11.18 |
 | D-016 | Perbaikan layout overlap laporan PDF premium (section spacing + text wrap) | 3.11.17 |
