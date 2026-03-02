@@ -108,21 +108,21 @@ const makeRecommendationLines = (summary: MonitoringReportSummary): string[] => 
   const lines: string[] = []
 
   if (summary.uptimePercent >= SLA_TARGET_PERCENT) {
-    lines.push(`Availability ${formatPercent(summary.uptimePercent)} sudah memenuhi target SLA ${formatPercent(SLA_TARGET_PERCENT)}.`)
+    lines.push(`Availability ${formatPercent(summary.uptimePercent)} memenuhi SLA ${formatPercent(SLA_TARGET_PERCENT)}.`)
   } else {
-    lines.push(`Availability ${formatPercent(summary.uptimePercent)} masih di bawah SLA ${formatPercent(SLA_TARGET_PERCENT)}; prioritaskan perbaikan akar gangguan.`)
+    lines.push(`Availability ${formatPercent(summary.uptimePercent)} di bawah SLA ${formatPercent(SLA_TARGET_PERCENT)}; prioritaskan akar gangguan.`)
   }
 
   if (summary.incidentCount === 0) {
-    lines.push('Tidak ada incident tercatat pada periode ini; pertahankan monitoring dan health-check rutin.')
+    lines.push('Tidak ada incident; lanjutkan monitoring dan health-check rutin.')
   } else {
-    lines.push(`Terjadi ${summary.incidentCount} incident dengan MTTR ${formatSeconds(summary.mttrSeconds)} dan downtime total ${formatSeconds(summary.totalDowntimeSeconds)}.`)
+    lines.push(`${summary.incidentCount} incident tercatat; MTTR ${formatSeconds(summary.mttrSeconds)}, downtime ${formatSeconds(summary.totalDowntimeSeconds)}.`)
   }
 
   if (summary.p95ResponseTime > 2000) {
-    lines.push(`P95 response ${formatMs(summary.p95ResponseTime)} tergolong tinggi; evaluasi performa upstream, DNS, dan aplikasi web.`)
+    lines.push(`P95 ${formatMs(summary.p95ResponseTime)} tinggi; evaluasi upstream, DNS, dan aplikasi.`)
   } else {
-    lines.push(`P95 response ${formatMs(summary.p95ResponseTime)} relatif stabil; lanjutkan observasi tren puncak trafik.`)
+    lines.push(`P95 ${formatMs(summary.p95ResponseTime)} stabil; lanjutkan observasi tren puncak trafik.`)
   }
 
   return lines
@@ -321,22 +321,22 @@ const drawHeaderBrand = (pdf: jsPDF, domainUrl: string, periodDays: ReportPeriod
 const drawChartLegend = (pdf: jsPDF, y: number) => {
   pdf.setDrawColor(...COLORS.border)
   pdf.setFillColor(255, 255, 255)
-  pdf.roundedRect(14, y, 182, 10, 1.5, 1.5, 'FD')
+  pdf.roundedRect(14, y, 182, 8, 1.5, 1.5, 'FD')
 
   pdf.setFillColor(...COLORS.success)
-  pdf.circle(20, y + 5, 1.4, 'F')
+  pdf.circle(20, y + 4, 1.2, 'F')
   pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(8)
+  pdf.setFontSize(7.4)
   pdf.setTextColor(...COLORS.ink)
-  pdf.text('Uptime Trend', 24, y + 6)
+  pdf.text('Uptime', 24, y + 4.8)
 
   pdf.setFillColor(...COLORS.primary)
-  pdf.circle(76, y + 5, 1.4, 'F')
-  pdf.text('Response Time Trend', 80, y + 6)
+  pdf.circle(68, y + 4, 1.2, 'F')
+  pdf.text('Response', 72, y + 4.8)
 
   pdf.setFillColor(...COLORS.warning)
-  pdf.circle(152, y + 5, 1.4, 'F')
-  pdf.text('SLA Threshold Alert', 156, y + 6)
+  pdf.circle(108, y + 4, 1.2, 'F')
+  pdf.text('SLA Alert', 112, y + 4.8)
 }
 
 const drawLineChart = (
@@ -502,17 +502,17 @@ const drawBarChart = (
 
 const drawMetricCards = (pdf: jsPDF, summary: MonitoringReportSummary, startY: number): number => {
   const cards = [
-    { label: 'Availability', value: formatPercent(summary.uptimePercent), hint: `Target SLA ${formatPercent(SLA_TARGET_PERCENT)}` },
-    { label: 'Total Checks', value: summary.totalChecks.toLocaleString('id-ID'), hint: `${summary.successChecks.toLocaleString('id-ID')} successful` },
+    { label: 'Availability', value: formatPercent(summary.uptimePercent), hint: `SLA ${formatPercent(SLA_TARGET_PERCENT)}` },
+    { label: 'Total Checks', value: summary.totalChecks.toLocaleString('id-ID'), hint: `${summary.successChecks.toLocaleString('id-ID')} ok` },
     { label: 'Avg Response', value: formatMs(summary.avgResponseTime), hint: `P95 ${formatMs(summary.p95ResponseTime)}` },
-    { label: 'Total Incidents', value: summary.incidentCount.toLocaleString('id-ID'), hint: `${summary.totalDays} hari observasi` },
-    { label: 'Total Downtime', value: formatSeconds(summary.totalDowntimeSeconds), hint: `Longest ${formatSeconds(summary.longestIncidentSeconds)}` },
-    { label: 'MTTR', value: formatSeconds(summary.mttrSeconds), hint: `${summary.daysMeetingSla}/${summary.totalDays} hari SLA tercapai` },
+    { label: 'Incidents', value: summary.incidentCount.toLocaleString('id-ID'), hint: `${summary.totalDays} hari` },
+    { label: 'Downtime', value: formatSeconds(summary.totalDowntimeSeconds), hint: `Longest ${formatDurationCompact(summary.longestIncidentSeconds)}` },
+    { label: 'MTTR', value: formatSeconds(summary.mttrSeconds), hint: `SLA days ${summary.daysMeetingSla}/${summary.totalDays}` },
   ]
 
   const cardsPerRow = 3
   const cardWidth = 58
-  const cardHeight = 20
+  const cardHeight = 18
   const gapX = 4
   const gapY = 4
 
@@ -527,19 +527,19 @@ const drawMetricCards = (pdf: jsPDF, summary: MonitoringReportSummary, startY: n
     pdf.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'FD')
 
     pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(8)
+    pdf.setFontSize(7.2)
     pdf.setTextColor(...COLORS.muted)
-    pdf.text(card.label, x + 3, y + 5)
+    pdf.text(card.label, x + 3, y + 4.6)
 
     pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(11)
+    pdf.setFontSize(10.2)
     pdf.setTextColor(...COLORS.ink)
-    pdf.text(card.value, x + 3, y + 11.5)
+    pdf.text(card.value, x + 3, y + 10)
 
     pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(7.5)
+    pdf.setFontSize(6.8)
     pdf.setTextColor(...COLORS.muted)
-    pdf.text(card.hint, x + 3, y + 16.5)
+    pdf.text(card.hint, x + 3, y + 14.4)
   })
 
   return startY + (Math.ceil(cards.length / cardsPerRow) * (cardHeight + gapY)) - gapY
@@ -548,7 +548,7 @@ const drawMetricCards = (pdf: jsPDF, summary: MonitoringReportSummary, startY: n
 const drawMetaPanel = (pdf: jsPDF, domainUrl: string, periodDays: ReportPeriodDays, createdAt: Date, statsCount: number) => {
   pdf.setDrawColor(...COLORS.border)
   pdf.setFillColor(...COLORS.softBlue)
-  pdf.roundedRect(14, 42, 182, 28, 2, 2, 'FD')
+  pdf.roundedRect(14, 42, 182, 27, 2, 2, 'FD')
 
   pdf.setFont('helvetica', 'bold')
   pdf.setFontSize(9)
@@ -560,7 +560,7 @@ const drawMetaPanel = (pdf: jsPDF, domainUrl: string, periodDays: ReportPeriodDa
   pdf.setTextColor(...COLORS.muted)
   pdf.text(`Domain: ${domainUrl}`, 18, 56)
   pdf.text(`Periode: ${formatPeriodLabel(periodDays)} • Sampel harian: ${statsCount} hari`, 18, 61)
-  pdf.text(`Generated: ${createdAt.toLocaleString('id-ID')} WIB`, 18, 66)
+  pdf.text(`Generated: ${createdAt.toLocaleString('id-ID')} WIB`, 18, 65.5)
 }
 
 const drawExecutiveNotes = (pdf: jsPDF, summary: MonitoringReportSummary, y: number) => {
@@ -589,26 +589,31 @@ const drawRecommendationPanel = (pdf: jsPDF, summary: MonitoringReportSummary, y
   const recommendations = makeRecommendationLines(summary)
   const wrappedLines = recommendations.map((line) => pdf.splitTextToSize(`• ${line}`, 172))
   const textHeight = wrappedLines.reduce((total, line) => total + (Array.isArray(line) ? line.length : 1) * 4.1 + 0.9, 0)
-  const panelHeight = Math.max(24, 10 + textHeight + 3)
+  const desiredPanelHeight = Math.max(21, 9 + textHeight + 2)
+  const maxPanelHeight = Math.max(18, 284 - y)
+  const panelHeight = Math.min(desiredPanelHeight, maxPanelHeight)
 
   pdf.setDrawColor(...COLORS.border)
   pdf.setFillColor(...COLORS.softGreen)
   pdf.roundedRect(14, y, 182, panelHeight, 2, 2, 'FD')
 
   pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(10)
+  pdf.setFontSize(9.5)
   pdf.setTextColor(...COLORS.ink)
-  pdf.text('Rekomendasi Tindak Lanjut', 18, y + 6)
+  pdf.text('Rekomendasi Tindak Lanjut', 18, y + 5.4)
 
   pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(7.8)
+  pdf.setFontSize(7.2)
   pdf.setTextColor(...COLORS.muted)
 
-  let cursorY = y + 10.5
+  let cursorY = y + 9.6
   wrappedLines.forEach((wrapped) => {
     const lines = Array.isArray(wrapped) ? wrapped : [wrapped]
-    pdf.text(lines, 18, cursorY)
-    cursorY += lines.length * 4.1 + 0.9
+    const projectedY = cursorY + lines.length * 3.8
+    if (projectedY <= y + panelHeight - 1.8) {
+      pdf.text(lines, 18, cursorY)
+      cursorY += lines.length * 3.8 + 0.8
+    }
   })
 
   return panelHeight
@@ -802,69 +807,69 @@ export const generateMonitoringReportPdf = async ({
 
   drawMetaPanel(pdf, domainUrl, periodDays, createdAt, stats.length)
 
-  let cursorY = 78
+  let cursorY = 76
   drawSectionTitle(pdf, 'Executive KPI Dashboard', 14, 72)
-  cursorY = drawMetricCards(pdf, summary, cursorY) + 9
+  cursorY = drawMetricCards(pdf, summary, cursorY) + 7
 
   pdf.setDrawColor(...COLORS.border)
   pdf.setFillColor(252, 254, 255)
-  pdf.roundedRect(14, cursorY, 182, 14, 2, 2, 'FD')
+  pdf.roundedRect(14, cursorY, 182, 12, 2, 2, 'FD')
   pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(9)
+  pdf.setFontSize(8.4)
   pdf.setTextColor(...COLORS.ink)
-  pdf.text('SLA Indicator', 18, cursorY + 5.4)
+  pdf.text('SLA Indicator', 18, cursorY + 4.8)
 
   const slaRatio = Math.min(1, Math.max(0, summary.uptimePercent / SLA_TARGET_PERCENT))
   pdf.setDrawColor(...COLORS.border)
-  pdf.rect(18, cursorY + 7.5, 120, 4)
+  pdf.rect(18, cursorY + 6.5, 120, 3.4)
   pdf.setFillColor(...(summary.uptimePercent >= SLA_TARGET_PERCENT ? COLORS.success : COLORS.warning))
-  pdf.rect(18, cursorY + 7.5, 120 * Math.min(1, slaRatio), 4, 'F')
+  pdf.rect(18, cursorY + 6.5, 120 * Math.min(1, slaRatio), 3.4, 'F')
 
   pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(8)
+  pdf.setFontSize(7.2)
   pdf.setTextColor(...COLORS.muted)
-  pdf.text(`Actual ${formatPercent(summary.uptimePercent)} vs SLA ${formatPercent(SLA_TARGET_PERCENT)}`, 142, cursorY + 10.6, { align: 'left' })
+  pdf.text(`Actual ${formatPercent(summary.uptimePercent)} vs SLA ${formatPercent(SLA_TARGET_PERCENT)}`, 142, cursorY + 9.2, { align: 'left' })
 
-  cursorY += 24
+  cursorY += 16
   drawSectionTitle(pdf, 'Performance Trend', 14, cursorY - 1.5)
 
   const dayLabels = stats.map((stat) => stat.date.slice(5))
   const uptimeSeries = stats.map((stat) => Number(stat.uptimePercent.toFixed(2)))
   const responseSeries = stats.map((stat) => Number((stat.avgResponseTime ?? 0).toFixed(2)))
 
-  const uptimeChartY = cursorY + 4
+  const uptimeChartY = cursorY + 6
   drawBarChart(pdf, uptimeSeries, dayLabels, {
     x: 14,
     y: uptimeChartY,
     width: 182,
-    height: 24,
+    height: 21,
     title: 'Uptime Trend Harian (Bar)',
     barColor: COLORS.success,
     yLabelSuffix: '%',
     baselineMin: 40,
   })
 
-  const responseChartY = uptimeChartY + 35
+  const responseChartY = uptimeChartY + 29
 
   drawLineChart(pdf, responseSeries, dayLabels, {
     x: 14,
     y: responseChartY,
     width: 182,
-    height: 24,
+    height: 21,
     title: 'Response Time Trend Harian',
     lineColor: COLORS.primary,
     fillColor: [232, 242, 255],
     yLabelSuffix: 'ms',
   })
 
-  cursorY = responseChartY + 31
+  cursorY = responseChartY + 26
   drawChartLegend(pdf, cursorY - 1)
-  cursorY += 12
+  cursorY += 10
 
   drawSectionTitle(pdf, 'Executive Interpretation', 14, cursorY)
-  cursorY += 5
+  cursorY += 4
   drawExecutiveNotes(pdf, summary, cursorY)
-  cursorY += 27
+  cursorY += 25
   drawRecommendationPanel(pdf, summary, cursorY)
 
   addFooter(pdf, 1, 3, createdAt)
