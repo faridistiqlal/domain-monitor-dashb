@@ -1,5 +1,28 @@
 # Changelog
 
+## Version 3.11.16 - Premium PDF Report Polish
+**Tanggal Rilis:** 2 Maret 2026
+
+### 🎨 Report Design Improvement
+- Menyempurnakan tampilan laporan PDF monitoring agar lebih formal dan rapi untuk kebutuhan pelaporan manajemen.
+- Menambahkan branding header laporan (identitas instansi + klasifikasi report) dengan struktur section yang lebih konsisten.
+- Menambahkan legend grafik dan section divider agar alur baca laporan lebih jelas.
+
+### 📊 Detail Informasi Tambahan
+- Menambah metrik detail pada executive summary:
+  - `P95 response time`,
+  - `longest incident`,
+  - hari yang memenuhi SLA,
+  - hari dengan uptime terburuk.
+- Menambahkan panel rekomendasi otomatis berbasis data (SLA, downtime, incident, latency) untuk tindak lanjut operasional.
+- Menata ulang tabel performa harian dan timeline incident agar lebih mudah dipindai.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`).
+
+**Status:** ✅ Ready for deploy
+
 ## Version 3.11.15 - Monitoring PDF Report Export (Pin Menu)
 **Tanggal Rilis:** 2 Maret 2026
 

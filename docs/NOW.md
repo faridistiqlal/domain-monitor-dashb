@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.15 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.16 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,14 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.16 (2 Mar 2026) — **Polish: Premium Monitoring PDF Report**
+- Penyempurnaan visual laporan PDF agar lebih formal, rapi, dan layak untuk pelaporan manajemen.
+- Penambahan branding header laporan + section divider + legend grafik.
+- Penambahan metrik detail: `P95 response`, `longest incident`, capaian SLA harian, dan hari dengan uptime terburuk.
+- Penambahan panel rekomendasi otomatis berbasis data operasional (SLA, downtime, incident, latency).
+- Perbaikan tata letak tabel performa harian dan timeline incident untuk keterbacaan lebih baik.
+- Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.15 (2 Mar 2026) — **Feature: Monitoring PDF Report Export (Pin Menu)**
 - Menambahkan aksi **Export laporan PDF** di menu titik-tiga pada card domain pin.
@@ -386,6 +394,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-015 | Polish premium laporan PDF monitoring (branding + insight + rekomendasi) | 3.11.16 |
 | D-014 | Export laporan monitoring PDF dari pin menu (1/15/30 hari + grafik) | 3.11.15 |
 | D-013 | Firestore analytics read bounding (R-024 Phase 2) | 3.11.14 |
 | D-010 | Monitoring Cron toggle hardening (auth guard + error mapping) | 3.11.13 |
