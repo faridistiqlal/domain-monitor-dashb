@@ -3,7 +3,7 @@
 Dashboard monitoring availability subdomain dengan Firebase sync, statistik uptime, notifikasi Slack, dan role-based user management.
 
 - Live App: https://kendal-uptime.vercel.app
-- Current Version: 3.11.14
+- Current Version: 3.11.15
 - Runtime: React 19 + TypeScript + Vite 7 + Tailwind 4
 
 ---
@@ -32,6 +32,7 @@ npm run preview
 - Auto-refresh + manual check
 - Statistik daily/hourly + incident tracking
 - Toggle global **Monitoring Cron** (admin) tersinkron ke Firebase + workflow
+- Export laporan monitoring **PDF per domain** dari menu titik-tiga (periode 1/15/30 hari + grafik)
 
 ### User & Permission (MVP)
 - Login username + password

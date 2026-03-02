@@ -1,5 +1,28 @@
 # Changelog
 
+## Version 3.11.15 - Monitoring PDF Report Export (Pin Menu)
+**Tanggal Rilis:** 2 Maret 2026
+
+### ✨ Fitur Baru
+- Menambahkan menu **Export laporan PDF** di aksi titik-tiga pada `PinnedDomainCard`.
+- Menyediakan pilihan periode laporan: **1 hari**, **15 hari**, **30 hari**.
+- Menambahkan generator laporan di `src/lib/monitoring-report-pdf.ts` dengan isi:
+  - summary KPI uptime/check/response/incident,
+  - grafik uptime harian,
+  - grafik response time harian,
+  - ringkasan reliabilitas (total downtime + MTTR),
+  - timeline incident (ringkas).
+
+### 🛡️ Stabilitas & UX
+- Proses export diberi guard/loading state agar tidak terjadi double-trigger saat klik berulang.
+- Error handling export menampilkan toast error yang lebih jelas jika data/statistik periode belum tersedia.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`).
+
+**Status:** ✅ Ready for deploy
+
 ## Version 3.11.14 - Firestore Efficiency Stabilization (R-024 Phase 2)
 **Tanggal Rilis:** 23 Februari 2026
 

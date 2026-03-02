@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 23 Februari 2026  
-**Current Version:** 3.11.14 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 2 Maret 2026  
+**Current Version:** 3.11.15 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -109,6 +109,7 @@ Fitur inti: cek status domain (online/dns-only/offline), statistik uptime, notif
 - Batch staggered checking (B1-B4)
 - Statistik harian/jam + incident tracking
 - Auto-refresh (60 detik) + manual check
+- Export laporan monitoring PDF per domain (periode 1/15/30 hari, KPI uptime, grafik, timeline incident)
 - Sinkronisasi domain/group/tag ke Firebase
 - Import/export CSV
 - Pin domain (sync antar device)
@@ -160,6 +161,18 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.15 (2 Mar 2026) — **Feature: Monitoring PDF Report Export (Pin Menu)**
+- Menambahkan aksi **Export laporan PDF** di menu titik-tiga pada card domain pin.
+- Pilihan periode export: **1 hari, 15 hari, 30 hari**.
+- Isi laporan mencakup:
+  - ringkasan KPI (uptime, total checks, avg response, incidents),
+  - grafik uptime harian,
+  - grafik response time harian,
+  - ringkasan reliabilitas (total downtime + MTTR),
+  - timeline incident (ringkas).
+- Menambahkan loader/guard saat proses export untuk mencegah double trigger.
+- Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.14 (23 Feb 2026) — **Patch: Firestore 20k Optimization (R-024 Phase 2)**
 - Implementasi read-bounded query untuk jalur analytics mahal:
@@ -373,6 +386,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-014 | Export laporan monitoring PDF dari pin menu (1/15/30 hari + grafik) | 3.11.15 |
 | D-013 | Firestore analytics read bounding (R-024 Phase 2) | 3.11.14 |
 | D-010 | Monitoring Cron toggle hardening (auth guard + error mapping) | 3.11.13 |
 | D-011 | GitHub Actions status card sync dengan toggle Monitoring Cron | 3.11.13 |
