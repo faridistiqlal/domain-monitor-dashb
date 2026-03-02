@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.17 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.18 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,16 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.18 (2 Mar 2026) — **Patch: PDF Spacing Polish + Uptime Bar Chart**
+- Perapian spacing pada halaman 1 laporan PDF:
+  - padding bawah Ringkasan Laporan,
+  - jarak antar blok Executive KPI,
+  - jarak title dan chart pada section trend,
+  - jarak title Executive Interpretation,
+  - padding bawah Catatan Eksekutif.
+- Grafik **Uptime Trend Harian** diubah menjadi **bar chart** untuk keterbacaan yang lebih cepat.
+- Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.17 (2 Mar 2026) — **Patch: PDF Report Layout Alignment Fix**
 - Perbaikan tata letak halaman 1 laporan PDF agar elemen tidak saling overlap:
@@ -402,6 +412,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-017 | Perapian spacing PDF premium + uptime bar chart | 3.11.18 |
 | D-016 | Perbaikan layout overlap laporan PDF premium (section spacing + text wrap) | 3.11.17 |
 | D-015 | Polish premium laporan PDF monitoring (branding + insight + rekomendasi) | 3.11.16 |
 | D-014 | Export laporan monitoring PDF dari pin menu (1/15/30 hari + grafik) | 3.11.15 |

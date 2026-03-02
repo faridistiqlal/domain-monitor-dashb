@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 3.11.18 - PDF Spacing Polish & Uptime Bar Chart
+**Tanggal Rilis:** 2 Maret 2026
+
+### 🎯 Visual Alignment Refinement
+- Menambahkan ruang vertikal pada section yang sebelumnya terlalu rapat: Ringkasan Laporan, Executive KPI Dashboard, Performance Trend, Response Time Trend, Executive Interpretation, dan Catatan Eksekutif.
+- Menyelaraskan jarak title-chart agar judul tidak bertabrakan dengan elemen grafik.
+- Menjaga panel rekomendasi tetap responsif terhadap teks multi-baris.
+
+### 📊 Chart Improvement
+- Mengubah visual **Uptime Trend Harian** dari line/area menjadi **bar chart** agar pola availability harian lebih mudah dibaca cepat.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`).
+
+**Status:** ✅ Ready for deploy
+
 ## Version 3.11.17 - PDF Report Layout Alignment Fix
 **Tanggal Rilis:** 2 Maret 2026
 
