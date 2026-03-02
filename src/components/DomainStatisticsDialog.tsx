@@ -5,12 +5,15 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts'
-import { ChartLine, Clock, TrendUp, Warning, CheckCircle } from '@phosphor-icons/react'
+import { ChartLine, Clock, TrendUp, Warning, CheckCircle, FilePdf, Spinner } from '@phosphor-icons/react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getFirestore, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore'
 import { DomainDailyStats, DomainIncident } from '@/lib/types'
 import { UptimeBar } from './UptimeBar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { ReportPeriodDays, generateMonitoringReportPdf } from '@/lib/monitoring-report-pdf'
+import { toast } from 'sonner'
 
 const DOMAIN_STATS_CACHE_TTL_MS = 5 * 60 * 1000
 const domainStatisticsCache = new Map<string, {
@@ -32,6 +35,7 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
   const [stats, setStats] = useState<DomainDailyStats[]>([])
   const [incidents, setIncidents] = useState<DomainIncident[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [exportingPeriod, setExportingPeriod] = useState<ReportPeriodDays | null>(null)
 
   useEffect(() => {
     if (open && domainId) {
@@ -205,6 +209,24 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
     })
   }
 
+  const handleExportPdf = async (reportPeriod: ReportPeriodDays) => {
+    if (exportingPeriod !== null) return
+    try {
+      setExportingPeriod(reportPeriod)
+      const fileName = await generateMonitoringReportPdf({
+        domainId,
+        domainUrl,
+        periodDays: reportPeriod,
+      })
+      toast.success(`Laporan PDF berhasil diexport: ${fileName}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Gagal mengekspor laporan PDF.'
+      toast.error(message)
+    } finally {
+      setExportingPeriod(null)
+    }
+  }
+
   const summary = calculateSummary()
   const chartData = getChartData()
   const hourlyBars = getHourlyBarsData()
@@ -213,9 +235,39 @@ export function DomainStatisticsDialog({ domainId, domainUrl, open, onOpenChange
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <ChartLine size={24} weight="duotone" className="text-primary" />
-            <DialogTitle className="text-2xl font-bold">Statistics</DialogTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ChartLine size={24} weight="duotone" className="text-primary" />
+              <DialogTitle className="text-2xl font-bold">Statistics</DialogTitle>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exportingPeriod !== null || loading || stats.length === 0}
+                  className="gap-1.5"
+                >
+                  {exportingPeriod !== null ? (
+                    <Spinner size={16} className="animate-spin" />
+                  ) : (
+                    <FilePdf size={16} weight="duotone" />
+                  )}
+                  Export PDF
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExportPdf(1)}>
+                  Laporan 1 Hari
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportPdf(15)}>
+                  Laporan 15 Hari
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportPdf(30)}>
+                  Laporan 30 Hari
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <DialogDescription className="font-mono text-sm">
             {domainUrl}

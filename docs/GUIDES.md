@@ -2,7 +2,7 @@
 
 **App:** Domain Monitor Dashboard - Kabupaten Kendal  
 **URL:** https://kendal-uptime.vercel.app (Live on Vercel)  
-**Version:** 3.11.20  
+**Version:** 3.11.21  
 **Deployment:** Vercel Production (Manual deploy via Vercel CLI)
 
 > **Status:** Source of Truth (operasional)
@@ -31,6 +31,7 @@
 - **Cron Global Toggle (Admin):** Settings → "Monitoring Cron" untuk ON/OFF eksekusi cron global.
 - **Statistik GitHub Sinkron:** Jika Monitoring Cron OFF, kartu status GitHub menampilkan mode disabled (bukan running normally).
 - **Export Laporan PDF (Pin):** Pada domain yang di-pin, klik menu titik-tiga → Export laporan PDF → pilih periode 1/15/30 hari.
+- **Export Laporan PDF (Statistik):** Buka dialog Statistik domain → klik tombol "Export PDF" di header → pilih periode 1/15/30 hari.
 
 ### Role Permissions Summary
 - **Admin:** Full access (read/write domains, groups, tags, manage users)
@@ -539,5 +540,5 @@ sudo systemctl reload nginx
 ---
 
 **Last Updated:** 2 Maret 2026  
-**App Version:** 3.11.20  
+**App Version:** 3.11.21  
 **Guide Status:** ✅ Complete & Up-to-date

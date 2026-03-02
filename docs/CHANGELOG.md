@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 3.11.21 - Export PDF dari Dialog Statistik
+**Tanggal Rilis:** 2 Maret 2026
+
+### 🆕 PDF Export Button di Statistics Dialog
+- Menambahkan tombol **Export PDF** (dropdown) di header dialog Statistik domain.
+- Pilihan periode export: 1 hari, 15 hari, 30 hari — memanggil report generator yang sudah ada.
+- Tombol otomatis disabled saat data belum dimuat atau kosong.
+- Spinner ditampilkan selama proses export berlangsung.
+
 ## Version 3.11.20 - Fix Title & Chart Spacing Overlap
 **Tanggal Rilis:** 2 Maret 2026
 

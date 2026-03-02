@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.20 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.21 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,12 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.21 (2 Mar 2026) — **Feature: Export PDF dari Dialog Statistik**
+- Menambahkan tombol **Export PDF** di header dialog Statistik domain.
+- Dropdown pilihan periode: 1 hari, 15 hari, 30 hari — menggunakan report generator yang sama.
+- Tombol disabled saat loading atau belum ada data, dengan spinner saat proses export.
+- User tidak perlu lagi kembali ke pin menu untuk export — langsung dari halaman analytics.
 
 ### v3.11.20 (2 Mar 2026) — **Fix: Title & Chart Spacing Overlap**
 - Memindahkan label nilai maks/min ke dalam area chart agar tidak menabrak judul/label seksi berikutnya.
@@ -426,6 +432,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-020 | Export PDF dari dialog Statistik domain (dropdown 1/15/30 hari) | 3.11.21 |
 | D-019 | Fix overlap judul & chart pada laporan PDF (label inside + spacing) | 3.11.20 |
 | D-018 | Compact page-1 laporan PDF (copy + spacing + overflow guard) | 3.11.19 |
 | D-017 | Perapian spacing PDF premium + uptime bar chart | 3.11.18 |
