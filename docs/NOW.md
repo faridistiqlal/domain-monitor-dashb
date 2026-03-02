@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.16 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.17 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,14 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.17 (2 Mar 2026) — **Patch: PDF Report Layout Alignment Fix**
+- Perbaikan tata letak halaman 1 laporan PDF agar elemen tidak saling overlap:
+  - section trend dipadatkan,
+  - jarak antar blok executive diselaraskan,
+  - panel rekomendasi menggunakan wrapping dinamis.
+- Menjaga struktur premium report tetap sama (branding, KPI dashboard, grafik, tabel, timeline), dengan keterbacaan yang lebih stabil pada data panjang.
+- Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.16 (2 Mar 2026) — **Polish: Premium Monitoring PDF Report**
 - Penyempurnaan visual laporan PDF agar lebih formal, rapi, dan layak untuk pelaporan manajemen.
@@ -394,6 +402,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-016 | Perbaikan layout overlap laporan PDF premium (section spacing + text wrap) | 3.11.17 |
 | D-015 | Polish premium laporan PDF monitoring (branding + insight + rekomendasi) | 3.11.16 |
 | D-014 | Export laporan monitoring PDF dari pin menu (1/15/30 hari + grafik) | 3.11.15 |
 | D-013 | Firestore analytics read bounding (R-024 Phase 2) | 3.11.14 |

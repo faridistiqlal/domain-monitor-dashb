@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 3.11.17 - PDF Report Layout Alignment Fix
+**Tanggal Rilis:** 2 Maret 2026
+
+### 🧩 Layout Stabilization
+- Menyelesaikan issue overlap elemen pada halaman 1 laporan PDF premium (khususnya area trend, executive interpretation, dan recommendation panel).
+- Menyesuaikan tinggi grafik + spacing section agar alur vertikal halaman tetap rapi pada variasi data.
+- Mengubah panel rekomendasi ke wrapping dinamis multi-line untuk mencegah teks terpotong atau menabrak footer.
+
+### ✅ Validation
+- TypeScript diagnostics file yang diubah: **no errors**.
+- Local build pass (`npm run build`).
+
+**Status:** ✅ Ready for deploy
+
 ## Version 3.11.16 - Premium PDF Report Polish
 **Tanggal Rilis:** 2 Maret 2026
 
