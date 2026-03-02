@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 3.11.22 - Export PDF di Analytics (DomainCharts)
+**Tanggal Rilis:** 2 Maret 2026
+
+### 🆕 PDF Export di Halaman Analytics
+- Menambahkan tombol **PDF** di header halaman Statistik → Analytics → domain detail.
+- Dropdown periode: 1 hari, 15 hari, 30 hari.
+- Reuse report generator yang sama dari semua entry point.
+- Tombol disabled saat loading/data kosong, spinner saat proses export.
+
 ## Version 3.11.21 - Export PDF dari Dialog Statistik
 **Tanggal Rilis:** 2 Maret 2026
 

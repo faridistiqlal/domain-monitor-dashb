@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.21 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.22 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,12 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.22 (2 Mar 2026) — **Feature: Export PDF di Analytics (DomainCharts)**
+- Menambahkan tombol **PDF** di header halaman Statistik → Analytics → domain detail.
+- Dropdown pilihan periode: 1 hari, 15 hari, 30 hari — sama seperti export dari pin menu dan dialog.
+- Tombol otomatis disabled saat loading/data kosong, spinner saat proses export.
+- Sekarang ada 3 entry point export PDF: Pin menu, Dialog Statistik, dan halaman Analytics.
 
 ### v3.11.21 (2 Mar 2026) — **Feature: Export PDF dari Dialog Statistik**
 - Menambahkan tombol **Export PDF** di header dialog Statistik domain.
@@ -432,6 +438,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-021 | Export PDF di halaman Analytics DomainCharts (dropdown 1/15/30 hari) | 3.11.22 |
 | D-020 | Export PDF dari dialog Statistik domain (dropdown 1/15/30 hari) | 3.11.21 |
 | D-019 | Fix overlap judul & chart pada laporan PDF (label inside + spacing) | 3.11.20 |
 | D-018 | Compact page-1 laporan PDF (copy + spacing + overflow guard) | 3.11.19 |

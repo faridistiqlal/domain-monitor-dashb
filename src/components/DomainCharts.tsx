@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
-import { TrendUp, ChartLine, Clock, ArrowLeft, ArrowClockwise } from '@phosphor-icons/react'
+import { TrendUp, ChartLine, Clock, ArrowLeft, ArrowClockwise, FilePdf, Spinner } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { getDomainStats, getDomainIncidents } from '@/lib/check-history'
 import { Domain, DomainDailyStats, DomainIncident, DomainStatus } from '@/lib/types'
+import { ReportPeriodDays, generateMonitoringReportPdf } from '@/lib/monitoring-report-pdf'
+import { toast } from 'sonner'
 import {
   LineChart,
   Line,
@@ -33,6 +36,25 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
   const [error, setError] = useState<string | null>(null)
   const [days, setDays] = useState<7 | 30>(7)
   const [viewMode, setViewMode] = useState<'daily' | 'hourly'>('daily')
+  const [exportingPeriod, setExportingPeriod] = useState<ReportPeriodDays | null>(null)
+
+  const handleExportPdf = async (reportPeriod: ReportPeriodDays) => {
+    if (exportingPeriod !== null) return
+    try {
+      setExportingPeriod(reportPeriod)
+      const fileName = await generateMonitoringReportPdf({
+        domainId: selectedDomain.id,
+        domainUrl: selectedDomain.url,
+        periodDays: reportPeriod,
+      })
+      toast.success(`Laporan PDF berhasil diexport: ${fileName}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Gagal mengekspor laporan PDF.'
+      toast.error(message)
+    } finally {
+      setExportingPeriod(null)
+    }
+  }
 
   const loadData = async () => {
     const refreshing = !isLoading
@@ -284,6 +306,34 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
               30 Hari
             </button>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={exportingPeriod !== null || isLoading || stats.length === 0}
+                className="h-8 gap-1.5 text-xs"
+              >
+                {exportingPeriod !== null ? (
+                  <Spinner size={14} className="animate-spin" />
+                ) : (
+                  <FilePdf size={14} weight="duotone" />
+                )}
+                PDF
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExportPdf(1)}>
+                Laporan 1 Hari
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPdf(15)}>
+                Laporan 15 Hari
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPdf(30)}>
+                Laporan 30 Hari
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
