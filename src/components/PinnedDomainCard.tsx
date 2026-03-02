@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Globe, DotsThree, Trash, Clock } from '@phosphor-icons/react'
+import { Globe, DotsThree, Trash, Clock, DownloadSimple, FilePdf } from '@phosphor-icons/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -7,10 +7,16 @@ import { StatusIndicator } from './StatusIndicator'
 import { UptimeBar } from './UptimeBar'
 import { DomainStatisticsDialog } from './DomainStatisticsDialog'
 import { Domain, DomainInsight, DomainStatus } from '@/lib/types'
+import { ReportPeriodDays, generateMonitoringReportPdf } from '@/lib/monitoring-report-pdf'
+import { toast } from 'sonner'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
@@ -54,6 +60,7 @@ const ResponseSparkline = ({ values }: { values: number[] }) => {
 export function PinnedDomainCard({ domain, status, insight, onUnpin }: PinnedDomainCardProps): JSX.Element {
   const [showStats, setShowStats] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [exportingPeriod, setExportingPeriod] = useState<ReportPeriodDays | null>(null)
 
   const handleUnpin = () => {
     if (!onUnpin) return
@@ -87,6 +94,25 @@ export function PinnedDomainCard({ domain, status, insight, onUnpin }: PinnedDom
     if (minutes < 60) return `${minutes}m ago`
     if (hours < 24) return `${hours}h ago`
     return `${days}d ago`
+  }
+
+  const handleExportPdf = async (periodDays: ReportPeriodDays) => {
+    if (exportingPeriod !== null) return
+
+    try {
+      setExportingPeriod(periodDays)
+      const fileName = await generateMonitoringReportPdf({
+        domainId: domain.id,
+        domainUrl: domain.url,
+        periodDays,
+      })
+      toast.success(`Laporan PDF berhasil diexport: ${fileName}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Gagal mengekspor laporan PDF.'
+      toast.error(message)
+    } finally {
+      setExportingPeriod(null)
+    }
   }
 
   return (
@@ -131,6 +157,40 @@ export function PinnedDomainCard({ domain, status, insight, onUnpin }: PinnedDom
                 <Globe size={14} className="mr-2" />
                 Buka di tab baru
               </DropdownMenuItem>
+
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger disabled={exportingPeriod !== null}>
+                  <FilePdf size={14} className="mr-2" />
+                  Export laporan PDF
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    disabled={exportingPeriod !== null}
+                    onClick={() => handleExportPdf(1)}
+                  >
+                    <DownloadSimple size={14} className="mr-2" />
+                    1 hari
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={exportingPeriod !== null}
+                    onClick={() => handleExportPdf(15)}
+                  >
+                    <DownloadSimple size={14} className="mr-2" />
+                    15 hari
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={exportingPeriod !== null}
+                    onClick={() => handleExportPdf(30)}
+                  >
+                    <DownloadSimple size={14} className="mr-2" />
+                    30 hari
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              {onUnpin && (
+                <DropdownMenuSeparator />
+              )}
               {onUnpin && (
                 <DropdownMenuItem
                   onClick={handleUnpin}
