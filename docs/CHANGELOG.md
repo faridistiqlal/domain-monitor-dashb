@@ -1,5 +1,17 @@
 # Changelog
 
+## Version 3.11.24 - Per-Domain Down/Recovery Alert di Cron
+**Tanggal Rilis:** 7 Maret 2026
+
+### 🆕 Per-Domain Slack Alert di Cron Job
+- Menambahkan fungsi `sendDomainAlertToSlack()` di `scripts/monitor-cron.js` untuk kirim alert ke Slack saat domain **down** atau **recovery**.
+- Alert dikirim **per domain** (bukan batch summary) setiap kali status berubah: `online → offline`, `online → dns-only`, atau `offline/dns-only → online`.
+- Format alert menggunakan **Slack Block Kit** (rich attachments): nama domain, status lama, status baru, response time, IP address, error message (jika ada), timestamp WIB + link dashboard.
+- Warna attachment: 🔴 merah untuk offline, 🟡 kuning untuk dns-only, 🟢 hijau untuk recovery.
+- Menghormati flag `notificationsEnabled` per domain (domain dengan `notificationsEnabled: false` di-skip).
+- Tidak ada tambahan Firebase reads/writes — semua data sudah tersedia dari batch check yang ada.
+- Fungsi bestehende (`sendSlackNotification`, `checkDomain`, `shouldWriteDomainStats`) tidak diubah.
+
 ## Version 3.11.23 - Fix Slack Notification
 **Tanggal Rilis:** 6 Maret 2026
 

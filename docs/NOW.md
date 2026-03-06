@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.23 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 7 Maret 2026  
+**Current Version:** 3.11.24 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,12 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.24 (7 Mar 2026) — **Feature: Per-Domain Down/Recovery Alert di Cron**
+- Fungsi `sendDomainAlertToSlack()` baru di `scripts/monitor-cron.js` — kirim rich Slack alert (Block Kit) per domain saat status berubah.
+- Alert DOWN (🔴/⚠️) saat `online → offline` / `online → dns-only`; alert RECOVERY (✅) saat `offline/dns-only → online`.
+- Menghormati flag `notificationsEnabled` per domain. Zero tambahan Firebase reads/writes.
+- Fungsi-fungsi bestehende tidak diubah sama sekali.
 
 ### v3.11.23 (6 Mar 2026) — **Fix: Slack Notification / Test Notification tidak terkirim**
 - Root cause: `fetch` dengan `mode: 'no-cors'` dan `Content-Type: application/json` menyebabkan browser modern (Chrome 100+) melempar `TypeError` sebelum request dikirim, karena `application/json` bukan CORS-safelisted content type.

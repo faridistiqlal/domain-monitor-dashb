@@ -536,7 +536,7 @@ function applyCheckResultToDomainInMemory(allDomains, domainId, checkResult, opt
 }
 
 /**
- * Send Slack notification
+ * Send Slack notification (batch summary — plain text)
  */
 async function sendSlackNotification(message) {
   if (!SLACK_WEBHOOK_URL) return
@@ -550,6 +550,75 @@ async function sendSlackNotification(message) {
     console.log('[Slack] Notification sent')
   } catch (error) {
     console.error('[Slack] Error:', error.message)
+  }
+}
+
+/**
+ * Send per-domain down / recovery alert to Slack (Block Kit, rich format)
+ * Called only when a domain's status changes — no extra Firebase reads/writes.
+ */
+async function sendDomainAlertToSlack(domain, previousStatus, currentStatus, checkResult) {
+  if (!SLACK_WEBHOOK_URL) return
+
+  const isDown = (currentStatus === 'offline' || currentStatus === 'dns-only')
+    && previousStatus === 'online'
+  const isRecovery = currentStatus === 'online'
+    && (previousStatus === 'offline' || previousStatus === 'dns-only')
+
+  if (!isDown && !isRecovery) return
+
+  const emoji = isDown ? (currentStatus === 'dns-only' ? '⚠️' : '🔴') : '✅'
+  const title = isDown
+    ? (currentStatus === 'dns-only' ? 'DNS Only — HTTP Tidak Dapat Diakses' : 'Domain Down Alert')
+    : 'Domain Recovery'
+  const color = isDown ? (currentStatus === 'dns-only' ? '#ffaa00' : '#ff0000') : '#36a64f'
+  const timeWIB = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
+
+  const fields = [
+    { type: 'mrkdwn', text: `*Domain:*\n<https://${domain.url}|${domain.url}>` },
+    { type: 'mrkdwn', text: `*Status:*\n${currentStatus.toUpperCase()}` },
+    { type: 'mrkdwn', text: `*Sebelumnya:*\n${previousStatus.toUpperCase()}` },
+  ]
+
+  if (checkResult.responseTime) {
+    fields.push({ type: 'mrkdwn', text: `*Response Time:*\n${checkResult.responseTime} ms` })
+  }
+  if (checkResult.ipAddress) {
+    fields.push({ type: 'mrkdwn', text: `*IP Address:*\n${checkResult.ipAddress}` })
+  }
+  if (checkResult.error) {
+    fields.push({ type: 'mrkdwn', text: `*Error:*\n\`${checkResult.error}\`` })
+  }
+
+  const payload = {
+    attachments: [{
+      color,
+      blocks: [
+        {
+          type: 'header',
+          text: { type: 'plain_text', text: `${emoji} ${title}`, emoji: true },
+        },
+        { type: 'section', fields },
+        {
+          type: 'context',
+          elements: [{
+            type: 'mrkdwn',
+            text: `🕐 ${timeWIB} WIB | <https://kendal-uptime.vercel.app|View Dashboard>`,
+          }],
+        },
+      ],
+    }],
+  }
+
+  try {
+    await fetch(SLACK_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    console.log(`[Slack] Domain alert sent: ${domain.url} → ${currentStatus}`)
+  } catch (error) {
+    console.error(`[Slack] Domain alert error for ${domain.url}:`, error.message)
   }
 }
 
@@ -703,6 +772,16 @@ async function runMonitoring() {
     console.log(`[Monitor] Results: ${online} online, ${dnsOnly} DNS-only, ${offline} offline`)
     console.log(`[Monitor] Stats writes this run: ${statsWrites}/${results.length} (heartbeat=${STATS_HEARTBEAT_HOURS}h)`)
     
+    // Send per-domain down/recovery alerts (status-change only, no extra Firebase I/O)
+    for (const { domain, result } of results) {
+      if (domain.notificationsEnabled === false) continue
+      const previousStatus = domain.status || null
+      const currentStatus = result.status
+      if (previousStatus && previousStatus !== currentStatus) {
+        await sendDomainAlertToSlack(domain, previousStatus, currentStatus, result)
+      }
+    }
+
     // Send summary to Slack
     const summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
 ✅ Online: ${online}
