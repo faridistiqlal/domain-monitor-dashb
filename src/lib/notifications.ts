@@ -63,18 +63,21 @@ export class NotificationService {
     let errorMessage: string | undefined;
 
     try {
-      const response = await fetch(settings.webhookUrl, {
+      // Use 'text/plain' Content-Type (CORS-safelisted) so the browser sends
+      // the request in no-cors mode without stripping headers or throwing TypeError.
+      // Slack parses JSON body regardless of Content-Type.
+      await fetch(settings.webhookUrl, {
         method: 'POST',
         mode: 'no-cors',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
         body: JSON.stringify(message),
       });
 
-      // With no-cors mode, response will be opaque, so we assume success if no error thrown
+      // Response is always opaque in no-cors mode; assume success if no exception
       this.lastNotificationTime.set(domain, Date.now());
-      console.log('Slack notification sent successfully');
+      console.log('[Notification] Slack webhook request sent (no-cors)');
       success = true;
     } catch (error) {
       console.error('Error sending Slack notification:', error);

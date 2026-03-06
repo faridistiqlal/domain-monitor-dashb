@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 3.11.23 - Fix Slack Notification
+**Tanggal Rilis:** 6 Maret 2026
+
+### 🔧 Bug Fix: Test Notification / Slack Webhook
+- **Root cause:** `mode: 'no-cors'` + `Content-Type: application/json` → browser melempar `TypeError` sebelum request ke Slack dikirim. `application/json` bukan CORS-safelisted content type.
+- **Fix:** Ganti ke `Content-Type: 'text/plain'` — CORS-safelisted, request dikirim sebagai simple request, Slack tetap parse JSON body.
+- Test notification (tombol Test di notification settings) dan notifikasi otomatis saat domain down/recovery berfungsi kembali.
+
 ## Version 3.11.22 - Export PDF di Analytics (DomainCharts)
 **Tanggal Rilis:** 2 Maret 2026
 

@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 2 Maret 2026  
-**Current Version:** 3.11.22 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.23 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,11 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.23 (6 Mar 2026) — **Fix: Slack Notification / Test Notification tidak terkirim**
+- Root cause: `fetch` dengan `mode: 'no-cors'` dan `Content-Type: application/json` menyebabkan browser modern (Chrome 100+) melempar `TypeError` sebelum request dikirim, karena `application/json` bukan CORS-safelisted content type.
+- Fix: Ganti `Content-Type` dari `application/json` ke `text/plain` — CORS-safelisted, request dikirim, Slack tetap parse JSON body-nya.
+- Test notification dan notifikasi otomatis sekarang berfungsi kembali.
 
 ### v3.11.22 (2 Mar 2026) — **Feature: Export PDF di Analytics (DomainCharts)**
 - Menambahkan tombol **PDF** di header halaman Statistik → Analytics → domain detail.
@@ -438,6 +443,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-022 | Fix Slack test notification (Content-Type text/plain di no-cors fetch) | 3.11.23 |
 | D-021 | Export PDF di halaman Analytics DomainCharts (dropdown 1/15/30 hari) | 3.11.22 |
 | D-020 | Export PDF dari dialog Statistik domain (dropdown 1/15/30 hari) | 3.11.21 |
 | D-019 | Fix overlap judul & chart pada laporan PDF (label inside + spacing) | 3.11.20 |
