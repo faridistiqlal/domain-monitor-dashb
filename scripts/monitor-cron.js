@@ -782,25 +782,29 @@ async function runMonitoring() {
       }
     }
 
-    // Send summary to Slack (with offline & dns-only domain lists)
+    // Send summary to Slack only if there are offline or dns-only domains
     const offlineList = results.filter(r => r.result.status === 'offline').map(r => r.domain.url)
     const dnsOnlyList = results.filter(r => r.result.status === 'dns-only').map(r => r.domain.url)
 
-    let summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
+    if (offlineList.length > 0 || dnsOnlyList.length > 0) {
+      let summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
 ✅ Online: ${online}
 ⚠️ DNS Only: ${dnsOnly}
 ❌ Offline: ${offline}
 Total checked: ${domainsToCheck.length}
 Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
 
-    if (offlineList.length > 0) {
-      summary += `\n\n❌ Offline (${offlineList.length}):\n${offlineList.map(u => `• ${u}`).join('\n')}`
+      if (offlineList.length > 0) {
+        summary += `\n\n❌ Offline (${offlineList.length}):\n${offlineList.map(u => `• ${u}`).join('\n')}`
+      }
+      if (dnsOnlyList.length > 0) {
+        summary += `\n\n⚠️ DNS Only (${dnsOnlyList.length}):\n${dnsOnlyList.map(u => `• ${u}`).join('\n')}`
+      }
+
+      await sendSlackNotification(summary)
+    } else {
+      console.log('[Slack] All domains online — skipping batch summary')
     }
-    if (dnsOnlyList.length > 0) {
-      summary += `\n\n⚠️ DNS Only (${dnsOnlyList.length}):\n${dnsOnlyList.map(u => `• ${u}`).join('\n')}`
-    }
-    
-    await sendSlackNotification(summary)
     
     // Write log to Firebase for web app monitoring
     try {
