@@ -772,9 +772,9 @@ async function runMonitoring() {
     console.log(`[Monitor] Results: ${online} online, ${dnsOnly} DNS-only, ${offline} offline`)
     console.log(`[Monitor] Stats writes this run: ${statsWrites}/${results.length} (heartbeat=${STATS_HEARTBEAT_HOURS}h)`)
     
-    // Send per-domain down/recovery alerts (status-change only, no extra Firebase I/O)
+    // Send per-domain down/recovery alerts (only domains with notificationsEnabled: true)
     for (const { domain, result } of results) {
-      if (domain.notificationsEnabled === false) continue
+      if (domain.notificationsEnabled !== true) continue
       const previousStatus = domain.status || null
       const currentStatus = result.status
       if (previousStatus && previousStatus !== currentStatus) {
