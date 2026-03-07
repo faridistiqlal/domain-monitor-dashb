@@ -165,8 +165,8 @@ firestore.rules               # Security rules Firestore
 ### v3.11.24 (7 Mar 2026) — **Feature: Per-Domain Down/Recovery Alert di Cron**
 - Fungsi `sendDomainAlertToSlack()` baru di `scripts/monitor-cron.js` — kirim rich Slack alert (Block Kit) per domain saat status berubah.
 - Alert DOWN (🔴/⚠️) saat `online → offline` / `online → dns-only`; alert RECOVERY (✅) saat `offline/dns-only → online`.
-- Menghormati flag `notificationsEnabled` per domain. Zero tambahan Firebase reads/writes.
-- Fungsi-fungsi bestehende tidak diubah sama sekali.
+- Alert **hanya dikirim** untuk domain dengan toggle notifikasi **aktif** di tab Kelola (`notificationsEnabled: true`). Domain default/belum di-toggle → tidak ada alert.
+- Zero tambahan Firebase reads/writes. Fungsi-fungsi bestehende tidak diubah sama sekali.
 
 ### v3.11.23 (6 Mar 2026) — **Fix: Slack Notification / Test Notification tidak terkirim**
 - Root cause: `fetch` dengan `mode: 'no-cors'` dan `Content-Type: application/json` menyebabkan browser modern (Chrome 100+) melempar `TypeError` sebelum request dikirim, karena `application/json` bukan CORS-safelisted content type.

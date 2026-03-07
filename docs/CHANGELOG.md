@@ -8,7 +8,7 @@
 - Alert dikirim **per domain** (bukan batch summary) setiap kali status berubah: `online → offline`, `online → dns-only`, atau `offline/dns-only → online`.
 - Format alert menggunakan **Slack Block Kit** (rich attachments): nama domain, status lama, status baru, response time, IP address, error message (jika ada), timestamp WIB + link dashboard.
 - Warna attachment: 🔴 merah untuk offline, 🟡 kuning untuk dns-only, 🟢 hijau untuk recovery.
-- Menghormati flag `notificationsEnabled` per domain (domain dengan `notificationsEnabled: false` di-skip).
+- Alert **hanya dikirim** untuk domain yang toggle notifikasinya **aktif** di tab Kelola (`notificationsEnabled: true`). Domain yang belum di-toggle atau dimatikan → tidak ada alert.
 - Tidak ada tambahan Firebase reads/writes — semua data sudah tersedia dari batch check yang ada.
 - Fungsi bestehende (`sendSlackNotification`, `checkDomain`, `shouldWriteDomainStats`) tidak diubah.
 
