@@ -782,13 +782,23 @@ async function runMonitoring() {
       }
     }
 
-    // Send summary to Slack
-    const summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
+    // Send summary to Slack (with offline & dns-only domain lists)
+    const offlineList = results.filter(r => r.result.status === 'offline').map(r => r.domain.url)
+    const dnsOnlyList = results.filter(r => r.result.status === 'dns-only').map(r => r.domain.url)
+
+    let summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
 ✅ Online: ${online}
 ⚠️ DNS Only: ${dnsOnly}
 ❌ Offline: ${offline}
 Total checked: ${domainsToCheck.length}
 Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
+
+    if (offlineList.length > 0) {
+      summary += `\n\n❌ Offline (${offlineList.length}):\n${offlineList.map(u => `• ${u}`).join('\n')}`
+    }
+    if (dnsOnlyList.length > 0) {
+      summary += `\n\n⚠️ DNS Only (${dnsOnlyList.length}):\n${dnsOnlyList.map(u => `• ${u}`).join('\n')}`
+    }
     
     await sendSlackNotification(summary)
     
