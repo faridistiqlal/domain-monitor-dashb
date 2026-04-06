@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 3.11.26 - Enable Vercel Analytics
+**Tanggal Rilis:** 5 April 2026
+
+### 🆕 Vercel Analytics
+- Mengaktifkan `@vercel/analytics` untuk melacak Visitors, Page Views, dan Bounce Rate dari pengguna nyata di production.
+- Menambahkan `<Analytics />` dari `@vercel/analytics/react` ke `src/main.tsx` sejajar `<SpeedInsights />`.
+- Tidak ada perubahan behavior/fitur aplikasi — berjalan pasif di background.
+
+## Version 3.11.25 - Enable Vercel Speed Insights
+**Tanggal Rilis:** 5 April 2026
+
+### 🆕 Vercel Speed Insights
+- Mengaktifkan `@vercel/speed-insights` (package sudah ada di `package.json`, belum pernah digunakan).
+- Menambahkan `<SpeedInsights />` dari `@vercel/speed-insights/react` ke `src/main.tsx` di dalam render tree (sejajar dengan `<Toaster />`).
+- Tidak ada perubahan behavior/fitur aplikasi — komponen berjalan secara pasif di background untuk mengumpulkan Core Web Vitals (LCP, CLS, INP) dari pengguna nyata di production.
+
 ## Version 3.11.24 - Per-Domain Down/Recovery Alert di Cron
 **Tanggal Rilis:** 7 Maret 2026
 

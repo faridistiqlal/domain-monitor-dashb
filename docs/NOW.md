@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 7 Maret 2026  
-**Current Version:** 3.11.24 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 6 April 2026  
+**Current Version:** 3.11.26 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,16 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.26 (5 Apr 2026) — **Patch: Enable Vercel Analytics**
+- Mengaktifkan `@vercel/analytics` — melacak Visitors, Page Views, Bounce Rate dari pengguna nyata di production Vercel.
+- Menambahkan `<Analytics />` dari `@vercel/analytics/react` ke `src/main.tsx` sejajar `<SpeedInsights />`.
+- Tidak ada perubahan behavior/fitur aplikasi.
+
+### v3.11.25 (5 Apr 2026) — **Patch: Enable Vercel Speed Insights**
+- Mengaktifkan komponen `<SpeedInsights />` dari `@vercel/speed-insights/react` di `src/main.tsx`.
+- Package sudah ada di `package.json` sejak sebelumnya, namun belum pernah digunakan di kode.
+- Tidak ada perubahan behavior/fitur — komponen berjalan pasif mengumpulkan Core Web Vitals dari pengguna nyata di production Vercel.
 
 ### v3.11.24 (7 Mar 2026) — **Feature: Per-Domain Down/Recovery Alert di Cron**
 - Fungsi `sendDomainAlertToSlack()` baru di `scripts/monitor-cron.js` — kirim rich Slack alert (Block Kit) per domain saat status berubah.
@@ -449,6 +459,8 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-024 | Enable Vercel Analytics (`<Analytics />` di main.tsx) | 3.11.26 |
+| D-023 | Enable Vercel Speed Insights (`<SpeedInsights />` di main.tsx) | 3.11.25 |
 | D-022 | Fix Slack test notification (Content-Type text/plain di no-cors fetch) | 3.11.23 |
 | D-021 | Export PDF di halaman Analytics DomainCharts (dropdown 1/15/30 hari) | 3.11.22 |
 | D-020 | Export PDF dari dialog Statistik domain (dropdown 1/15/30 hari) | 3.11.21 |
