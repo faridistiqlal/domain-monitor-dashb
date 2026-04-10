@@ -236,107 +236,121 @@ async function initializeFirestoreConnection() {
 }
 
 /**
- * Check single domain with timeout
+ * Perform a single HTTP reachability attempt.
+ * Returns { reachable, protocol, responseTime, statusCode, error }
+ * Accepts any HTTP response (including 4xx/5xx) as "server alive".
+ * Falls back from HEAD → GET if server rejects HEAD.
+ */
+async function attemptHTTP(baseUrl, protocol, timeoutMs) {
+  const url = `${protocol}://${baseUrl}`
+  const startTime = Date.now()
+
+  for (const method of ['HEAD', 'GET']) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+      const response = await fetch(url, {
+        method,
+        signal: controller.signal,
+        redirect: 'follow',
+      })
+      clearTimeout(timeoutId)
+
+      // Any HTTP response means server is alive (even 403/503)
+      return {
+        reachable: true,
+        protocol,
+        responseTime: Date.now() - startTime,
+        statusCode: response.status,
+        error: null,
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        return { reachable: false, protocol, responseTime: null, statusCode: null, error: 'Timeout' }
+      }
+      // HEAD rejected (405/ECONNRESET) → retry with GET
+      if (method === 'HEAD') continue
+      return { reachable: false, protocol, responseTime: null, statusCode: null, error: err.message }
+    }
+  }
+  return { reachable: false, protocol, responseTime: null, statusCode: null, error: 'Unreachable' }
+}
+
+/**
+ * Check single domain — with retry, longer timeout, HEAD→GET fallback,
+ * and accepts any HTTP status (4xx/5xx) as "server alive".
  */
 async function checkDomain(domain) {
   const url = domain.url.replace(/^https?:\/\//, '')
-  const startTime = Date.now()
-  
+  const HTTP_TIMEOUT = 12000  // 12s — generous for slow .go.id servers
+  const MAX_RETRIES  = 2      // up to 2 attempts before declaring down
+
+  // ── DNS lookup ──────────────────────────────────────────────────────────
+  let ipAddress = null
   try {
-    // DNS lookup with timeout
-    const dnsPromise = dnsLookup(url)
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('DNS timeout')), 5000)
-    )
-    
-    const ipAddress = await Promise.race([dnsPromise, timeoutPromise])
-    const dnsResolved = !!ipAddress.address
-    
-    if (!dnsResolved) {
+    const dnsResult = await Promise.race([
+      dnsLookup(url),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('DNS timeout')), 8000)),
+    ])
+    ipAddress = dnsResult?.address || null
+  } catch (_) {
+    // DNS failed entirely
+  }
+
+  const dnsResolved = !!ipAddress
+
+  // ── HTTP reachability (with retry) ──────────────────────────────────────
+  let lastResult = null
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    // Try HTTPS first, then HTTP
+    const httpsResult = await attemptHTTP(url, 'https', HTTP_TIMEOUT)
+    if (httpsResult.reachable) {
       return {
-        status: 'offline',
-        ipAddress: null,
-        responseTime: null,
-        protocol: null,
-        error: 'DNS resolution failed'
+        status: 'online',
+        ipAddress,
+        responseTime: httpsResult.responseTime,
+        protocol: 'https',
+        error: null,
       }
     }
-    
-    // Try HTTPS first with reduced timeout
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
-      
-      const httpsResponse = await fetch(`https://${url}`, {
-        method: 'HEAD',
-        signal: controller.signal,
-        redirect: 'follow'
-      })
-      
-      clearTimeout(timeoutId)
-      const responseTime = Date.now() - startTime
-      
-      if (httpsResponse.ok) {
-        return {
-          status: 'online',
-          ipAddress: ipAddress.address,
-          responseTime,
-          protocol: 'https',
-          error: null
-        }
-      }
-    } catch (httpsError) {
-      // HTTPS failed, try HTTP with timeout
-      try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000)
-        
-        const httpResponse = await fetch(`http://${url}`, {
-          method: 'HEAD',
-          signal: controller.signal,
-          redirect: 'follow'
-        })
-        
-        clearTimeout(timeoutId)
-        const responseTime = Date.now() - startTime
-        
-        if (httpResponse.ok) {
-          return {
-            status: 'online',
-            ipAddress: ipAddress.address,
-            responseTime,
-            protocol: 'http',
-            error: null
-          }
-        }
-      } catch (httpError) {
-        // Both failed but DNS resolved
-        return {
-          status: 'dns-only',
-          ipAddress: ipAddress.address,
-          responseTime: null,
-          protocol: null,
-          error: 'HTTP/HTTPS not accessible'
-        }
+
+    const httpResult = await attemptHTTP(url, 'http', HTTP_TIMEOUT)
+    if (httpResult.reachable) {
+      return {
+        status: 'online',
+        ipAddress,
+        responseTime: httpResult.responseTime,
+        protocol: 'http',
+        error: null,
       }
     }
-    
+
+    lastResult = httpsResult.error === 'Timeout' ? httpsResult : httpResult
+
+    // Wait 2s before retry (except last attempt)
+    if (attempt < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    }
+  }
+
+  // ── Classify after retries exhausted ────────────────────────────────────
+  if (dnsResolved) {
     return {
       status: 'dns-only',
-      ipAddress: ipAddress.address,
+      ipAddress,
       responseTime: null,
       protocol: null,
-      error: 'Server not responding'
+      error: lastResult?.error || 'HTTP/HTTPS not accessible',
     }
-    
-  } catch (error) {
-    return {
-      status: 'offline',
-      ipAddress: null,
-      responseTime: null,
-      protocol: null,
-      error: error.message
-    }
+  }
+
+  return {
+    status: 'offline',
+    ipAddress: null,
+    responseTime: null,
+    protocol: null,
+    error: lastResult?.error || 'DNS resolution failed',
   }
 }
 
