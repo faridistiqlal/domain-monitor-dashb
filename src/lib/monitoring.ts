@@ -173,37 +173,34 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
   
   let status: 'online' | 'offline' | 'dns-only' = 'offline'
   let error: string | undefined
-  
+
+  const isSSLIssue = !!(
+    httpResult.error?.includes('SSL') ||
+    httpResult.error?.includes('Sertifikat') ||
+    httpResult.error?.includes('CERT') ||
+    httpResult.error?.includes('cert')
+  )
+
   if (httpAccessible) {
     status = 'online'
-  } else if (dnsResolvable && !httpAccessible) {
+  } else if (dnsResolvable && isSSLIssue) {
+    // True dns-only: server is running but SSL cert is broken
     status = 'dns-only'
-    
-    if (httpResult.error?.includes('SSL') || 
-        httpResult.error?.includes('Sertifikat') ||
-        httpResult.error?.includes('CERT')) {
-      error = httpResult.error
-    } else if (httpResult.error === 'Timeout') {
-      error = 'Server lambat atau tidak merespons'
-    } else if (httpResult.error === 'CORS/Network Block') {
-      error = 'Browser CORS/Network - Coba akses manual'
-    } else {
-      error = httpResult.error || 'DNS OK, Server tidak dapat diakses'
-    }
-  } else if (!dnsResolvable && !httpAccessible) {
+    error = httpResult.error
+  } else if (!httpAccessible) {
+    // Server not reachable for any other reason → offline
+    // (covers: Failed to fetch, CORS block, Address Unreachable,
+    //  Connection Refused, Timeout, DNS not resolved, etc.)
+    status = 'offline'
     if (httpResult.error === 'Timeout') {
-      status = 'dns-only'
-      error = 'Timeout - Server lambat'
+      error = 'Server tidak merespons (timeout)'
+    } else if (httpResult.error === 'CORS/Network Block') {
+      error = 'Server tidak dapat diakses'
     } else if (httpResult.error === 'DNS Tidak Ditemukan') {
-      status = 'offline'
       error = 'DNS tidak dapat di-resolve'
     } else {
-      status = 'offline'
-      error = httpResult.error || 'Domain tidak dapat diakses'
+      error = httpResult.error || 'Server tidak dapat diakses'
     }
-  } else {
-    status = 'offline'
-    error = httpResult.error || 'Domain tidak dapat diakses'
   }
 
   return {
