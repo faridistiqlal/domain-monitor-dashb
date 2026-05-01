@@ -336,8 +336,30 @@ async function checkDomain(domain) {
 
   // ── Classify after retries exhausted ────────────────────────────────────
   if (dnsResolved) {
+    // dns-only ONLY when the error is specifically SSL/TLS/cert related.
+    // Any other failure (server down, connection refused, timeout, etc.) = offline.
+    const errMsg = (lastResult?.error || '').toLowerCase()
+    const isSslError = errMsg.includes('cert')
+      || errMsg.includes('ssl')
+      || errMsg.includes('tls')
+      || errMsg.includes('self_signed')
+      || errMsg.includes('self signed')
+      || errMsg.includes('unable_to_verify')
+      || errMsg.includes('handshake')
+
+    if (isSslError) {
+      return {
+        status: 'dns-only',
+        ipAddress,
+        responseTime: null,
+        protocol: null,
+        error: lastResult?.error || 'SSL/TLS certificate error',
+      }
+    }
+
+    // Server unreachable / connection refused / timeout → offline
     return {
-      status: 'dns-only',
+      status: 'offline',
       ipAddress,
       responseTime: null,
       protocol: null,
@@ -550,20 +572,69 @@ function applyCheckResultToDomainInMemory(allDomains, domainId, checkResult, opt
 }
 
 /**
- * Send Slack notification (batch summary — plain text)
+ * Send Slack batch summary (Block Kit)
  */
-async function sendSlackNotification(message) {
+async function sendSlackBatchSummary({
+  batchNum, online, dnsOnly, offline, total, offlineList, dnsOnlyList
+}) {
   if (!SLACK_WEBHOOK_URL) return
-  
+
+  const timeWIB = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
+  const color = offline > 0 ? '#ff0000' : (dnsOnly > 0 ? '#ffaa00' : '#36a64f')
+
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: `🔍 Batch B${batchNum} — Monitor Selesai`, emoji: true },
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: `✅ *Online:*\n${online}` },
+        { type: 'mrkdwn', text: `❌ *Offline:*\n${offline}` },
+        { type: 'mrkdwn', text: `⚠️ *SSL Error:*\n${dnsOnly}` },
+        { type: 'mrkdwn', text: `📊 *Total Dicek:*\n${total}` },
+      ],
+    },
+  ]
+
+  if (offlineList.length > 0) {
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*❌ Domain Offline (${offlineList.length}):*\n${offlineList.map(u => `• ${u}`).join('\n')}`,
+      },
+    })
+  }
+
+  if (dnsOnlyList.length > 0) {
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*⚠️ SSL/TLS Error (${dnsOnlyList.length}):*\n${dnsOnlyList.map(u => `• ${u}`).join('\n')}`,
+      },
+    })
+  }
+
+  blocks.push({
+    type: 'context',
+    elements: [{
+      type: 'mrkdwn',
+      text: `🕐 ${timeWIB} WIB | <https://kendal-uptime.vercel.app|View Dashboard>`,
+    }],
+  })
+
   try {
     await fetch(SLACK_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: message })
+      body: JSON.stringify({ attachments: [{ color, blocks }] }),
     })
-    console.log('[Slack] Notification sent')
+    console.log('[Slack] Batch summary sent')
   } catch (error) {
-    console.error('[Slack] Error:', error.message)
+    console.error('[Slack] Batch summary error:', error.message)
   }
 }
 
@@ -583,7 +654,7 @@ async function sendDomainAlertToSlack(domain, previousStatus, currentStatus, che
 
   const emoji = isDown ? (currentStatus === 'dns-only' ? '⚠️' : '🔴') : '✅'
   const title = isDown
-    ? (currentStatus === 'dns-only' ? 'DNS Only — HTTP Tidak Dapat Diakses' : 'Domain Down Alert')
+    ? (currentStatus === 'dns-only' ? 'SSL/TLS Error — Sertifikat Bermasalah' : 'Domain Down Alert')
     : 'Domain Recovery'
   const color = isDown ? (currentStatus === 'dns-only' ? '#ffaa00' : '#ff0000') : '#36a64f'
   const timeWIB = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
@@ -801,21 +872,15 @@ async function runMonitoring() {
     const dnsOnlyList = results.filter(r => r.result.status === 'dns-only').map(r => r.domain.url)
 
     if (offlineList.length > 0 || dnsOnlyList.length > 0) {
-      let summary = `🔍 Domain Monitor - Batch ${currentBatch} Check Complete
-✅ Online: ${online}
-⚠️ DNS Only: ${dnsOnly}
-❌ Offline: ${offline}
-Total checked: ${domainsToCheck.length}
-Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
-
-      if (offlineList.length > 0) {
-        summary += `\n\n❌ Offline (${offlineList.length}):\n${offlineList.map(u => `• ${u}`).join('\n')}`
-      }
-      if (dnsOnlyList.length > 0) {
-        summary += `\n\n⚠️ DNS Only (${dnsOnlyList.length}):\n${dnsOnlyList.map(u => `• ${u}`).join('\n')}`
-      }
-
-      await sendSlackNotification(summary)
+      await sendSlackBatchSummary({
+        batchNum: currentBatch,
+        online,
+        dnsOnly,
+        offline,
+        total: domainsToCheck.length,
+        offlineList,
+        dnsOnlyList,
+      })
     } else {
       console.log('[Slack] All domains online — skipping batch summary')
     }
@@ -865,7 +930,15 @@ Time: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
       console.error('[Monitor] Failed to write error log:', logError.message)
     }
     
-    await sendSlackNotification(`❌ Monitoring Error: ${error.message}`)
+    if (SLACK_WEBHOOK_URL) {
+      try {
+        await fetch(SLACK_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: `❌ Monitoring Error: ${error.message}` }),
+        })
+      } catch (_) {}
+    }
     process.exit(1)
   }
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 3.11.30 - Fix Cron dns-only Logic + Slack Block Kit
+**Tanggal Rilis:** 1 Mei 2026
+
+### 🐛 Fix: Cron checkDomain() Status Logic
+- `checkDomain()` di `monitor-cron.js` masih menggunakan logika lama: DNS resolve + HTTP fail = `dns-only`. Ini bug yang sama seperti yang sudah difix di browser-side (v3.11.27).
+- Fix: `dns-only` hanya dikembalikan jika error message mengandung kata kunci SSL/TLS/cert (`cert`, `ssl`, `tls`, `self_signed`, `handshake`, dll). Semua kegagalan lain (server down, timeout, ECONNREFUSED, ECONNRESET) → `offline`.
+- Dampak: domain yang servernya benar-benar mati tidak lagi tampil kuning/dns-only di dashboard, dan notif Slack tidak salah label.
+
+### 🔔 Fix: Slack Notification
+- Title alert per-domain `dns-only`: `'DNS Only — HTTP Tidak Dapat Diakses'` → `'SSL/TLS Error — Sertifikat Bermasalah'` (sesuai makna sebenarnya).
+- Batch summary diupgrade dari plain text ke Block Kit — tampilan lebih rapi dan konsisten dengan per-domain alert. Warna attachment: merah jika ada offline, oranye jika hanya ssl-error, hijau jika semua online.
+- Error fatal monitoring tetap kirim plain text ke Slack (fallback).
+
 ## Version 3.11.29 - Fix Header DomainCharts Overflow Mobile
 **Tanggal Rilis:** 1 Mei 2026
 

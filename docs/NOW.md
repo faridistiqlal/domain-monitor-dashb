@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 1 Mei 2026  
-**Current Version:** 3.11.29 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.30 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,11 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.30 (1 Mei 2026) — **Fix: Cron dns-only Logic + Slack Block Kit**
+- `checkDomain()` di `monitor-cron.js` difix — sebelumnya DNS resolve + HTTP fail = `dns-only` (sama seperti bug browser v3.11.27). Sekarang `dns-only` hanya untuk error SSL/TLS cert; semua kegagalan lain (server down, timeout, ECONNREFUSED) → `offline`.
+- Title alert per-domain `dns-only` diubah: `'DNS Only — HTTP Tidak Dapat Diakses'` → `'SSL/TLS Error — Sertifikat Bermasalah'`.
+- Batch summary Slack diupgrade dari plain text ke Block Kit (konsisten dengan per-domain alert).
 
 ### v3.11.29 (1 Mei 2026) — **Style: Fix Header DomainCharts Overflow Mobile**
 - Header DomainCharts dipisah jadi 2 baris: baris 1 (tombol back + judul + PDF), baris 2 (Daily/Hourly toggle, 7/30 Hari toggle, Refresh) — tidak ada kontrol yang terpotong di mobile.
@@ -474,6 +479,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-028 | Fix cron dns-only logic + Slack Block Kit upgrade | 3.11.30 |
 | D-027 | Fix header DomainCharts overflow mobile (2-row layout + pr fix) | 3.11.29 |
 | D-026 | Fix mobile analytics responsive (tab, uptime bar, card grid, chart color) | 3.11.28 |
 | D-025 | Fix status offline saat server tidak terjangkau (monitoring.ts) | 3.11.27 |
