@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 1 Mei 2026  
-**Current Version:** 3.11.28 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.29 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,10 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.29 (1 Mei 2026) — **Style: Fix Header DomainCharts Overflow Mobile**
+- Header DomainCharts dipisah jadi 2 baris: baris 1 (tombol back + judul + PDF), baris 2 (Daily/Hourly toggle, 7/30 Hari toggle, Refresh) — tidak ada kontrol yang terpotong di mobile.
+- Kurangi `pr-4` → `pr-2` di StatisticsView agar tab Realtime/Analytics/GitHub punya ruang cukup.
 
 ### v3.11.28 (1 Mei 2026) — **Style: Fix Mobile Analytics Responsive**
 - Tab Realtime/Analytics/GitHub tidak overflow di mobile (hapus `max-w-2xl`, tambah `min-w-0 truncate`).
@@ -470,6 +474,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-027 | Fix header DomainCharts overflow mobile (2-row layout + pr fix) | 3.11.29 |
 | D-026 | Fix mobile analytics responsive (tab, uptime bar, card grid, chart color) | 3.11.28 |
 | D-025 | Fix status offline saat server tidak terjangkau (monitoring.ts) | 3.11.27 |
 | D-024 | Enable Vercel Analytics (`<Analytics />` di main.tsx) | 3.11.26 |

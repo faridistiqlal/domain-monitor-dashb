@@ -232,110 +232,115 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
 
   return (
     <div className="space-y-3">
-      {/* Header */}
+      {/* Header — row 1: back + title */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 min-w-0">
           <button 
             onClick={onClose} 
-            className="p-1.5 rounded-lg hover:bg-accent transition-colors"
+            className="p-1.5 rounded-lg hover:bg-accent transition-colors shrink-0"
             title="Kembali"
           >
             <ArrowLeft size={20} className="text-muted-foreground" />
           </button>
-          <div>
+          <div className="min-w-0">
             <h3 className="text-base font-semibold">Statistik Domain</h3>
-            <p className="text-xs text-muted-foreground font-mono">{selectedDomain.url}</p>
+            <p className="text-xs text-muted-foreground font-mono truncate">{selectedDomain.url}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* View Mode Toggle */}
-          <div className="flex gap-1 border rounded p-0.5">
-            <button
-              onClick={() => setViewMode('daily')}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                viewMode === 'daily'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              title="Daily view - 90 hari"
+        {/* PDF — always visible, top-right */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exportingPeriod !== null || isLoading || stats.length === 0}
+              className="h-8 gap-1.5 text-xs shrink-0"
             >
-              Daily
-            </button>
-            <button
-              onClick={() => setViewMode('hourly')}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                viewMode === 'hourly'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              title="Hourly view - 7 hari detail"
-            >
-              Hourly
-            </button>
-          </div>
-          <Button
-            onClick={() => loadData()}
-            disabled={isRefreshing}
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2"
+              {exportingPeriod !== null ? (
+                <Spinner size={14} className="animate-spin" />
+              ) : (
+                <FilePdf size={14} weight="duotone" />
+              )}
+              PDF
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleExportPdf(1)}>
+              Laporan 1 Hari
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExportPdf(15)}>
+              Laporan 15 Hari
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExportPdf(30)}>
+              Laporan 30 Hari
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Header — row 2: controls */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* View Mode Toggle */}
+        <div className="flex gap-1 border rounded p-0.5">
+          <button
+            onClick={() => setViewMode('daily')}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              viewMode === 'daily'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            title="Daily view - 90 hari"
           >
-            <ArrowClockwise 
-              size={16} 
-              className={isRefreshing ? 'animate-spin' : ''} 
-            />
-          </Button>
-          <div className="flex gap-1 border rounded p-0.5">
-            <button
-              onClick={() => setDays(7)}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                days === 7
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              7 Hari
-            </button>
-            <button
-              onClick={() => setDays(30)}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                days === 30
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              30 Hari
-            </button>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={exportingPeriod !== null || isLoading || stats.length === 0}
-                className="h-8 gap-1.5 text-xs"
-              >
-                {exportingPeriod !== null ? (
-                  <Spinner size={14} className="animate-spin" />
-                ) : (
-                  <FilePdf size={14} weight="duotone" />
-                )}
-                PDF
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleExportPdf(1)}>
-                Laporan 1 Hari
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExportPdf(15)}>
-                Laporan 15 Hari
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExportPdf(30)}>
-                Laporan 30 Hari
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            Daily
+          </button>
+          <button
+            onClick={() => setViewMode('hourly')}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              viewMode === 'hourly'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            title="Hourly view - 7 hari detail"
+          >
+            Hourly
+          </button>
         </div>
+        {/* Period Toggle */}
+        <div className="flex gap-1 border rounded p-0.5">
+          <button
+            onClick={() => setDays(7)}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              days === 7
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            7 Hari
+          </button>
+          <button
+            onClick={() => setDays(30)}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              days === 30
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            30 Hari
+          </button>
+        </div>
+        {/* Refresh */}
+        <Button
+          onClick={() => loadData()}
+          disabled={isRefreshing}
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2"
+        >
+          <ArrowClockwise 
+            size={16} 
+            className={isRefreshing ? 'animate-spin' : ''} 
+          />
+        </Button>
       </div>
 
       {stats.length === 0 ? (

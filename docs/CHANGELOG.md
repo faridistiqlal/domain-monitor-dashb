@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 3.11.29 - Fix Header DomainCharts Overflow Mobile
+**Tanggal Rilis:** 1 Mei 2026
+
+### 🎨 Style: Header 2-Row Layout
+- Header DomainCharts dipisah menjadi 2 baris: baris pertama berisi tombol back, judul domain, dan tombol PDF; baris kedua berisi semua toggle kontrol (Daily/Hourly, 7/30 Hari, Refresh).
+- Penyebab overflow sebelumnya: semua 5 elemen dalam 1 baris `flex justify-between` sehingga di layar <430px kontrol kanan terpotong.
+- Kurangi `pr-4` → `pr-2` di container StatisticsView agar tab Realtime/Analytics/GitHub tidak terpotong.
+- Build pass, TypeScript clean.
+
 ## Version 3.11.28 - Fix Mobile Analytics Responsive
 **Tanggal Rilis:** 1 Mei 2026
 

@@ -142,7 +142,7 @@ export function StatisticsView({
 
   return (
     <ScrollArea className="flex-1 min-h-0">
-      <div className="space-y-2 pr-4 pb-20 md:pb-4">
+      <div className="space-y-2 pr-2 pb-20 md:pb-4">
         {/* Tabs untuk Manual vs Firebase */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
           <TabsList className="grid w-full grid-cols-3 h-auto p-1">
