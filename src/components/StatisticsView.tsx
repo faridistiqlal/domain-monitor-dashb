@@ -145,18 +145,18 @@ export function StatisticsView({
       <div className="space-y-2 pr-4 pb-20 md:pb-4">
         {/* Tabs untuk Manual vs Firebase */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3 h-auto p-1">
-            <TabsTrigger value="manual" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row">
-              <Gauge size={14} className="md:size-4" />
-              <span className="leading-tight">Real-time</span>
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+            <TabsTrigger value="manual" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row min-w-0">
+              <Gauge size={14} className="md:size-4 shrink-0" />
+              <span className="leading-tight truncate">Real-time</span>
             </TabsTrigger>
-            <TabsTrigger value="firebase" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row">
-              <ChartLine size={14} className="md:size-4" />
-              <span className="leading-tight">Analytics</span>
+            <TabsTrigger value="firebase" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row min-w-0">
+              <ChartLine size={14} className="md:size-4 shrink-0" />
+              <span className="leading-tight truncate">Analytics</span>
             </TabsTrigger>
-            <TabsTrigger value="github-actions" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row">
-              <TrendUp size={14} className="md:size-4" />
-              <span className="leading-tight">GitHub</span>
+            <TabsTrigger value="github-actions" className="gap-1 md:gap-2 text-[10px] md:text-sm h-9 md:h-10 px-1 md:px-3 flex-col md:flex-row min-w-0">
+              <TrendUp size={14} className="md:size-4 shrink-0" />
+              <span className="leading-tight truncate">GitHub</span>
             </TabsTrigger>
           </TabsList>
 

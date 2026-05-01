@@ -14,6 +14,7 @@ import {
   Line,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -384,11 +385,11 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
                       {statusLabel}
                     </Badge>
                   </div>
-                  <div className="flex gap-0.5 flex-wrap">
+                  <div className="flex gap-px overflow-hidden w-full">
                     {uptimeBars.map((bar, i) => (
                       <div
                         key={i}
-                        className={`${viewMode === 'daily' ? 'w-2' : 'w-1.5'} h-8 rounded-sm transition-all ${
+                        className={`flex-1 min-w-0 h-8 rounded-sm transition-all ${
                           bar.status === 'online'
                             ? 'bg-success hover:opacity-80'
                             : bar.status === 'partial'
@@ -446,7 +447,7 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="col-span-2 sm:col-span-1">
               <CardContent className="p-3">
                 <div className="text-xs text-muted-foreground mb-1">Incidents</div>
                 <div className="text-2xl font-bold text-destructive leading-tight">{incidents.length}</div>
@@ -506,9 +507,20 @@ export function DomainCharts({ selectedDomain, onClose, currentStatus }: DomainC
                   />
                   <Bar
                     dataKey="uptime"
-                    fill="oklch(0.70 0.22 145)"
                     radius={[4, 4, 0, 0]}
-                  />
+                  >
+                    {stats.map((stat, index) => {
+                      const uptime = stat.totalChecks > 0
+                        ? (stat.successChecks / stat.totalChecks) * 100
+                        : 0
+                      const color = uptime >= 95
+                        ? 'oklch(0.70 0.22 145)'
+                        : uptime >= 50
+                        ? 'rgb(245, 158, 11)'
+                        : 'oklch(0.60 0.25 25)'
+                      return <Cell key={`cell-${index}`} fill={color} />
+                    })}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
