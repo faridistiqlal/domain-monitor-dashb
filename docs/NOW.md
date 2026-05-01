@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 1 Mei 2026  
-**Current Version:** 3.11.27 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.28 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,12 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.28 (1 Mei 2026) — **Style: Fix Mobile Analytics Responsive**
+- Tab Realtime/Analytics/GitHub tidak overflow di mobile (hapus `max-w-2xl`, tambah `min-w-0 truncate`).
+- Uptime bar tampil 1 baris penuh: ganti `flex-wrap` → `flex overflow-hidden`, bar `flex-1 min-w-0` agar proporsional.
+- 5 summary card: card ke-5 (Incidents) diberi `col-span-2 sm:col-span-1` agar tidak menggantung di mobile.
+- Daily Uptime bar chart: setiap bar diwarnai per threshold via `<Cell>` — hijau ≥95%, kuning 50–94%, merah <50%.
 
 ### v3.11.27 (1 Mei 2026) — **Fix: Status Offline saat Server Tidak Terjangkau**
 - Logika `dns-only` diubah: hanya berlaku jika DNS resolve + error SSL/cert. Semua error lain → `offline`.
@@ -464,6 +470,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-026 | Fix mobile analytics responsive (tab, uptime bar, card grid, chart color) | 3.11.28 |
 | D-025 | Fix status offline saat server tidak terjangkau (monitoring.ts) | 3.11.27 |
 | D-024 | Enable Vercel Analytics (`<Analytics />` di main.tsx) | 3.11.26 |
 | D-023 | Enable Vercel Speed Insights (`<SpeedInsights />` di main.tsx) | 3.11.25 |

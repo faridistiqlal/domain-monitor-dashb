@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 3.11.28 - Fix Mobile Analytics Responsive
+**Tanggal Rilis:** 1 Mei 2026
+
+### 🎨 Style: Mobile Responsive Fixes — Tab Analytics Domain
+- **Tab overflow:** Hapus `max-w-2xl` dari `TabsList`, tambah `min-w-0` + `truncate` agar 3 tab muat penuh di layar sempit.
+- **Uptime bar 1 baris:** Ganti `flex flex-wrap gap-0.5 w-2/w-1.5` menjadi `flex overflow-hidden gap-px` dengan tiap bar `flex-1 min-w-0` — semua bar proporsional dalam 1 baris, tidak pernah wrap ke baris ke-2.
+- **5 summary card:** Card ke-5 (Incidents) diberi `col-span-2 sm:col-span-1` sehingga di mobile mengisi baris penuh, tidak menggantung sendirian.
+- **Daily Uptime chart warna:** Menggunakan `<Cell>` dari recharts untuk mewarnai tiap bar sesuai threshold: hijau ≥95%, kuning/orange 50–94%, merah <50%. Sebelumnya semua bar hijau.
+- Build pass, TypeScript clean.
+
 ## Version 3.11.27 - Fix Status Offline saat Server Tidak Terjangkau
 **Tanggal Rilis:** 1 Mei 2026
 
