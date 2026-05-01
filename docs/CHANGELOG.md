@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 3.11.27 - Fix Status Offline saat Server Tidak Terjangkau
+**Tanggal Rilis:** 1 Mei 2026
+
+### 🔧 Bug Fix: Manual Check Status Tidak Akurat saat Server Mati
+- **Root cause:** Logika status di `src/lib/monitoring.ts` menetapkan `dns-only` untuk *semua* kasus DNS resolve + HTTP gagal, termasuk saat server mati total (`ERR_ADDRESS_UNREACHABLE`, `Failed to fetch`, `Connection Refused`).
+- **Fix:** Status `dns-only` sekarang **hanya** diberikan jika DNS resolve + error adalah SSL/cert issue (server jalan tapi sertifikat rusak). Semua error lain (server tidak terjangkau, timeout, CORS/network block, dll.) → langsung `offline`.
+- Sebelumnya: domain dengan cPanel mati + DNS masih aktif → tampil `dns-only` (kuning). Sesudah fix: tampil `offline` (merah) sesuai kondisi nyata.
+- Tidak ada perubahan pada cron job (`scripts/monitor-cron.js`) — logika cron sudah benar.
+- Build pass, TypeScript clean.
+
 ## Version 3.11.26 - Enable Vercel Analytics
 **Tanggal Rilis:** 5 April 2026
 

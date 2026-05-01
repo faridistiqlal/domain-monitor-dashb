@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 6 April 2026  
-**Current Version:** 3.11.26 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 1 Mei 2026  
+**Current Version:** 3.11.27 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,11 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.27 (1 Mei 2026) — **Fix: Status Offline saat Server Tidak Terjangkau**
+- Logika `dns-only` diubah: hanya berlaku jika DNS resolve + error SSL/cert. Semua error lain → `offline`.
+- Sebelumnya: cPanel off + DNS aktif → tampil `dns-only`. Sesudah fix: tampil `offline` (merah) sesuai kondisi nyata.
+- Tidak ada perubahan cron, Firebase, atau komponen lain.
 
 ### v3.11.26 (5 Apr 2026) — **Patch: Enable Vercel Analytics**
 - Mengaktifkan `@vercel/analytics` — melacak Visitors, Page Views, Bounce Rate dari pengguna nyata di production Vercel.
@@ -459,6 +464,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-025 | Fix status offline saat server tidak terjangkau (monitoring.ts) | 3.11.27 |
 | D-024 | Enable Vercel Analytics (`<Analytics />` di main.tsx) | 3.11.26 |
 | D-023 | Enable Vercel Speed Insights (`<SpeedInsights />` di main.tsx) | 3.11.25 |
 | D-022 | Fix Slack test notification (Content-Type text/plain di no-cors fetch) | 3.11.23 |
