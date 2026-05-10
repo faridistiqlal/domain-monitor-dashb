@@ -153,9 +153,11 @@ export function PinnedDomainCard({ domain, status, insight, onUnpin }: PinnedDom
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}>
-                <Globe size={14} className="mr-2" />
-                Buka di tab baru
+              <DropdownMenuItem asChild>
+                <a href={`https://${domain.url}`} target="_blank" rel="noopener noreferrer">
+                  <Globe size={14} className="mr-2" />
+                  Buka di tab baru
+                </a>
               </DropdownMenuItem>
 
               <DropdownMenuSub>

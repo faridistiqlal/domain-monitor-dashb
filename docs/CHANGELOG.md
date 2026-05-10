@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 3.11.31 - Fix Grup Domain Hilang + Link Mobile
+**Tanggal Rilis:** 10 Mei 2026
+
+### 🐛 Fix: Domain Hilang dari Grup Setelah Refresh
+- `handleAssignDomains` kini langsung memanggil `syncDomainsToFirestore(updatedDomains)` setelah update state. Sebelumnya hanya mengandalkan debounce useEffect 2 detik — jika user refresh sebelum 2 detik berlalu, perubahan `groupId` tidak tersimpan ke Firebase.
+- Fix ini memastikan setiap aksi assign grup langsung ter-persist ke Firestore.
+
+### 🐛 Fix: Icon Globe Tidak Bisa Buka Tab Baru di Mobile/Android
+- DomainCard, PinnedDomainCard, TagCard: ganti `<button onClick={() => window.open(...)}>` ke `<a href target="_blank" rel="noopener noreferrer">`.
+- `window.open()` sering diblokir popup blocker mobile browser (Chrome Android, Safari iOS) karena tidak dianggap navigasi langsung. Menggunakan elemen `<a>` native selalu reliable di semua browser dan device.
+
 ## Version 3.11.30 - Fix Cron dns-only Logic + Slack Block Kit
 **Tanggal Rilis:** 1 Mei 2026
 

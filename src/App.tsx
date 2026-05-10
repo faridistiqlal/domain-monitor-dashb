@@ -1926,8 +1926,12 @@ function App() {
     
     console.log('[Assign Domains] Updating', domainIds.length, 'domains to group:', groupId)
     setDomains(updatedDomains)
+
+    // Sync immediately — don't rely on 2s debounce for deliberate user action
+    syncDomainsToFirestore(updatedDomains)
+      .then(() => appConsole.log('[Assign Domains] ✅ Synced to Firebase'))
+      .catch(err => console.error('[Assign Domains] ❌ Sync error:', err))
     
-    // No localStorage cache - useEffect will auto-sync to Firebase after 2s
     toast.success('Domain berhasil diatur grupnya')
   }
 

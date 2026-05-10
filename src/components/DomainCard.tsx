@@ -453,13 +453,19 @@ export function DomainCard({ domain, status, insight, onDelete, onEdit, onToggle
               {/* Action Buttons */}
               <div className="flex items-center gap-1">
                 <Button
+                  asChild
                   variant="ghost"
                   size="icon"
-                  onClick={() => window.open(`https://${domain.url}`, '_blank', 'noopener,noreferrer')}
                   className="h-6 w-6 text-muted-foreground hover:text-accent hover:bg-accent/10"
-                  aria-label={`Open ${domain.url} in new tab`}
                 >
-                  <Globe size={14} />
+                  <a
+                    href={`https://${domain.url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${domain.url} in new tab`}
+                  >
+                    <Globe size={14} />
+                  </a>
                 </Button>
                 <Button
                   variant="ghost"

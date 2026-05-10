@@ -146,13 +146,15 @@ export function TagCard({ tag, domainCount, domains, statuses = {}, groups = [],
                         </p>
                       )}
                     </div>
-                    <button
-                      onClick={() => window.open(`https://${domain.url}`, '_blank')}
+                    <a
+                      href={`https://${domain.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex-shrink-0 p-2 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
                       title="Buka domain"
                     >
                       <Globe size={18} weight="duotone" />
-                    </button>
+                    </a>
                   </div>
                 ))
               )}

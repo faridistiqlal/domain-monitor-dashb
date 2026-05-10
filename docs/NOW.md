@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 1 Mei 2026  
-**Current Version:** 3.11.30 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 10 Mei 2026  
+**Current Version:** 3.11.31 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -161,6 +161,10 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.31 (10 Mei 2026) — **Fix: Grup Domain Hilang + Link Mobile**
+- `handleAssignDomains` kini langsung memanggil `syncDomainsToFirestore(updatedDomains)` setelah update state — tidak lagi mengandalkan debounce 2 detik. Ini menyelesaikan bug "domain hilang dari grup setelah refresh" karena sebelumnya data bisa hilang jika refresh dilakukan sebelum 2 detik.
+- Icon Globe/WWW di DomainCard, PinnedDomainCard, dan TagCard diubah dari `window.open()` (diblokir popup blocker mobile) ke elemen `<a href target="_blank">`. Kini bisa dibuka di tab baru di mobile/tablet/Android.
 
 ### v3.11.30 (1 Mei 2026) — **Fix: Cron dns-only Logic + Slack Block Kit**
 - `checkDomain()` di `monitor-cron.js` difix — sebelumnya DNS resolve + HTTP fail = `dns-only` (sama seperti bug browser v3.11.27). Sekarang `dns-only` hanya untuk error SSL/TLS cert; semua kegagalan lain (server down, timeout, ECONNREFUSED) → `offline`.
@@ -479,6 +483,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### Done Recently
 | ID | Item | Versi |
 |----|------|-------|
+| D-029 | Fix grup domain hilang setelah refresh + icon link mobile | 3.11.31 |
 | D-028 | Fix cron dns-only logic + Slack Block Kit upgrade | 3.11.30 |
 | D-027 | Fix header DomainCharts overflow mobile (2-row layout + pr fix) | 3.11.29 |
 | D-026 | Fix mobile analytics responsive (tab, uptime bar, card grid, chart color) | 3.11.28 |
