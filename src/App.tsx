@@ -41,7 +41,7 @@ import { SettingsMenuDialog } from '@/components/SettingsMenuDialog'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings, ManagedUser, ManagedUserRole, UserPermissions, DomainInsight } from '@/lib/types'
 import { NotificationDetails } from '@/lib/notifications'
-import { checkDomainStatus } from '@/lib/monitoring'
+import { checkDomainStatus, checkDomainStatuses } from '@/lib/monitoring'
 import { 
   loadDomains, 
   loadGroups, 
@@ -1301,9 +1301,7 @@ function App() {
     })
     setStatuses(prev => ({ ...prev, ...checkingStatuses }))
 
-    const results = await Promise.all(
-      domainsToCheck.map(domain => checkDomainStatus(domain.url, domain.id))
-    )
+    const results = await checkDomainStatuses(domainsToCheck)
 
     const newStatuses: Record<string, DomainStatus> = {}
     results.forEach(result => {
@@ -3036,10 +3034,8 @@ function App() {
                     })
                     setStatuses(prev => ({ ...prev, ...checkingStatuses }))
                     
-                    // Check domains
-                    const results = await Promise.all(
-                      pinnedDomains.map(domain => checkDomainStatus(domain.url, domain.id))
-                    )
+                    // Check domains with browser-safe concurrency
+                    const results = await checkDomainStatuses(pinnedDomains)
                     
                     const newStatuses: Record<string, DomainStatus> = {}
                     results.forEach(result => {

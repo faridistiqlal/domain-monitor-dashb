@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Domain, DomainStatus } from '@/lib/types'
-import { checkDomainStatus } from '@/lib/monitoring'
+import { checkDomainStatuses } from '@/lib/monitoring'
 
 interface UseTabAutoChecksParams {
   activeTab: 'domains' | 'groups' | 'manage' | 'tags' | 'statistics' | 'pinned'
@@ -50,9 +50,7 @@ export function useTabAutoChecks({
           })
           setStatuses(prev => ({ ...prev, ...checkingStatuses }))
 
-          Promise.all(
-            uncheckedDomains.map(domain => checkDomainStatus(domain.url, domain.id))
-          ).then(results => {
+          checkDomainStatuses(uncheckedDomains).then(results => {
             const newStatuses: Record<string, DomainStatus> = {}
             results.forEach(result => {
               newStatuses[result.id] = result

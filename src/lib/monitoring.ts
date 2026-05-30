@@ -1,10 +1,15 @@
 import { DomainStatus } from './types'
 
+const DNS_LOOKUP_TIMEOUT_MS = 5000
+const HTTP_HEAD_TIMEOUT_MS = 4000
+const HTTP_GET_TIMEOUT_MS = 10000
+const BULK_CHECK_CONCURRENCY = 8
+
 async function getIPAddress(domain: string): Promise<string | undefined> {
   try {
     const cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0]
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000)
+    const timeoutId = setTimeout(() => controller.abort(), DNS_LOOKUP_TIMEOUT_MS)
     
     const response = await fetch(`https://dns.google/resolve?name=${cleanDomain}&type=A`, {
       signal: controller.signal
@@ -22,7 +27,7 @@ async function getIPAddress(domain: string): Promise<string | undefined> {
   return undefined
 }
 
-async function checkHTTPAccess(url: string, timeout: number = 6000): Promise<{ accessible: boolean; responseTime?: number; error?: string; statusCode?: number }> {
+async function checkHTTPAccess(url: string, timeout: number = HTTP_GET_TIMEOUT_MS): Promise<{ accessible: boolean; responseTime?: number; error?: string; statusCode?: number }> {
   const startTime = Date.now()
   const fullUrl = url.startsWith('http') ? url : `https://${url}`
   const isHttpsPage = typeof window !== 'undefined' && window.location.protocol === 'https:'
@@ -35,80 +40,93 @@ async function checkHTTPAccess(url: string, timeout: number = 6000): Promise<{ a
     }
   }
   
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), timeout)
+  let lastError: { error?: string; responseTime?: number } = {}
 
-    const response = await fetch(fullUrl, {
-      method: 'HEAD',
-      mode: 'no-cors',
-      cache: 'no-store',
-      signal: controller.signal,
-      redirect: 'follow',
-    })
+  for (const method of ['HEAD', 'GET'] as const) {
+    try {
+      const controller = new AbortController()
+      const methodTimeout = method === 'HEAD' ? Math.min(HTTP_HEAD_TIMEOUT_MS, timeout) : timeout
+      const timeoutId = setTimeout(() => controller.abort(), methodTimeout)
 
-    clearTimeout(timeoutId)
-    const responseTime = Date.now() - startTime
+      const response = await fetch(fullUrl, {
+        method,
+        mode: 'no-cors',
+        cache: 'no-store',
+        signal: controller.signal,
+        redirect: 'follow',
+      })
 
-    return { 
-      accessible: true, 
-      responseTime,
-      statusCode: response.status === 0 ? undefined : response.status
+      clearTimeout(timeoutId)
+      const responseTime = Date.now() - startTime
+
+      return { 
+        accessible: true, 
+        responseTime,
+        statusCode: response.status === 0 ? undefined : response.status
+      }
+    } catch (error) {
+      lastError = normalizeHTTPError(error, Date.now() - startTime, method === 'HEAD' ? HTTP_HEAD_TIMEOUT_MS : timeout)
     }
-  } catch (error) {
-    const responseTime = Date.now() - startTime
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        return { accessible: false, error: 'Timeout', responseTime: timeout }
-      }
-      
-      if (error.message.includes('ERR_CERT_DATE_INVALID')) {
-        return { accessible: false, error: 'Sertifikat SSL Kadaluarsa', responseTime }
-      }
-      
-      if (error.message.includes('ERR_CERT_AUTHORITY_INVALID')) {
-        return { accessible: false, error: 'Sertifikat SSL Tidak Valid', responseTime }
-      }
-      
-      if (error.message.includes('ERR_CERT_COMMON_NAME_INVALID')) {
-        return { accessible: false, error: 'SSL: Domain Tidak Cocok', responseTime }
-      }
-      
-      if (error.message.includes('ERR_SSL_PROTOCOL_ERROR')) {
-        return { accessible: false, error: 'SSL Protocol Error', responseTime }
-      }
-      
-      if (error.message.includes('ERR_CONNECTION_REFUSED')) {
-        return { accessible: false, error: 'Connection Refused', responseTime }
-      }
-      
-      if (error.message.includes('ERR_CONNECTION_RESET')) {
-        return { accessible: false, error: 'Connection Reset', responseTime }
-      }
-      
-      if (error.message.includes('ERR_ADDRESS_UNREACHABLE')) {
-        return { accessible: false, error: 'Address Unreachable', responseTime }
-      }
-      
-      if (error.message.includes('ERR_NAME_NOT_RESOLVED')) {
-        return { accessible: false, error: 'DNS Tidak Ditemukan', responseTime }
-      }
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        return { accessible: false, error: 'CORS/Network Block', responseTime }
-      }
-      
-      if (error.message.includes('ERR_')) {
-        const errMatch = error.message.match(/ERR_[A-Z_]+/)
-        return { accessible: false, error: errMatch ? errMatch[0] : error.message, responseTime }
-      }
-      
-      return { accessible: false, error: 'Connection Failed', responseTime }
-    }
-    
-    return { accessible: false, error: 'Unknown Error', responseTime }
   }
+
+  return {
+    accessible: false,
+    error: lastError.error || 'Unknown Error',
+    responseTime: lastError.responseTime,
+  }
+}
+
+function normalizeHTTPError(error: unknown, responseTime: number, timeout: number): { error: string; responseTime: number } {
+  if (error instanceof Error) {
+    if (error.name === 'AbortError') {
+      return { error: 'Timeout', responseTime: timeout }
+    }
+    
+    if (error.message.includes('ERR_CERT_DATE_INVALID')) {
+      return { error: 'Sertifikat SSL Kadaluarsa', responseTime }
+    }
+    
+    if (error.message.includes('ERR_CERT_AUTHORITY_INVALID')) {
+      return { error: 'Sertifikat SSL Tidak Valid', responseTime }
+    }
+    
+    if (error.message.includes('ERR_CERT_COMMON_NAME_INVALID')) {
+      return { error: 'SSL: Domain Tidak Cocok', responseTime }
+    }
+    
+    if (error.message.includes('ERR_SSL_PROTOCOL_ERROR')) {
+      return { error: 'SSL Protocol Error', responseTime }
+    }
+    
+    if (error.message.includes('ERR_CONNECTION_REFUSED')) {
+      return { error: 'Connection Refused', responseTime }
+    }
+    
+    if (error.message.includes('ERR_CONNECTION_RESET')) {
+      return { error: 'Connection Reset', responseTime }
+    }
+    
+    if (error.message.includes('ERR_ADDRESS_UNREACHABLE')) {
+      return { error: 'Address Unreachable', responseTime }
+    }
+    
+    if (error.message.includes('ERR_NAME_NOT_RESOLVED')) {
+      return { error: 'DNS Tidak Ditemukan', responseTime }
+    }
+    
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      return { error: 'CORS/Network Block', responseTime }
+    }
+    
+    if (error.message.includes('ERR_')) {
+      const errMatch = error.message.match(/ERR_[A-Z_]+/)
+      return { error: errMatch ? errMatch[0] : error.message, responseTime }
+    }
+    
+    return { error: 'Connection Failed', responseTime }
+  }
+  
+  return { error: 'Unknown Error', responseTime }
 }
 
 async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; responseTime?: number; error?: string; protocol?: string; sslIssue?: boolean }> {
@@ -116,7 +134,7 @@ async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; re
   const isHttpsPage = typeof window !== 'undefined' && window.location.protocol === 'https:'
   
   // Try HTTPS first
-  const httpsResult = await checkHTTPAccess(`https://${cleanUrl}`, 6000)
+  const httpsResult = await checkHTTPAccess(`https://${cleanUrl}`, HTTP_GET_TIMEOUT_MS)
   
   if (httpsResult.accessible) {
     return { ...httpsResult, protocol: 'https', sslIssue: false }
@@ -137,7 +155,7 @@ async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; re
   }
   
   // Try HTTP as fallback
-  const httpResult = await checkHTTPAccess(`http://${cleanUrl}`, 6000)
+  const httpResult = await checkHTTPAccess(`http://${cleanUrl}`, HTTP_GET_TIMEOUT_MS)
   
   if (httpResult.accessible) {
     return { 
@@ -152,7 +170,7 @@ async function checkHTTPSandHTTP(url: string): Promise<{ accessible: boolean; re
   return {
     accessible: false,
     error: httpsResult.error || httpResult.error || 'Both HTTP and HTTPS failed',
-    responseTime: Math.min(httpsResult.responseTime || 6000, httpResult.responseTime || 6000),
+    responseTime: Math.min(httpsResult.responseTime || HTTP_GET_TIMEOUT_MS, httpResult.responseTime || HTTP_GET_TIMEOUT_MS),
     sslIssue: isSSLError
   }
 }
@@ -214,6 +232,25 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
     dnsResolvable,
     protocol: httpResult.protocol,
   }
+}
+
+export async function checkDomainStatuses<T extends { id: string; url: string }>(
+  domains: T[],
+  concurrency: number = BULK_CHECK_CONCURRENCY,
+): Promise<DomainStatus[]> {
+  const results: DomainStatus[] = new Array(domains.length)
+  let nextIndex = 0
+  const workerCount = Math.min(Math.max(1, concurrency), domains.length)
+
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (nextIndex < domains.length) {
+      const currentIndex = nextIndex++
+      const domain = domains[currentIndex]
+      results[currentIndex] = await checkDomainStatus(domain.url, domain.id)
+    }
+  }))
+
+  return results
 }
 
 export function validateDomain(url: string): { valid: boolean; error?: string } {

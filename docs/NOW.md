@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 10 Mei 2026  
-**Current Version:** 3.11.31 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 30 Mei 2026  
+**Current Version:** 3.11.32 (sumber: `src/lib/version.ts`)  
 **Live App:** https://kendal-uptime.vercel.app
 
 ---
@@ -58,21 +58,22 @@
    - `refactor: clean firestore sync logic` — refactor kode
    - `chore: remove backup patch files` — cleanup/maintenance
    - `style: fix mobile card overflow` — UI/styling
-   
+
    Format: `kategori: 4-5 kata penjelasan`. Jangan commit semua file sekaligus.
 
 7. **Default eksekusi untuk perubahan rule/sistem: deploy dulu, commit terakhir.**
    - Untuk perubahan yang menyentuh **rules/security/auth/workflow production**, urutan wajib:
-     1) implement + test lokal,
-     2) deploy (Vercel dan/atau Firebase rules sesuai scope),
-     3) verifikasi production,
-     4) baru lakukan commit/push final.
+     1. implement + test lokal,
+     2. deploy (Vercel dan/atau Firebase rules sesuai scope),
+     3. verifikasi production,
+     4. baru lakukan commit/push final.
    - Commit tetap dipisah per kategori, tetapi dilakukan setelah deploy/verifikasi selesai.
 
 8. **Sebelum commit atau deploy, wajib cek error/warning dulu.**
-  - Jalankan pengecekan minimal: diagnostics TypeScript/ESLint + `npm run build`.
-  - Jika masih ada error, **dilarang commit/deploy** sampai beres.
-  - Warning yang relevan dengan perubahan harus ditangani atau dicatat alasannya.
+
+- Jalankan pengecekan minimal: diagnostics TypeScript/ESLint + `npm run build`.
+- Jika masih ada error, **dilarang commit/deploy** sampai beres.
+- Warning yang relevan dengan perubahan harus ditangani atau dicatat alasannya.
 
 ---
 
@@ -82,6 +83,7 @@ Dashboard monitoring availability subdomain Kabupaten Kendal.
 Fitur inti: cek status domain (online/dns-only/offline), statistik uptime, notifikasi Slack, sinkronisasi Firebase, user management.
 
 ### Tech Stack
+
 - Frontend: React 19 + TypeScript + Vite 7 + Tailwind CSS 4
 - Data: Firebase Firestore
 - Monitoring terjadwal: GitHub Actions (`.github/workflows/monitor-domains.yml`)
@@ -93,18 +95,19 @@ Fitur inti: cek status domain (online/dns-only/offline), statistik uptime, notif
 
 ## 2. Status Sistem (Production Ready)
 
-| Aspek | Detail |
-|-------|--------|
-| Status | ✅ Production Ready |
-| Role aktif | `admin`, `viewer`, `add-only` |
+| Aspek           | Detail                                  |
+| --------------- | --------------------------------------- |
+| Status          | ✅ Production Ready                     |
+| Role aktif      | `admin`, `viewer`, `add-only`           |
 | Monitoring cron | GitHub Actions tiap 1 jam (`0 * * * *`) |
-| Runtime per run | ~2.4 menit |
-| Usage bulanan | ~1,728 menit/bulan (86% kuota 2,000) |
-| Deploy target | Vercel production |
+| Runtime per run | ~2.4 menit                              |
+| Usage bulanan   | ~1,728 menit/bulan (86% kuota 2,000)    |
+| Deploy target   | Vercel production                       |
 
 ### Fitur Implementasi
 
 **Monitoring & Data:**
+
 - 3-state status: `online`, `dns-only`, `offline`
 - Batch staggered checking (B1-B4)
 - Statistik harian/jam + incident tracking
@@ -115,17 +118,20 @@ Fitur inti: cek status domain (online/dns-only/offline), statistik uptime, notif
 - Pin domain (sync antar device)
 
 **User & Permission (MVP - v3.10.0):**
+
 - Login username + password (bukan password-only lagi)
 - Role enforcement: admin (full), viewer (read-only), add-only (tambah domain saja)
 - User Management dialog khusus admin
 - Managed users sync ke Firebase (`users/user-directory`)
 
 **Notifications:**
+
 - Slack webhook settings sinkron ke Firebase
 - Rule: down / recovery / slow + cooldown
 - Per-domain notification toggle tersimpan cloud
 
 **UI/UX (v3.11.0):**
+
 - Dark/Light mode toggle (persisted, tersedia di header + mobile nav + landing page)
 - Audit log viewer (timeline UI, admin only, dari Settings menu)
 - Landing page login screen dengan loading state + spinner
@@ -162,64 +168,83 @@ firestore.rules               # Security rules Firestore
 
 ## 4. Release Terbaru
 
+### v3.11.32 (30 Mei 2026) — **Fix: Monitoring False Offline Browser Check**
+
+- Browser-side monitoring kini membatasi pengecekan massal dengan concurrency aman (`checkDomainStatuses`) untuk mencegah timeout palsu saat ratusan domain dicek bersamaan.
+- HTTP check kini mencoba `HEAD` lalu fallback ke `GET`, sehingga website yang bisa dibuka manual tetapi tidak merespons `HEAD` tidak langsung ditandai offline.
+- Timeout browser-side diselaraskan lebih realistis untuk website `.go.id` yang lambat: DNS 5 detik, HEAD 4 detik, GET 10 detik.
+- Jalur yang ikut memakai fix: tab Monitoring, refresh pinned, dan auto-check pinned. Pengecekan individual tetap berjalan seperti sebelumnya.
+
 ### v3.11.31 (10 Mei 2026) — **Fix: Grup Domain Hilang + Link Mobile**
+
 - `handleAssignDomains` kini langsung memanggil `syncDomainsToFirestore(updatedDomains)` setelah update state — tidak lagi mengandalkan debounce 2 detik. Ini menyelesaikan bug "domain hilang dari grup setelah refresh" karena sebelumnya data bisa hilang jika refresh dilakukan sebelum 2 detik.
 - Icon Globe/WWW di DomainCard, PinnedDomainCard, dan TagCard diubah dari `window.open()` (diblokir popup blocker mobile) ke elemen `<a href target="_blank">`. Kini bisa dibuka di tab baru di mobile/tablet/Android.
 
 ### v3.11.30 (1 Mei 2026) — **Fix: Cron dns-only Logic + Slack Block Kit**
+
 - `checkDomain()` di `monitor-cron.js` difix — sebelumnya DNS resolve + HTTP fail = `dns-only` (sama seperti bug browser v3.11.27). Sekarang `dns-only` hanya untuk error SSL/TLS cert; semua kegagalan lain (server down, timeout, ECONNREFUSED) → `offline`.
 - Title alert per-domain `dns-only` diubah: `'DNS Only — HTTP Tidak Dapat Diakses'` → `'SSL/TLS Error — Sertifikat Bermasalah'`.
 - Batch summary Slack diupgrade dari plain text ke Block Kit (konsisten dengan per-domain alert).
 
 ### v3.11.29 (1 Mei 2026) — **Style: Fix Header DomainCharts Overflow Mobile**
+
 - Header DomainCharts dipisah jadi 2 baris: baris 1 (tombol back + judul + PDF), baris 2 (Daily/Hourly toggle, 7/30 Hari toggle, Refresh) — tidak ada kontrol yang terpotong di mobile.
 - Kurangi `pr-4` → `pr-2` di StatisticsView agar tab Realtime/Analytics/GitHub punya ruang cukup.
 
 ### v3.11.28 (1 Mei 2026) — **Style: Fix Mobile Analytics Responsive**
+
 - Tab Realtime/Analytics/GitHub tidak overflow di mobile (hapus `max-w-2xl`, tambah `min-w-0 truncate`).
 - Uptime bar tampil 1 baris penuh: ganti `flex-wrap` → `flex overflow-hidden`, bar `flex-1 min-w-0` agar proporsional.
 - 5 summary card: card ke-5 (Incidents) diberi `col-span-2 sm:col-span-1` agar tidak menggantung di mobile.
 - Daily Uptime bar chart: setiap bar diwarnai per threshold via `<Cell>` — hijau ≥95%, kuning 50–94%, merah <50%.
 
 ### v3.11.27 (1 Mei 2026) — **Fix: Status Offline saat Server Tidak Terjangkau**
+
 - Logika `dns-only` diubah: hanya berlaku jika DNS resolve + error SSL/cert. Semua error lain → `offline`.
 - Sebelumnya: cPanel off + DNS aktif → tampil `dns-only`. Sesudah fix: tampil `offline` (merah) sesuai kondisi nyata.
 - Tidak ada perubahan cron, Firebase, atau komponen lain.
 
 ### v3.11.26 (5 Apr 2026) — **Patch: Enable Vercel Analytics**
+
 - Mengaktifkan `@vercel/analytics` — melacak Visitors, Page Views, Bounce Rate dari pengguna nyata di production Vercel.
 - Menambahkan `<Analytics />` dari `@vercel/analytics/react` ke `src/main.tsx` sejajar `<SpeedInsights />`.
 - Tidak ada perubahan behavior/fitur aplikasi.
 
 ### v3.11.25 (5 Apr 2026) — **Patch: Enable Vercel Speed Insights**
+
 - Mengaktifkan komponen `<SpeedInsights />` dari `@vercel/speed-insights/react` di `src/main.tsx`.
 - Package sudah ada di `package.json` sejak sebelumnya, namun belum pernah digunakan di kode.
 - Tidak ada perubahan behavior/fitur — komponen berjalan pasif mengumpulkan Core Web Vitals dari pengguna nyata di production Vercel.
 
 ### v3.11.24 (7 Mar 2026) — **Feature: Per-Domain Down/Recovery Alert di Cron**
+
 - Fungsi `sendDomainAlertToSlack()` baru di `scripts/monitor-cron.js` — kirim rich Slack alert (Block Kit) per domain saat status berubah.
 - Alert DOWN (🔴/⚠️) saat `online → offline` / `online → dns-only`; alert RECOVERY (✅) saat `offline/dns-only → online`.
 - Alert **hanya dikirim** untuk domain dengan toggle notifikasi **aktif** di tab Kelola (`notificationsEnabled: true`). Domain default/belum di-toggle → tidak ada alert.
 - Zero tambahan Firebase reads/writes. Fungsi-fungsi bestehende tidak diubah sama sekali.
 
 ### v3.11.23 (6 Mar 2026) — **Fix: Slack Notification / Test Notification tidak terkirim**
+
 - Root cause: `fetch` dengan `mode: 'no-cors'` dan `Content-Type: application/json` menyebabkan browser modern (Chrome 100+) melempar `TypeError` sebelum request dikirim, karena `application/json` bukan CORS-safelisted content type.
 - Fix: Ganti `Content-Type` dari `application/json` ke `text/plain` — CORS-safelisted, request dikirim, Slack tetap parse JSON body-nya.
 - Test notification dan notifikasi otomatis sekarang berfungsi kembali.
 
 ### v3.11.22 (2 Mar 2026) — **Feature: Export PDF di Analytics (DomainCharts)**
+
 - Menambahkan tombol **PDF** di header halaman Statistik → Analytics → domain detail.
 - Dropdown pilihan periode: 1 hari, 15 hari, 30 hari — sama seperti export dari pin menu dan dialog.
 - Tombol otomatis disabled saat loading/data kosong, spinner saat proses export.
 - Sekarang ada 3 entry point export PDF: Pin menu, Dialog Statistik, dan halaman Analytics.
 
 ### v3.11.21 (2 Mar 2026) — **Feature: Export PDF dari Dialog Statistik**
+
 - Menambahkan tombol **Export PDF** di header dialog Statistik domain.
 - Dropdown pilihan periode: 1 hari, 15 hari, 30 hari — menggunakan report generator yang sama.
 - Tombol disabled saat loading atau belum ada data, dengan spinner saat proses export.
 - User bisa export langsung dari popup statistik tanpa kembali ke pin menu.
 
 ### v3.11.20 (2 Mar 2026) — **Fix: Title & Chart Spacing Overlap**
+
 - Memindahkan label nilai maks/min ke dalam area chart agar tidak menabrak judul/label seksi berikutnya.
 - Memperbesar jarak antar chart (uptime bar → response line) dari 29mm → 33mm.
 - Memperbesar jarak chart ke legend, legend ke Executive Interpretation, dan antar seksi bawah.
@@ -227,6 +252,7 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.19 (2 Mar 2026) — **Patch: Compact Page-1 PDF Layout**
+
 - Halaman 1 laporan PDF dibuat lebih compact agar informasi mudah dipindai tanpa terasa penuh.
 - Ringkasan copy pada KPI cards, legend, dan recommendation panel disederhanakan.
 - Penyesuaian tinggi blok dan spacing antar section agar judul/chart tidak mepet.
@@ -234,6 +260,7 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.18 (2 Mar 2026) — **Patch: PDF Spacing Polish + Uptime Bar Chart**
+
 - Perapian spacing pada halaman 1 laporan PDF:
   - padding bawah Ringkasan Laporan,
   - jarak antar blok Executive KPI,
@@ -244,6 +271,7 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.17 (2 Mar 2026) — **Patch: PDF Report Layout Alignment Fix**
+
 - Perbaikan tata letak halaman 1 laporan PDF agar elemen tidak saling overlap:
   - section trend dipadatkan,
   - jarak antar blok executive diselaraskan,
@@ -252,6 +280,7 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.16 (2 Mar 2026) — **Polish: Premium Monitoring PDF Report**
+
 - Penyempurnaan visual laporan PDF agar lebih formal, rapi, dan layak untuk pelaporan manajemen.
 - Penambahan branding header laporan + section divider + legend grafik.
 - Penambahan metrik detail: `P95 response`, `longest incident`, capaian SLA harian, dan hari dengan uptime terburuk.
@@ -260,6 +289,7 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.15 (2 Mar 2026) — **Feature: Monitoring PDF Report Export (Pin Menu)**
+
 - Menambahkan aksi **Export laporan PDF** di menu titik-tiga pada card domain pin.
 - Pilihan periode export: **1 hari, 15 hari, 30 hari**.
 - Isi laporan mencakup:
@@ -272,6 +302,7 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS.
 
 ### v3.11.14 (23 Feb 2026) — **Patch: Firestore 20k Optimization (R-024 Phase 2)**
+
 - Implementasi read-bounded query untuk jalur analytics mahal:
   - `use-domain-insights`: query dibatasi dengan `orderBy(date desc)` + `limit`.
   - `UptimeBar`: strategi bounded query (`orderBy+limit`) dengan fallback aman.
@@ -281,6 +312,7 @@ firestore.rules               # Security rules Firestore
 - Deploy production: `kendal-uptime.vercel.app` PASS.
 
 ### v3.11.13 (23 Feb 2026) — **Patch: Cron Toggle Hardening + GitHub Stats Sync**
+
 - Hardening save toggle Monitoring Cron di UI:
   - guard sesi Firebase Auth (`authUid`) wajib ada,
   - mapping error Firestore (`permission-denied` / `unauthenticated`) menjadi toast yang lebih jelas.
@@ -295,30 +327,35 @@ firestore.rules               # Security rules Firestore
   - deploy Vercel production PASS (`kendal-uptime.vercel.app`).
 
 ### v3.11.12 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 10)**
+
 - Ekstraksi logic export CSV dari `App.tsx` ke hook `use-domain-export`
 - Hook menangani export all, filtered, dan group export dengan validasi yang sama
 - Tidak ada perubahan behavior fungsional (refactor internal)
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.11 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 9)**
+
 - Ekstraksi logic auto-check tab dari `App.tsx` ke hook `use-tab-auto-checks`
 - Hook menangani auto-check saat buka tab Monitoring (manual mode) dan tab Pin
 - Tidak ada perubahan behavior fungsional (refactor internal)
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.10 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 8)**
+
 - Ekstraksi logic notification settings dari `App.tsx` ke hook `use-notification-settings`
 - Hook menangani state/settings load dari Firebase, save settings, dan test notification
 - Tidak ada perubahan behavior fungsional (refactor internal)
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.9 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 7)**
+
 - Ekstraksi logic session inactivity timeout dari `App.tsx` ke hook `use-session-timeout`
 - Hook menangani warning auto-logout, timeout trigger, dan cleanup event listeners/interval
 - Tidak ada perubahan behavior fungsional (refactor internal)
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.8 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 6)**
+
 - Ekstraksi scheduler auto-refresh dari `App.tsx` ke hook `use-auto-refresh-scheduler`
 - Scheduler mencakup initial delay 10 detik, worker lifecycle, dan reset countdown batch
 - Perbaikan konflik compile pada hook scheduler (duplikasi implementasi/export) + penyelarasan API `onAutoCheck`
@@ -326,18 +363,21 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.7 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 4+5)**
+
 - Ekstraksi tracking Firebase ops ke hook `use-firebase-ops-tracker`
 - Ekstraksi kalkulasi seleksi domain tab Kelola ke hook `use-manage-selectable-domains`
 - Tidak ada perubahan behavior fungsional (refactor internal)
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.6 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 3)**
+
 - Ekstraksi manajemen seleksi domain ke hook `use-domain-selection`
 - Penyederhanaan handler select domain/select all di `App.tsx`
 - Tidak ada perubahan behavior fungsional (refactor internal)
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.5 (23 Feb 2026) — **Patch: R-006 Refactor App.tsx (Phase 1)**
+
 - Backup file dibuat sebelum refactor (`backups/App.tsx.backup-...`)
 - Ekstraksi logic dari `App.tsx` ke hooks:
   - `use-manual-refresh-cooldown`
@@ -347,12 +387,14 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.4 (23 Feb 2026) — **Patch: Rollback Public Status Route**
+
 - Hapus fitur **public status page** dan route `/status`
 - Hapus fallback query `?view=status`
 - Konfigurasi `vercel.json` dikembalikan tanpa rewrite khusus route publik
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.3 (23 Feb 2026) — **Minor: Public Status MVP + Session Sync**
+
 - Tambah **public status page** read-only (MVP) untuk visualisasi status layanan tanpa login
 - Akses mode publik via path `/status` atau query `?view=status`
 - Tambah mode **Preview** jika data live belum tersedia
@@ -360,6 +402,7 @@ firestore.rules               # Security rules Firestore
 - Validasi lokal: diagnostics bersih + `npm run build` PASS
 
 ### v3.11.2 (19 Feb 2026) — **Minor: Loading UX + Optimization + Cleanup**
+
 - Tambah loading skeleton saat initial Firebase data fetch (authenticated state)
 - Deduplikasi domain loading flow (initial + version-change) agar konsisten
 - Tambah `useCallback` pada handler utama untuk mengurangi re-render
@@ -374,6 +417,7 @@ firestore.rules               # Security rules Firestore
 - Insight per domain: badge uptime 7d/30d + response-time sparkline (list monitoring & pin card)
 
 ### v3.11.1 (19 Feb 2026) — **Minor: Security Hardening + Logging Cleanup**
+
 - Hapus hardcoded default password `admin123` dari source code
 - Bootstrap password admin pakai `VITE_DEFAULT_ADMIN_PASSWORD` (opsional) atau localStorage
 - Firestore rules diperketat: auth guard untuk `domains/groups/tags`
@@ -383,6 +427,7 @@ firestore.rules               # Security rules Firestore
 - Verifikasi role matrix PASS: `admin` full write, `add-only` write `domains` saja, `viewer` read-only
 
 ### v3.11.0 (18 Feb 2026) — **Major: Dark Mode + Audit Log**
+
 - Dark/Light mode toggle dengan `next-themes` (persist di localStorage)
 - Audit log viewer UI (timeline, fetch dari Firestore, admin only)
 - Landing page login screen dengan loading/disable state + spinner
@@ -393,53 +438,63 @@ firestore.rules               # Security rules Firestore
 - Fix audit log dialog scroll issue
 
 ### v3.10.2 (16 Feb 2026)
+
 - Firestore Rules deploy finalized
 - Script deploy rules disiapkan (`firebase.json` + `package.json`)
 - E2E checklist user management selesai (PASS)
 - Footer version sinkron changelog
 
 ### v3.10.1 (16 Feb 2026)
+
 - Lock aksi mutasi untuk read-only/add-only diperketat
 - Pin/monitoring toggle gated by permission
 
 ### v3.10.0 (16 Feb 2026) — **Major: User Management MVP**
+
 - Username + password login (bukan password-only)
 - Admin: create/enable/disable user
 - Role enforcement: viewer, add-only, admin
 - Managed users sync ke Firebase
 
 ### v3.9.11 (16 Feb 2026)
+
 - Data-loss prevention: skip auto-sync startup, throw on read error
 
 ### v3.9.10 (16 Feb 2026)
+
 - Sinkronisasi estimasi runtime GitHub Actions (~2.4 min/run)
 
 ### v3.9.9 (1 Feb 2026)
+
 - Schedule diubah dari 20 menit → 1 jam (fix syntax error + quota)
 
 ### v3.9.8 (24 Jan 2026)
+
 - 80% reduction workflow time (minimal deps install)
 
 ### v3.9.5-3.9.7 (12-19 Jan 2026)
+
 - Groups persistence fix, notification settings Firebase sync, UI fixes
 
 ### v3.9.0-3.9.4 (12 Jan 2026)
+
 - Search in assign dialog, tag sync fix, pin sync fix, icon/layout fixes
 
 ### Milestone Lama
-| Versi | Highlight |
-|-------|-----------|
+
+| Versi  | Highlight                                                                |
+| ------ | ------------------------------------------------------------------------ |
 | v3.8.x | UptimeBar fix, GitHub Actions stats, domain persistence, countdown timer |
-| v3.7.x | GitHub Actions health monitoring tab |
-| v3.6.x | GitHub Actions 24/7 monitoring (FREE tier) |
-| v3.5.x | Mobile responsive, unified charts |
-| v3.4.x | Individual monitoring, pin tab Firebase sync |
-| v3.1.x | Analytics data, individual domain monitoring |
-| v2.3.x | Firebase optimization, staggered auto-check |
-| v2.2.0 | Slack notifications |
-| v2.1.0 | Firebase cloud sync |
-| v2.0.0 | Statistics, tags, manual check |
-| v1.0.0 | Initial release (2023) |
+| v3.7.x | GitHub Actions health monitoring tab                                     |
+| v3.6.x | GitHub Actions 24/7 monitoring (FREE tier)                               |
+| v3.5.x | Mobile responsive, unified charts                                        |
+| v3.4.x | Individual monitoring, pin tab Firebase sync                             |
+| v3.1.x | Analytics data, individual domain monitoring                             |
+| v2.3.x | Firebase optimization, staggered auto-check                              |
+| v2.2.0 | Slack notifications                                                      |
+| v2.1.0 | Firebase cloud sync                                                      |
+| v2.0.0 | Statistics, tags, manual check                                           |
+| v1.0.0 | Initial release (2023)                                                   |
 
 Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 
@@ -448,95 +503,101 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ## 5. Roadmap (Pending Work)
 
 #### 🔴 High Priority (Fix / Security)
-| ID | Item | Kategori | Effort | Status | Target |
-|----|------|----------|--------|--------|--------|
-| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix | large | In Progress (Phase 10 done) | 3.12.x |
-| R-007 | Hapus console.log berlebihan (~126 statements di App.tsx) | fix | small | Done | 3.11.x |
-| R-008 | Tambah `useCallback` pada handler functions (cegah re-render) | fix | medium | Done | 3.12.x |
-| R-004 | Firestore rules: auth guard pada domains/groups/tags collections | fix/security | small | Done | 3.11.x |
-| R-009 | Hardcode default password `admin123` di source code | fix/security | small | Done | 3.11.x |
-| R-024 | Firestore 20k efficiency stabilization (read/write budget hardening) | fix | large | In Progress (Phase 2 implemented) | 3.12.x |
+
+| ID    | Item                                                                  | Kategori     | Effort | Status                            | Target |
+| ----- | --------------------------------------------------------------------- | ------------ | ------ | --------------------------------- | ------ |
+| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix          | large  | In Progress (Phase 10 done)       | 3.12.x |
+| R-007 | Hapus console.log berlebihan (~126 statements di App.tsx)             | fix          | small  | Done                              | 3.11.x |
+| R-008 | Tambah `useCallback` pada handler functions (cegah re-render)         | fix          | medium | Done                              | 3.12.x |
+| R-004 | Firestore rules: auth guard pada domains/groups/tags collections      | fix/security | small  | Done                              | 3.11.x |
+| R-009 | Hardcode default password `admin123` di source code                   | fix/security | small  | Done                              | 3.11.x |
+| R-024 | Firestore 20k efficiency stabilization (read/write budget hardening)  | fix          | large  | In Progress (Phase 2 implemented) | 3.12.x |
 
 #### 🟡 Medium Priority (Improvement / Feature)
-| ID | Item | Kategori | Effort | Status | Target |
-|----|------|----------|--------|--------|--------|
-| R-010 | Deduplikasi domain loading logic (initial + version-change) | fix | medium | Done | 3.12.x |
-| R-011 | Error boundary per section/tab (bukan hanya root) | improvement | small | Done | 3.11.x |
+
+| ID    | Item                                                                  | Kategori    | Effort | Status          | Target |
+| ----- | --------------------------------------------------------------------- | ----------- | ------ | --------------- | ------ |
+| R-010 | Deduplikasi domain loading logic (initial + version-change)           | fix         | medium | Done            | 3.12.x |
+| R-011 | Error boundary per section/tab (bukan hanya root)                     | improvement | small  | Done            | 3.11.x |
 | R-012 | Accessibility: ARIA labels, keyboard nav, color-blind safe indicators | improvement | medium | Done (baseline) | 3.11.x |
-| R-013 | Konsistensi bahasa UI (campur ID/EN → pilih satu atau i18n) | improvement | medium | Planned | 3.13.x |
-| R-014 | Loading skeleton saat initial Firebase data fetch | improvement | small | Done | 3.11.x |
-| R-015 | Public status page (read-only, tanpa auth) | feature | large | Planned | 3.13.x |
-| R-016 | Uptime percentage badge per domain (7d/30d) | feature | medium | Done | 3.11.x |
-| R-017 | Response time trend sparkline charts per domain | feature | medium | Done | 3.11.x |
+| R-013 | Konsistensi bahasa UI (campur ID/EN → pilih satu atau i18n)           | improvement | medium | Planned         | 3.13.x |
+| R-014 | Loading skeleton saat initial Firebase data fetch                     | improvement | small  | Done            | 3.11.x |
+| R-015 | Public status page (read-only, tanpa auth)                            | feature     | large  | Planned         | 3.13.x |
+| R-016 | Uptime percentage badge per domain (7d/30d)                           | feature     | medium | Done            | 3.11.x |
+| R-017 | Response time trend sparkline charts per domain                       | feature     | medium | Done            | 3.11.x |
 
 #### 🟢 Low Priority (Nice to Have)
-| ID | Item | Kategori | Effort | Status | Target |
-|----|------|----------|--------|--------|--------|
-| R-018 | Keyboard shortcuts (R=refresh, /=search, 1-6=tab, Esc=close) | feature | small | Planned | 3.13.x |
-| R-019 | Bulk operations: pin, enable notif, assign tag dari manage tab | improvement | medium | Planned | 3.13.x |
-| R-020 | SSL certificate expiry monitoring & warning (30/14/7 hari) | feature | large | Planned | 3.14.x |
-| R-021 | Rate limiting pada manual refresh (cooldown 30s) | improvement | small | Done | 3.11.x |
-| R-022 | Session management: sync logout antar tab (BroadcastChannel) | improvement | medium | Done | 3.11.x |
-| R-023 | Cleanup unused dependencies (three, embla, vaul, heroicons) | fix | small | Done | 3.11.x |
-| R-005 | Governance update docs per release | improvement | small | Planned | ongoing |
+
+| ID    | Item                                                           | Kategori    | Effort | Status  | Target  |
+| ----- | -------------------------------------------------------------- | ----------- | ------ | ------- | ------- |
+| R-018 | Keyboard shortcuts (R=refresh, /=search, 1-6=tab, Esc=close)   | feature     | small  | Planned | 3.13.x  |
+| R-019 | Bulk operations: pin, enable notif, assign tag dari manage tab | improvement | medium | Planned | 3.13.x  |
+| R-020 | SSL certificate expiry monitoring & warning (30/14/7 hari)     | feature     | large  | Planned | 3.14.x  |
+| R-021 | Rate limiting pada manual refresh (cooldown 30s)               | improvement | small  | Done    | 3.11.x  |
+| R-022 | Session management: sync logout antar tab (BroadcastChannel)   | improvement | medium | Done    | 3.11.x  |
+| R-023 | Cleanup unused dependencies (three, embla, vaul, heroicons)    | fix         | small  | Done    | 3.11.x  |
+| R-005 | Governance update docs per release                             | improvement | small  | Planned | ongoing |
 
 ### Done Recently
-| ID | Item | Versi |
-|----|------|-------|
-| D-029 | Fix grup domain hilang setelah refresh + icon link mobile | 3.11.31 |
-| D-028 | Fix cron dns-only logic + Slack Block Kit upgrade | 3.11.30 |
-| D-027 | Fix header DomainCharts overflow mobile (2-row layout + pr fix) | 3.11.29 |
-| D-026 | Fix mobile analytics responsive (tab, uptime bar, card grid, chart color) | 3.11.28 |
-| D-025 | Fix status offline saat server tidak terjangkau (monitoring.ts) | 3.11.27 |
-| D-024 | Enable Vercel Analytics (`<Analytics />` di main.tsx) | 3.11.26 |
-| D-023 | Enable Vercel Speed Insights (`<SpeedInsights />` di main.tsx) | 3.11.25 |
-| D-022 | Fix Slack test notification (Content-Type text/plain di no-cors fetch) | 3.11.23 |
-| D-021 | Export PDF di halaman Analytics DomainCharts (dropdown 1/15/30 hari) | 3.11.22 |
-| D-020 | Export PDF dari dialog Statistik domain (dropdown 1/15/30 hari) | 3.11.21 |
-| D-019 | Fix overlap judul & chart pada laporan PDF (label inside + spacing) | 3.11.20 |
-| D-018 | Compact page-1 laporan PDF (copy + spacing + overflow guard) | 3.11.19 |
-| D-017 | Perapian spacing PDF premium + uptime bar chart | 3.11.18 |
-| D-016 | Perbaikan layout overlap laporan PDF premium (section spacing + text wrap) | 3.11.17 |
-| D-015 | Polish premium laporan PDF monitoring (branding + insight + rekomendasi) | 3.11.16 |
-| D-014 | Export laporan monitoring PDF dari pin menu (1/15/30 hari + grafik) | 3.11.15 |
-| D-013 | Firestore analytics read bounding (R-024 Phase 2) | 3.11.14 |
-| D-010 | Monitoring Cron toggle hardening (auth guard + error mapping) | 3.11.13 |
-| D-011 | GitHub Actions status card sync dengan toggle Monitoring Cron | 3.11.13 |
+
+| ID    | Item                                                                        | Versi   |
+| ----- | --------------------------------------------------------------------------- | ------- |
+| D-030 | Fix monitoring false offline: concurrency limit + HEAD→GET fallback         | 3.11.32 |
+| D-029 | Fix grup domain hilang setelah refresh + icon link mobile                   | 3.11.31 |
+| D-028 | Fix cron dns-only logic + Slack Block Kit upgrade                           | 3.11.30 |
+| D-027 | Fix header DomainCharts overflow mobile (2-row layout + pr fix)             | 3.11.29 |
+| D-026 | Fix mobile analytics responsive (tab, uptime bar, card grid, chart color)   | 3.11.28 |
+| D-025 | Fix status offline saat server tidak terjangkau (monitoring.ts)             | 3.11.27 |
+| D-024 | Enable Vercel Analytics (`<Analytics />` di main.tsx)                       | 3.11.26 |
+| D-023 | Enable Vercel Speed Insights (`<SpeedInsights />` di main.tsx)              | 3.11.25 |
+| D-022 | Fix Slack test notification (Content-Type text/plain di no-cors fetch)      | 3.11.23 |
+| D-021 | Export PDF di halaman Analytics DomainCharts (dropdown 1/15/30 hari)        | 3.11.22 |
+| D-020 | Export PDF dari dialog Statistik domain (dropdown 1/15/30 hari)             | 3.11.21 |
+| D-019 | Fix overlap judul & chart pada laporan PDF (label inside + spacing)         | 3.11.20 |
+| D-018 | Compact page-1 laporan PDF (copy + spacing + overflow guard)                | 3.11.19 |
+| D-017 | Perapian spacing PDF premium + uptime bar chart                             | 3.11.18 |
+| D-016 | Perbaikan layout overlap laporan PDF premium (section spacing + text wrap)  | 3.11.17 |
+| D-015 | Polish premium laporan PDF monitoring (branding + insight + rekomendasi)    | 3.11.16 |
+| D-014 | Export laporan monitoring PDF dari pin menu (1/15/30 hari + grafik)         | 3.11.15 |
+| D-013 | Firestore analytics read bounding (R-024 Phase 2)                           | 3.11.14 |
+| D-010 | Monitoring Cron toggle hardening (auth guard + error mapping)               | 3.11.13 |
+| D-011 | GitHub Actions status card sync dengan toggle Monitoring Cron               | 3.11.13 |
 | D-012 | Script verifikasi admin auth/write monitoring control (`verify:auth-admin`) | 3.11.13 |
-| R-006 | Refactor App.tsx phase 10 (domain export hook) | 3.11.12 |
-| R-006 | Refactor App.tsx phase 9 (tab auto-checks hook) | 3.11.11 |
-| R-006 | Refactor App.tsx phase 8 (notification-settings hook) | 3.11.10 |
-| R-006 | Refactor App.tsx phase 7 (session-timeout hook) | 3.11.9 |
-| R-006 | Refactor App.tsx phase 6 (auto-refresh scheduler hook) | 3.11.8 |
-| R-022 | Sync logout antar tab (BroadcastChannel + storage fallback) | 3.11.3 |
-| R-011 | Error boundary per tab/section | 3.11.2 |
-| R-012 | Accessibility baseline (ARIA labels kontrol utama) | 3.11.2 |
-| R-016 | Uptime badge 7d/30d per domain | 3.11.2 |
-| R-017 | Response-time sparkline per domain | 3.11.2 |
-| R-021 | Manual refresh cooldown 30 detik | 3.11.2 |
-| R-008 | Tambah useCallback pada handler utama | 3.11.2 |
-| R-010 | Deduplikasi domain loading flow | 3.11.2 |
-| R-014 | Loading skeleton initial Firebase fetch | 3.11.2 |
-| R-023 | Cleanup dependency unused (three, heroicons) | 3.11.2 |
-| D-008 | Mobile menu settings: Management Akun + Log History | 3.11.2 |
-| D-009 | Login-phase hardening + safe logging (no webhook dump) | 3.11.2 |
-| R-007 | Hapus console.log berlebihan di App.tsx | 3.11.1 |
-| R-004 | Firestore rules auth guard domains/groups/tags | 3.11.1 |
-| R-009 | Hapus hardcoded default password source code | 3.11.1 |
-| D-004 | Dark/Light mode toggle | 3.11.0 |
-| D-005 | Audit log viewer UI | 3.11.0 |
-| D-006 | Landing page login + FAQ + tooltip fix | 3.11.0 |
-| D-007 | Fix TS errors GroupCard + TagCard | 3.11.0 |
-| R-001 | Simplifikasi dokumentasi ke single-entry | 3.10.x |
-| R-002 | Split dokumen historis ke `docs/archive/` | 3.10.x |
-| R-003 | Sinkronisasi metadata arsip | 3.10.x |
-| D-001 | User Management MVP | 3.10.0 |
-| D-002 | Read-only/add-only action lock | 3.10.1 |
-| D-003 | Firebase rules deploy & E2E | 3.10.2 |
+| R-006 | Refactor App.tsx phase 10 (domain export hook)                              | 3.11.12 |
+| R-006 | Refactor App.tsx phase 9 (tab auto-checks hook)                             | 3.11.11 |
+| R-006 | Refactor App.tsx phase 8 (notification-settings hook)                       | 3.11.10 |
+| R-006 | Refactor App.tsx phase 7 (session-timeout hook)                             | 3.11.9  |
+| R-006 | Refactor App.tsx phase 6 (auto-refresh scheduler hook)                      | 3.11.8  |
+| R-022 | Sync logout antar tab (BroadcastChannel + storage fallback)                 | 3.11.3  |
+| R-011 | Error boundary per tab/section                                              | 3.11.2  |
+| R-012 | Accessibility baseline (ARIA labels kontrol utama)                          | 3.11.2  |
+| R-016 | Uptime badge 7d/30d per domain                                              | 3.11.2  |
+| R-017 | Response-time sparkline per domain                                          | 3.11.2  |
+| R-021 | Manual refresh cooldown 30 detik                                            | 3.11.2  |
+| R-008 | Tambah useCallback pada handler utama                                       | 3.11.2  |
+| R-010 | Deduplikasi domain loading flow                                             | 3.11.2  |
+| R-014 | Loading skeleton initial Firebase fetch                                     | 3.11.2  |
+| R-023 | Cleanup dependency unused (three, heroicons)                                | 3.11.2  |
+| D-008 | Mobile menu settings: Management Akun + Log History                         | 3.11.2  |
+| D-009 | Login-phase hardening + safe logging (no webhook dump)                      | 3.11.2  |
+| R-007 | Hapus console.log berlebihan di App.tsx                                     | 3.11.1  |
+| R-004 | Firestore rules auth guard domains/groups/tags                              | 3.11.1  |
+| R-009 | Hapus hardcoded default password source code                                | 3.11.1  |
+| D-004 | Dark/Light mode toggle                                                      | 3.11.0  |
+| D-005 | Audit log viewer UI                                                         | 3.11.0  |
+| D-006 | Landing page login + FAQ + tooltip fix                                      | 3.11.0  |
+| D-007 | Fix TS errors GroupCard + TagCard                                           | 3.11.0  |
+| R-001 | Simplifikasi dokumentasi ke single-entry                                    | 3.10.x  |
+| R-002 | Split dokumen historis ke `docs/archive/`                                   | 3.10.x  |
+| R-003 | Sinkronisasi metadata arsip                                                 | 3.10.x  |
+| D-001 | User Management MVP                                                         | 3.10.0  |
+| D-002 | Read-only/add-only action lock                                              | 3.10.1  |
+| D-003 | Firebase rules deploy & E2E                                                 | 3.10.2  |
 
 ### R-006 Master Checklist (s/d Phase 10)
 
 #### Status per Phase
+
 - [x] Phase 1 — baseline pemecahan handler awal dari `App.tsx` (rilis `3.11.5`)
 - [x] Phase 3 — ekstraksi state seleksi domain ke `use-domain-selection` (rilis `3.11.6`)
 - [x] Phase 4+5 — ekstraksi tracker operasi Firebase + selectable domains logic (rilis `3.11.7`)
@@ -547,23 +608,29 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 - [x] Phase 10 — ekstraksi CSV export handlers ke `use-domain-export` (rilis `3.11.12`)
 
 #### Analisis Kandidat Refactor Berikutnya (Phase 11+)
+
 1. **Dialog/UI state orchestration hook**
-  - Kandidat: state buka/tutup dialog (settings, import/export, assignment, info dialog) yang masih tersebar di `App.tsx`
-  - Dampak: menurunkan coupling UI orchestration dan mempermudah testing perilaku modal
+
+- Kandidat: state buka/tutup dialog (settings, import/export, assignment, info dialog) yang masih tersebar di `App.tsx`
+- Dampak: menurunkan coupling UI orchestration dan mempermudah testing perilaku modal
 
 2. **Data refresh & fetch orchestration hook**
-  - Kandidat: alur initial load + manual refresh + auto refresh trigger agar satu jalur konsisten
-  - Dampak: mengurangi duplikasi guard/loading/error path dan risiko race condition
+
+- Kandidat: alur initial load + manual refresh + auto refresh trigger agar satu jalur konsisten
+- Dampak: mengurangi duplikasi guard/loading/error path dan risiko race condition
 
 3. **Domain action handlers hook**
-  - Kandidat: handler domain-level action (pin, tag/group assignment, update status) yang masih berat di root component
-  - Dampak: memadatkan `App.tsx` ke role container/composition, bukan business logic executor
+
+- Kandidat: handler domain-level action (pin, tag/group assignment, update status) yang masih berat di root component
+- Dampak: memadatkan `App.tsx` ke role container/composition, bukan business logic executor
 
 4. **Derived view-model selectors**
-  - Kandidat: kalkulasi/filter/sorting dataset untuk tab/list/charts dipusatkan ke selector util/hook
-  - Dampak: mengurangi re-computation inline dan memudahkan audit performa render
+
+- Kandidat: kalkulasi/filter/sorting dataset untuk tab/list/charts dipusatkan ke selector util/hook
+- Dampak: mengurangi re-computation inline dan memudahkan audit performa render
 
 #### Exit Criteria sebelum lanjut ke phase berikutnya
+
 - `npm run build` harus PASS tanpa TypeScript error
 - Diagnostics workspace harus clean (no error)
 - `src/lib/version.ts`, `docs/NOW.md`, `docs/CHANGELOG.md`, `docs/GUIDES.md` harus sinkron
@@ -572,23 +639,30 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ### R-024 Plan — Firestore 20k Efficiency Stabilization
 
 #### Tujuan
+
 - Menurunkan konsumsi Firestore read/write agar operasional lebih aman terhadap limit free-tier internal (20k/bulan), tanpa menghapus fitur monitoring yang sudah berjalan.
 
 #### Phase Plan
+
 1. **Phase 1 — Cron write amplification reduction** ✅
-  - `scripts/monitor-cron.js`: status domain tetap di-update, tetapi write `domains/default-user` dikonsolidasikan menjadi **1x per run**.
-  - `scripts/monitor-cron.js`: write stats harian ditrigger hanya saat status berubah atau heartbeat periodik.
+
+- `scripts/monitor-cron.js`: status domain tetap di-update, tetapi write `domains/default-user` dikonsolidasikan menjadi **1x per run**.
+- `scripts/monitor-cron.js`: write stats harian ditrigger hanya saat status berubah atau heartbeat periodik.
 
 2. **Phase 2 — Analytics read bounding** ✅
-  - `use-domain-insights`, `UptimeBar`, `DomainStatisticsDialog` diubah ke query yang dibatasi period + indexed query.
+
+- `use-domain-insights`, `UptimeBar`, `DomainStatisticsDialog` diubah ke query yang dibatasi period + indexed query.
 
 3. **Phase 3 — UI cost control**
-  - Lazy-load + cache TTL untuk panel statistik/insight agar read berulang dari tab aktif turun.
+
+- Lazy-load + cache TTL untuk panel statistik/insight agar read berulang dari tab aktif turun.
 
 4. **Phase 4 — Data model hardening (opsional)**
-  - Pecah dokumen array besar menjadi struktur lebih granular jika kebutuhan skala domain terus naik.
+
+- Pecah dokumen array besar menjadi struktur lebih granular jika kebutuhan skala domain terus naik.
 
 #### Before vs After (Phase 1)
+
 - **Before:**
   - Cron menulis `domains/default-user` per domain yang dicek (`~6D write/hari`, D = total domain).
   - Cron menulis stats hampir setiap kali check domain.
@@ -599,10 +673,12 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
   - Dampak: write harian turun signifikan pada domain dengan status stabil.
 
 #### Dampak ke Behavior User
+
 - Tidak ada perubahan fitur inti (check domain, status, notifikasi, dashboard).
 - Perubahan fokus di efisiensi internal write/read; statistik detail tetap tersedia, namun write saat status stabil dibuat lebih hemat.
 
 #### Progress Implementasi (Aman)
+
 - ✅ Backup file sebelum perubahan (`backups/*backup-safe-opt-*`).
 - ✅ Tambah budget metadata di `use-firebase-ops-tracker` (daily budget, usage %, remaining ops, over-budget flag).
 - ✅ Tambah TTL cache untuk jalur read mahal:
@@ -618,21 +694,25 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 ## 6. Workflow: Plan → Test → Deploy → Commit
 
 ### A. Sebelum coding
+
 1. (Opsional) Backup: `git diff > backup-pre-edit-$(date +%Y%m%d-%H%M%S).patch`
 2. Tetapkan scope perubahan + target versi
 
 ### B. Implementasi
+
 1. Ubah kode sesuai scope
 2. Update versi di `src/lib/version.ts`
 3. Catat perubahan di `docs/CHANGELOG.md`
 
 ### C. Validasi lokal
+
 ```bash
 npm run build          # Wajib berhasil
 npm run dev            # Opsional: verifikasi manual
 ```
 
 ### D. Deploy ke Vercel
+
 Deploy dilakukan lewat **Vercel CLI** (bukan Git push auto-deploy).
 
 ```bash
@@ -642,6 +722,7 @@ npx vercel --prod --yes                              # Deploy ke production
 ```
 
 **Info deploy:**
+
 - Project: `monitoring-domain-bulk`
 - Deployment URL: `monitoring-domain-bulk-*-farid-istiqlals-projects.vercel.app`
 - Production Domain: `kendal-uptime.vercel.app`
@@ -649,18 +730,21 @@ npx vercel --prod --yes                              # Deploy ke production
 > **Penting:** Di Codespace/session baru, `npx vercel login` wajib dijalankan ulang karena session CLI tidak persist.
 
 ### D2. Deploy Firestore Rules (jika ada perubahan rule/security)
+
 ```bash
 npm run firebase:login
 npx firebase-tools deploy --only firestore:rules --project kendal-monitor
 ```
 
 ### Pilih Runbook (D3 vs D4)
-| Kondisi Perubahan | Pakai | Catatan |
-|---|---|---|
+
+| Kondisi Perubahan                                                       | Pakai  | Catatan                                               |
+| ----------------------------------------------------------------------- | ------ | ----------------------------------------------------- |
 | Ada perubahan `firestore.rules`, auth, permission, atau security policy | **D3** | Wajib deploy Firestore rules + verifikasi role/access |
-| Perubahan UI/docs/refactor internal tanpa perubahan rules/security | **D4** | Cukup deploy Vercel + smoke check |
+| Perubahan UI/docs/refactor internal tanpa perubahan rules/security      | **D4** | Cukup deploy Vercel + smoke check                     |
 
 ### D3. Runbook Cepat (Copy-Paste, deploy-first)
+
 ```bash
 # 1) Validasi lokal
 npm run build
@@ -684,6 +768,7 @@ git push origin main
 ```
 
 ### D4. Runbook Singkat (tanpa perubahan rules)
+
 ```bash
 # 1) Validasi lokal
 npm run build
@@ -703,16 +788,19 @@ git push origin main
 ```
 
 ### E. Post-deploy
+
 1. Cek https://kendal-uptime.vercel.app
 2. Verifikasi footer version == changelog terbaru
 3. Jika gagal: cek log Vercel → rollback/redeploy
 
 ### F. Commit & Push (setelah deploy/verifikasi)
+
 1. `git add` per kategori perubahan
 2. Commit terpisah per kategori (`fix: ...`, `docs: ...`, dst)
 3. `git push origin main`
 
 ### Release Gate Checklist
+
 - [ ] Kode sudah dites lokal (`npm run build` pass)
 - [ ] `src/lib/version.ts` sinkron target rilis
 - [ ] `docs/CHANGELOG.md` diupdate
@@ -722,6 +810,7 @@ git push origin main
 - [ ] Commit/push dilakukan setelah verifikasi production selesai
 
 ### Evidence Verifikasi (isi setiap rilis)
+
 - [ ] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-...vercel.app`
 - [ ] **Production URL:** `https://kendal-uptime.vercel.app`
 - [ ] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`
@@ -733,6 +822,7 @@ git push origin main
   - viewer: read ✅, write `domains/groups/tags` ❌ (`403`)
 
 #### Contoh Terisi — v3.11.1 (19 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-ip52zj8fe-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`
@@ -743,6 +833,7 @@ git push origin main
   - add-only (`budi`): write `domains` ✅, write `groups/tags` ❌ (`403`)
 
 #### Contoh Terisi — v3.11.2 update (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-gf713v8fs-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`
@@ -750,6 +841,7 @@ git push origin main
 - [x] **Feature Check:** tab-level boundary, cooldown 30s, insight badge/sparkline tampil normal
 
 #### Contoh Terisi — v3.11.3 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-cc44zn4do-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app`, `curl -I https://kendal-uptime.vercel.app/status`, `curl -I 'https://kendal-uptime.vercel.app/?view=status'` → semuanya `HTTP 200`
@@ -758,6 +850,7 @@ git push origin main
   - viewer (`farid`, `eek`): read ✅, write `domains/groups/tags` ❌ (`403`)
 
 #### Contoh Terisi — v3.11.4 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-a9ezpscea-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -765,6 +858,7 @@ git push origin main
 - [x] **Feature Check:** route publik `/status` dinonaktifkan (rollback), dashboard utama tetap normal
 
 #### Contoh Terisi — v3.11.5 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-oa6m97lq6-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -772,6 +866,7 @@ git push origin main
 - [x] **Feature Check:** refactor `App.tsx` phase 1 live, perpindahan tab lebih responsif (query insights tidak ter-trigger berulang)
 
 #### Contoh Terisi — v3.11.6 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-kiy6lr01q-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -779,6 +874,7 @@ git push origin main
 - [x] **Feature Check:** refactor `App.tsx` phase 3 live (state seleksi domain dipindah ke hook `use-domain-selection`)
 
 #### Contoh Terisi — v3.11.7 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-agkxjfrw6-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -786,6 +882,7 @@ git push origin main
 - [x] **Feature Check:** refactor `App.tsx` phase 4+5 live (`use-firebase-ops-tracker`, `use-manage-selectable-domains`)
 
 #### Contoh Terisi — v3.11.8 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-2n0i9mn89-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -793,6 +890,7 @@ git push origin main
 - [x] **Feature Check:** refactor `App.tsx` phase 6 live (`use-auto-refresh-scheduler`)
 
 #### Contoh Terisi — v3.11.9 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-ogv1flj9k-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -800,6 +898,7 @@ git push origin main
 - [x] **Feature Check:** refactor `App.tsx` phase 7 live (`use-session-timeout`)
 
 #### Contoh Terisi — v3.11.10 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-5ndv51osg-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -807,6 +906,7 @@ git push origin main
 - [x] **Feature Check:** refactor `App.tsx` phase 8 live (`use-notification-settings`)
 
 #### Contoh Terisi — v3.11.11 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-78egj4z0l-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -814,6 +914,7 @@ git push origin main
 - [x] **Feature Check:** refactor `App.tsx` phase 9 live (`use-tab-auto-checks`)
 
 #### Contoh Terisi — v3.11.12 (23 Feb 2026)
+
 - [x] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-fbvzxgj9w-farid-istiqlals-projects.vercel.app`
 - [x] **Production URL:** `https://kendal-uptime.vercel.app`
 - [x] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`, `curl -I https://kendal-uptime.vercel.app/status` → `HTTP 404`
@@ -821,8 +922,10 @@ git push origin main
 - [x] **Feature Check:** refactor `App.tsx` phase 10 live (`use-domain-export`)
 
 #### Template Kosong (Copy-Paste per rilis)
+
 ```markdown
 #### Contoh Terisi — vX.Y.Z (DD Mon YYYY)
+
 - [ ] **Deployment URL (Vercel):** `https://monitoring-domain-bulk-...vercel.app`
 - [ ] **Production URL:** `https://kendal-uptime.vercel.app`
 - [ ] **Smoke Check:** `curl -I https://kendal-uptime.vercel.app` → `HTTP 200`
@@ -860,13 +963,13 @@ npx vercel --prod        # Manual deploy production
 
 ## 8. File Dokumentasi
 
-| File | Fungsi |
-|------|--------|
-| [NOW.md](./NOW.md) | ← File ini. Baca ini = tahu segalanya |
-| [CHANGELOG.md](./CHANGELOG.md) | Detail lengkap semua rilis (30+ versi) |
-| [GUIDES.md](./GUIDES.md) | Panduan penggunaan aplikasi untuk end-user |
-| [archive/](./archive/) | Dokumen historis (development plan, blueprint, checklist lama) |
+| File                           | Fungsi                                                         |
+| ------------------------------ | -------------------------------------------------------------- |
+| [NOW.md](./NOW.md)             | ← File ini. Baca ini = tahu segalanya                          |
+| [CHANGELOG.md](./CHANGELOG.md) | Detail lengkap semua rilis (30+ versi)                         |
+| [GUIDES.md](./GUIDES.md)       | Panduan penggunaan aplikasi untuk end-user                     |
+| [archive/](./archive/)         | Dokumen historis (development plan, blueprint, checklist lama) |
 
 ---
 
-*File ini adalah satu-satunya yang perlu dibaca untuk memahami keseluruhan sistem.*
+_File ini adalah satu-satunya yang perlu dibaca untuk memahami keseluruhan sistem._
