@@ -41,7 +41,7 @@ import { SettingsMenuDialog } from '@/components/SettingsMenuDialog'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Domain, DomainStatus, DomainGroup, DomainTag, NotificationSettings, ManagedUser, ManagedUserRole, UserPermissions, DomainInsight } from '@/lib/types'
 import { NotificationDetails } from '@/lib/notifications'
-import { checkDomainStatus, checkDomainStatuses } from '@/lib/monitoring'
+import { checkDomainStatus, checkDomainStatuses, checkDomainStatusesFromServer } from '@/lib/monitoring'
 import { 
   loadDomains, 
   loadGroups, 
@@ -181,6 +181,7 @@ function App() {
   const [tags, setTags] = useState<DomainTag[]>([])
   const [statuses, setStatuses] = useState<Record<string, DomainStatus>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [bulkCheckProgress, setBulkCheckProgress] = useState<{ completed: number; total: number } | null>(null)
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -275,6 +276,26 @@ function App() {
     })
   }, [])
 
+  const getPersistedStatusesFromDomains = useCallback((loadedDomains: Domain[]): Record<string, DomainStatus> => {
+    return loadedDomains.reduce<Record<string, DomainStatus>>((acc, domain) => {
+      if (!domain.status) return acc
+
+      acc[domain.id] = {
+        id: domain.id,
+        status: domain.status,
+        responseTime: domain.responseTime ?? undefined,
+        lastChecked: domain.lastChecked,
+        error: domain.error ?? undefined,
+        ipAddress: domain.ipAddress ?? undefined,
+        protocol: domain.protocol ?? undefined,
+        httpAccessible: domain.status === 'online',
+        dnsResolvable: !!domain.ipAddress,
+      }
+
+      return acc
+    }, {})
+  }, [])
+
   const loadAndSetDomainsFromFirebase = useCallback(async () => {
     appConsole.log('[Domains] Loading domains from Firebase (no cache)...')
 
@@ -283,12 +304,17 @@ function App() {
       trackFirebaseRead(1)
 
       const normalizedDomains = normalizeDomainsForMonitoring(loadedDomains)
+      const persistedStatuses = getPersistedStatusesFromDomains(normalizedDomains)
       setDomains(normalizedDomains)
+      setStatuses(persistedStatuses)
+      setPreviousStatuses(Object.fromEntries(
+        Object.entries(persistedStatuses).map(([id, status]) => [id, status.status])
+      ))
 
       appConsole.log('[Domains] ✅ Loaded', normalizedDomains.length, 'domains from Firebase')
       const pinnedCount = normalizedDomains.filter(d => d.pinned).length
       const groupedCount = normalizedDomains.filter(d => d.groupId).length
-      appConsole.log(`[Domains] ${pinnedCount} pinned, ${groupedCount} in groups`)
+      appConsole.log(`[Domains] ${pinnedCount} pinned, ${groupedCount} in groups, ${Object.keys(persistedStatuses).length} server statuses`)
       return normalizedDomains
     } catch (error: any) {
       console.error('Firebase quota exceeded or error loading data:', error)
@@ -299,7 +325,7 @@ function App() {
       }
       throw error
     }
-  }, [normalizeDomainsForMonitoring])
+  }, [getPersistedStatusesFromDomains, normalizeDomainsForMonitoring])
 
   // Track previous statuses for incident detection
   const [previousStatuses, setPreviousStatuses] = useState<Record<string, 'online' | 'offline' | 'dns-only'>>({})
@@ -480,18 +506,10 @@ function App() {
           appConsole.log('✅ Fresh data loaded from Firebase after version update')
         }
         
-        // AUTO-CLEAR: Always clear status on browser refresh
-        // This prevents confusion with outdated status counts
-        // User needs to manually "Check All" or enable auto-refresh to see status
-        appConsole.log('Status cleared on browser refresh - please check domains to see current status')
+        // Keep GitHub Actions / cron results from Firestore as the default status source.
+        // Manual browser checks can still override this temporarily during the session.
         localStorage.removeItem('domain-last-statuses')
-        setStatuses({})
-        setPreviousStatuses({})
-        
-        // NOTE: Removed Firebase fallback load to prevent quota exhaustion
-        // Previously: loaded from Firebase if localStorage empty (312 domain reads!)
-        // Now: localStorage populated only by auto-check, manual check is local-only
-        // User must enable auto-refresh to get Firebase data persistence
+        appConsole.log('Status hydrated from GitHub Actions monitoring results in Firebase')
         
         // Password already synced to localStorage by loadPassword()
       } catch (error) {
@@ -1301,7 +1319,21 @@ function App() {
     })
     setStatuses(prev => ({ ...prev, ...checkingStatuses }))
 
-    const results = await checkDomainStatuses(domainsToCheck)
+    setBulkCheckProgress({ completed: 0, total: domainsToCheck.length })
+
+    let results: DomainStatus[] = []
+    try {
+      const handleProgress = ({ completed, total, result }: { completed: number; total: number; result: DomainStatus }) => {
+        setBulkCheckProgress({ completed, total })
+        setStatuses(prev => ({ ...prev, [result.id]: result }))
+      }
+
+      results = isAutoCheck
+        ? await checkDomainStatuses(domainsToCheck, undefined, handleProgress)
+        : await checkDomainStatusesFromServer(domainsToCheck, handleProgress)
+    } finally {
+      setBulkCheckProgress(null)
+    }
 
     const newStatuses: Record<string, DomainStatus> = {}
     results.forEach(result => {
@@ -1762,8 +1794,11 @@ function App() {
       setIsPaused(false)
     }
     try {
-      await checkAllDomains(true, false, false) // Manual check: local only, no Firebase
+      await checkAllDomains(true, false, false) // Manual check: server-side, no Firebase writes
       setLastCheckTime(new Date())
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Manual check gagal dijalankan dari server'
+      toast.error(message)
     } finally {
       setIsRefreshing(false)
     }
@@ -1776,9 +1811,7 @@ function App() {
     hasChecked,
     isRefreshing,
     domains,
-    statuses,
     onManualRefresh: handleManualRefresh,
-    setStatuses,
   })
 
   const handleTogglePause = useCallback(() => {
@@ -2091,6 +2124,10 @@ function App() {
     hasChecked,
   })
 
+  const bulkCheckPercent = bulkCheckProgress && bulkCheckProgress.total > 0
+    ? Math.round((bulkCheckProgress.completed / bulkCheckProgress.total) * 100)
+    : 0
+
   const handleSelectDomain = useCallback((id: string, selected: boolean) => {
     toggleDomainSelection(id, selected)
   }, [toggleDomainSelection])
@@ -2299,7 +2336,11 @@ function App() {
                     size={14} 
                     className={isRefreshing ? 'animate-spin' : ''} 
                   />
-                  {isRefreshing && <span className="text-xs ml-1.5">Checking...</span>}
+                  {isRefreshing && (
+                    <span className="text-xs ml-1.5">
+                      {bulkCheckProgress ? `${bulkCheckProgress.completed}/${bulkCheckProgress.total}` : 'Checking...'}
+                    </span>
+                  )}
                   {!isRefreshing && manualRefreshRemainingSeconds > 0 && (
                     <span className="text-xs ml-1.5">{manualRefreshRemainingSeconds}s</span>
                   )}
@@ -2366,12 +2407,23 @@ function App() {
 
           <TabsContent value="domains" className="space-y-4 flex-1 flex flex-col overflow-hidden">
             <ErrorBoundary FallbackComponent={TabSectionFallback} resetKeys={[activeTab]}>
+            {isRefreshing && bulkCheckProgress && (
+              <div className="rounded-lg border border-primary/30 bg-primary/10 p-3" aria-live="polite">
+                <div className="flex items-center justify-between gap-3 text-xs mb-2">
+                  <span className="font-semibold text-primary">Memeriksa domain</span>
+                  <span className="text-muted-foreground font-mono">
+                    {bulkCheckProgress.completed}/{bulkCheckProgress.total} ({bulkCheckPercent}%)
+                  </span>
+                </div>
+                <Progress value={bulkCheckPercent} className="h-2" />
+              </div>
+            )}
             {!autoRefreshEnabled && hasChecked && !isRefreshing && totalCount > 0 && (
               <div className="space-y-3">
                 <div className="bg-success/10 border border-success/30 rounded-lg p-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="w-6 h-6 rounded bg-success/20 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded bg-success/20 flex items-center justify-center shrink-0">
                         <CheckSquare size={14} weight="duotone" className="text-success" />
                       </div>
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs flex-1 min-w-0">
@@ -2390,7 +2442,7 @@ function App() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -2427,7 +2479,7 @@ function App() {
                 {dnsOnlyCount > onlineCount && dnsOnlyCount > 5 && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
                     <div className="flex items-start gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
                         <Info size={18} weight="duotone" className="text-amber-500" />
                       </div>
                       <div className="space-y-1">
@@ -2675,11 +2727,22 @@ function App() {
                         className={isRefreshing ? 'animate-spin mr-2' : 'mr-2'} 
                       />
                       {isRefreshing
-                        ? 'Checking...'
+                        ? bulkCheckProgress
+                          ? `Checking ${bulkCheckProgress.completed}/${bulkCheckProgress.total}`
+                          : 'Checking...'
                         : manualRefreshRemainingSeconds > 0
                           ? `Tunggu ${manualRefreshRemainingSeconds}s`
                           : `Check All Domains (${totalCount})`}
                     </Button>
+                    {isRefreshing && bulkCheckProgress && (
+                      <div className="space-y-2" aria-live="polite">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{bulkCheckProgress.completed} dari {bulkCheckProgress.total} selesai</span>
+                          <span className="font-mono">{bulkCheckPercent}%</span>
+                        </div>
+                        <Progress value={bulkCheckPercent} className="h-2" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3024,31 +3087,16 @@ function App() {
                   onClick={async () => {
                     const pinnedDomains = domains.filter(d => d.pinned)
                     if (pinnedDomains.length === 0) return
-                    
-                    toast.info(`Checking ${pinnedDomains.length} pinned domains...`)
-                    
-                    // Set checking status
-                    const checkingStatuses: Record<string, DomainStatus> = {}
-                    pinnedDomains.forEach(domain => {
-                      checkingStatuses[domain.id] = { id: domain.id, status: 'checking' }
-                    })
-                    setStatuses(prev => ({ ...prev, ...checkingStatuses }))
-                    
-                    // Check domains with browser-safe concurrency
-                    const results = await checkDomainStatuses(pinnedDomains)
-                    
-                    const newStatuses: Record<string, DomainStatus> = {}
-                    results.forEach(result => {
-                      newStatuses[result.id] = result
-                    })
-                    setStatuses(prev => ({ ...prev, ...newStatuses }))
-                    
-                    toast.success('Pinned domains updated!')
+
+                    toast.info('Memuat status terbaru dari GitHub Actions...')
+                    const refreshedDomains = await loadAndSetDomainsFromFirebase()
+                    const refreshedPinnedCount = refreshedDomains.filter(d => d.pinned && d.status).length
+                    toast.success(`Status cron dimuat: ${refreshedPinnedCount}/${pinnedDomains.length} pinned domain punya hasil server`)
                   }}
                   className="h-8"
                 >
                   <ArrowClockwise size={14} />
-                  Refresh Status
+                  Muat Status Cron
                 </Button>
               )}
             </div>

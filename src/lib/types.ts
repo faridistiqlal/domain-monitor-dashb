@@ -2,6 +2,12 @@ export interface Domain {
   id: string
   url: string
   addedAt: number
+  status?: 'online' | 'offline' | 'dns-only'
+  responseTime?: number | null
+  lastChecked?: number
+  error?: string | null
+  ipAddress?: string | null
+  protocol?: string | null
   groupId?: string
   tags?: string[]
   notificationsEnabled?: boolean

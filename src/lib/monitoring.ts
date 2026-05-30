@@ -4,6 +4,14 @@ const DNS_LOOKUP_TIMEOUT_MS = 5000
 const HTTP_HEAD_TIMEOUT_MS = 4000
 const HTTP_GET_TIMEOUT_MS = 10000
 const BULK_CHECK_CONCURRENCY = 8
+const SERVER_CHECK_BATCH_SIZE = 8
+
+export interface DomainCheckProgress<T extends { id: string; url: string }> {
+  completed: number
+  total: number
+  domain: T
+  result: DomainStatus
+}
 
 async function getIPAddress(domain: string): Promise<string | undefined> {
   try {
@@ -237,18 +245,71 @@ export async function checkDomainStatus(url: string, domainId: string): Promise<
 export async function checkDomainStatuses<T extends { id: string; url: string }>(
   domains: T[],
   concurrency: number = BULK_CHECK_CONCURRENCY,
+  onProgress?: (progress: DomainCheckProgress<T>) => void,
 ): Promise<DomainStatus[]> {
   const results: DomainStatus[] = new Array(domains.length)
   let nextIndex = 0
+  let completed = 0
   const workerCount = Math.min(Math.max(1, concurrency), domains.length)
 
   await Promise.all(Array.from({ length: workerCount }, async () => {
     while (nextIndex < domains.length) {
       const currentIndex = nextIndex++
       const domain = domains[currentIndex]
-      results[currentIndex] = await checkDomainStatus(domain.url, domain.id)
+      const result = await checkDomainStatus(domain.url, domain.id)
+      results[currentIndex] = result
+      completed += 1
+      onProgress?.({ completed, total: domains.length, domain, result })
     }
   }))
+
+  return results
+}
+
+export async function checkDomainStatusesFromServer<T extends { id: string; url: string }>(
+  domains: T[],
+  onProgress?: (progress: DomainCheckProgress<T>) => void,
+): Promise<DomainStatus[]> {
+  const results: DomainStatus[] = []
+  let completed = 0
+  const isLocalDev = typeof window !== 'undefined'
+    && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+
+  try {
+    for (let startIndex = 0; startIndex < domains.length; startIndex += SERVER_CHECK_BATCH_SIZE) {
+      const batch = domains.slice(startIndex, startIndex + SERVER_CHECK_BATCH_SIZE)
+      const response = await fetch('/api/check-domains', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          domains: batch.map(domain => ({ id: domain.id, url: domain.url })),
+        }),
+      })
+
+      if (!response.ok) {
+        const message = await response.text().catch(() => '')
+        throw new Error(message || `Server check gagal (${response.status})`)
+      }
+
+      const data = await response.json() as { results?: DomainStatus[] }
+      const batchResults = Array.isArray(data.results) ? data.results : []
+
+      batchResults.forEach((result, index) => {
+        const domain = batch[index]
+        if (!domain) return
+
+        results[startIndex + index] = result
+        completed += 1
+        onProgress?.({ completed, total: domains.length, domain, result })
+      })
+    }
+  } catch (error) {
+    if (isLocalDev) {
+      return checkDomainStatuses(domains, undefined, onProgress)
+    }
+
+    throw error
+  }
 
   return results
 }

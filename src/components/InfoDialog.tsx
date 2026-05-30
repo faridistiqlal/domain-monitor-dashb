@@ -121,7 +121,7 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
                 </div>
                 <div className="flex gap-2">
                   <span className="font-semibold text-accent">•</span>
-                  <p><span className="font-semibold text-foreground">Auto-Check Pinned:</span> Domain di tab Pin otomatis ter-check saat tab dibuka, atau klik "Refresh Status" untuk manual refresh</p>
+                  <p><span className="font-semibold text-foreground">Status Pinned:</span> Tab Pin memakai hasil monitoring GitHub Actions dari Firebase. Klik "Muat Status Cron" untuk memuat hasil server terbaru.</p>
                 </div>
               </div>
             </AccordionContent>
@@ -197,7 +197,7 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
             <AccordionContent>
               <div className="space-y-4 pt-2">
                 <div className="flex gap-3 items-start">
-                  <div className="w-3 h-3 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)] mt-1 flex-shrink-0" />
+                  <div className="w-3 h-3 rounded-full bg-success shadow-[0_0_8px_rgba(76,175,80,0.6)] mt-1 shrink-0" />
                   <div className="space-y-1">
                     <div className="font-semibold" style={{ color: 'oklch(0.70 0.22 145)' }}>Online</div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -209,7 +209,7 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
                 </div>
 
                 <div className="flex gap-3 items-start">
-                  <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] mt-1 flex-shrink-0" />
+                  <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] mt-1 shrink-0" />
                   <div className="space-y-1">
                     <div className="font-semibold" style={{ color: 'rgb(245, 158, 11)' }}>DNS Only</div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -234,7 +234,7 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
                 </div>
 
                 <div className="flex gap-3 items-start">
-                  <div className="w-3 h-3 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)] mt-1 flex-shrink-0" />
+                  <div className="w-3 h-3 rounded-full bg-destructive shadow-[0_0_8px_rgba(244,67,54,0.6)] mt-1 shrink-0" />
                   <div className="space-y-1">
                     <div className="font-semibold text-destructive">Offline</div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
