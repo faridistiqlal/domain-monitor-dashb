@@ -104,7 +104,7 @@ echo -e "${BLUE}═════════════════════�
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo -e "  1. Wait 1-2 minutes for Vercel auto-deploy"
-echo -e "  2. Check: ${BLUE}https://kendal-uptime.vercel.app${NC}"
+echo -e "  2. Check: ${BLUE}https://domain-watchtower.vercel.app${NC}"
 echo -e "  3. Verify footer shows: ${GREEN}v${NEW_VERSION}${NC}"
 echo ""
 echo -e "${YELLOW}Deployment status:${NC}"

@@ -727,7 +727,7 @@ async function sendSlackBatchSummary({
     elements: [
       {
         type: "mrkdwn",
-        text: `🕐 ${timeWIB} WIB | <https://kendal-uptime.vercel.app|View Dashboard>`,
+        text: `🕐 ${timeWIB} WIB | <https://domain-watchtower.vercel.app|View Dashboard>`,
       },
     ],
   });
@@ -824,7 +824,7 @@ async function sendDomainAlertToSlack(
             elements: [
               {
                 type: "mrkdwn",
-                text: `🕐 ${timeWIB} WIB | <https://kendal-uptime.vercel.app|View Dashboard>`,
+                text: `🕐 ${timeWIB} WIB | <https://domain-watchtower.vercel.app|View Dashboard>`,
               },
             ],
           },
