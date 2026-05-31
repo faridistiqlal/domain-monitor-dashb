@@ -181,6 +181,25 @@ Endpoint ini juga dibatasi di server menjadi maksimal 2 request per 60 detik per
 
 ---
 
+## Biaya & Free Tier
+
+Secara umum project ini bisa dijalankan dengan biaya sangat rendah, dan untuk skala kecil-menengah biasanya masih bisa di level gratis.
+
+- Vercel: bisa deploy di plan gratis untuk frontend + serverless endpoint ringan (`/api/check-domains`).
+- Firebase: bisa mulai dari free tier, tetapi tetap perlu monitor kuota bulanan (Firestore read/write/storage + Auth usage).
+- GitHub Actions monitoring: pada akun/repo tertentu bisa berjalan gratis, tetapi batas menit/billing tergantung kebijakan plan GitHub Anda.
+
+Rekomendasi operasional:
+
+- Mulai dari free tier dulu.
+- Nyalakan scheduler secukupnya (misalnya 1x/jam seperti default).
+- Pantau usage tiap bulan di dashboard Firebase, Vercel, dan GitHub.
+- Jika trafik/domain makin banyak, baru naikkan plan secara bertahap.
+
+Intinya: mayoritas setup bisa jalan di tier gratis, selama penggunaan masih dalam batas kuota platform.
+
+---
+
 ## Struktur Proyek
 
 ```text

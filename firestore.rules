@@ -229,17 +229,17 @@ service cloud.firestore {
 
     match /domain-stats-daily/{docId} {
       allow read: if canReadApp();
-      allow write: if validDailyStatsDoc();
+      allow write: if isAdmin() && validDailyStatsDoc();
     }
 
     match /domain-incidents/{docId} {
       allow read: if canReadApp();
-      allow write: if validIncidentDoc();
+      allow write: if isAdmin() && validIncidentDoc();
     }
 
     match /github-actions-logs/{docId} {
       allow read: if canReadApp();
-      allow write: if validGithubActionsLogDoc();
+      allow write: if isAdmin() && validGithubActionsLogDoc();
     }
 
     match /audit-logs/{docId} {

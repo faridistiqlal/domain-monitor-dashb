@@ -1,31 +1,37 @@
-Thanks for helping make GitHub safe for everyone.
+# Security Policy
 
-# Security
+## Supported Versions
 
-GitHub takes the security of our software products and services seriously, including all of the open source code repositories managed through our GitHub organizations, such as [GitHub](https://github.com/GitHub).
+Security updates are applied to the active `main` branch (latest release state).
 
-Even though [open source repositories are outside of the scope of our bug bounty program](https://bounty.github.com/index.html#scope) and therefore not eligible for bounty rewards, we will ensure that your finding gets passed along to the appropriate maintainers for remediation. 
+| Version | Supported |
+| --- | --- |
+| Latest (`main`) | Yes |
+| Older commits/releases | No |
 
-## Reporting Security Issues
+## Reporting a Vulnerability
 
-If you believe you have found a security vulnerability in any GitHub-owned repository, please report it to us through coordinated disclosure.
+Please do not open public issues for security problems.
 
-**Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.**
+Use one of these private channels:
 
-Instead, please send an email to opensource-security[@]github.com.
+1. GitHub Security Advisory: open a private report in the repository `Security` tab.
+2. If advisory is unavailable, contact the maintainer directly through private GitHub communication.
 
-Please include as much of the information listed below as you can to help us better understand and resolve the issue:
+Include the following details to speed up triage:
 
-  * The type of issue (e.g., buffer overflow, SQL injection, or cross-site scripting)
-  * Full paths of source file(s) related to the manifestation of the issue
-  * The location of the affected source code (tag/branch/commit or direct URL)
-  * Any special configuration required to reproduce the issue
-  * Step-by-step instructions to reproduce the issue
-  * Proof-of-concept or exploit code (if possible)
-  * Impact of the issue, including how an attacker might exploit the issue
+- Affected file/path and commit hash.
+- Reproduction steps (clear and minimal).
+- Impact assessment (what can an attacker do).
+- Suggested fix or mitigation (if available).
 
-This information will help us triage your report more quickly.
+## Response Targets
 
-## Policy
+- Initial triage response: within 72 hours.
+- Status update: within 7 days.
+- Fix timeline: depends on severity and complexity.
 
-See [GitHub's Safe Harbor Policy](https://docs.github.com/en/site-policy/security-policies/github-bug-bounty-program-legal-safe-harbor#1-safe-harbor-terms)
+## Disclosure Policy
+
+- Please allow time for a fix before public disclosure.
+- After a fix is released, coordinated disclosure is welcome.
