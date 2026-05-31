@@ -2,11 +2,11 @@
 
 Dashboard monitoring availability domain/subdomain dengan Firebase sync, statistik uptime, notifikasi Slack, dan role-based access.
 
-| Link | Value |
-| --- | --- |
-| Demo URL | https://domain-watchtower.vercel.app |
-| Current Version | 3.11.32 |
-| Runtime | React 19 + TypeScript + Vite 7 + Tailwind 4 |
+| Link            | Value                                       |
+| --------------- | ------------------------------------------- |
+| Demo URL        | https://domain-watchtower.vercel.app        |
+| Current Version | 3.11.32                                     |
+| Runtime         | React 19 + TypeScript + Vite 7 + Tailwind 4 |
 
 - Current Version: 3.11.32
 
@@ -83,6 +83,7 @@ npm run preview
 ## Fitur Utama
 
 ### Monitoring
+
 - 3-state status: `online`, `dns-only`, `offline`
 - Manual bulk check + progress counter
 - Auto-refresh + batch staggered checking
@@ -90,12 +91,14 @@ npm run preview
 - Export laporan PDF per domain
 
 ### User & Permission
+
 - Login username + password
 - Role: `admin`, `viewer`, `add-only`
 - Guard permission pada aksi mutasi (edit/delete/pin/toggle monitoring)
 - Admin bisa kelola user dari UI
 
 ### Integrasi
+
 - Firebase Firestore sync (domains/groups/tags/stats)
 - GitHub Actions cron monitoring
 - Slack webhook notification (down/recovery/slow)
@@ -105,7 +108,7 @@ npm run preview
 ## Setup Firebase
 
 1. Buat project Firebase dan aktifkan Firestore.
-2. Salin konfigurasi web app ke [src/lib/firebase.ts](src/lib/firebase.ts).
+2. Salin file `.env.example` menjadi `.env`, lalu isi semua variabel `VITE_FIREBASE_*` untuk frontend.
 3. Deploy rules:
 
 ```bash
@@ -114,12 +117,26 @@ npm run firebase:rules:deploy
 ```
 
 4. Pastikan struktur dokumen utama tersedia:
+
 - `domains/default-user`
 - `groups/default-user`
 - `tags/default-user`
 - `users/default-user`
 
 5. Aktifkan Firebase Authentication (Email/Password) jika ingin mode auth penuh.
+
+Variabel env frontend (lokal + Vercel):
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_MEASUREMENT_ID`
+- `VITE_DEFAULT_ADMIN_PASSWORD`
+- `VITE_DEMO_VIEWER_USERNAME`
+- `VITE_DEMO_VIEWER_PASSWORD`
 
 ---
 
@@ -141,6 +158,10 @@ Set repository secrets berikut:
 - `FIREBASE_SERVICE_ACCOUNT` (recommended)
 - `FIREBASE_CRON_EMAIL` dan `FIREBASE_CRON_PASSWORD` (fallback jika tanpa service account)
 - `SLACK_WEBHOOK_URL` (optional)
+
+Catatan:
+
+- `scripts/monitor-cron.js` dan `scripts/verify-admin-auth.mjs` sekarang mewajibkan semua variabel `FIREBASE_*` di atas. Tidak ada fallback hardcoded lagi.
 
 Set repository variables (optional):
 

@@ -74,7 +74,6 @@ export interface UserPermissions {
 export interface ManagedUser {
   id: string
   username: string
-  password?: string
   email?: string
   authUid?: string
   role: ManagedUserRole

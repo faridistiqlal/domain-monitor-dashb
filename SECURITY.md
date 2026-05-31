@@ -4,10 +4,10 @@
 
 Security updates are applied to the active `main` branch (latest release state).
 
-| Version | Supported |
-| --- | --- |
-| Latest (`main`) | Yes |
-| Older commits/releases | No |
+| Version                | Supported |
+| ---------------------- | --------- |
+| Latest (`main`)        | Yes       |
+| Older commits/releases | No        |
 
 ## Reporting a Vulnerability
 

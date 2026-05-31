@@ -158,7 +158,6 @@ function App() {
   const createDefaultAdminUser = (): ManagedUser => ({
     id: 'default-user',
     username: 'admin',
-    password: localStorage.getItem('app-password') || DEFAULT_ADMIN_PASSWORD,
     role: 'admin',
     permissions: getPermissionsByRole('admin'),
     isActive: true,
@@ -171,7 +170,6 @@ function App() {
   const createDemoViewerUser = (): ManagedUser => ({
     id: 'demo-viewer',
     username: DEMO_VIEWER_USERNAME || 'demo',
-    password: DEMO_VIEWER_PASSWORD,
     role: 'viewer',
     permissions: getPermissionsByRole('viewer'),
     isActive: true,
@@ -402,6 +400,29 @@ function App() {
       || false
   }
 
+  const isAuthInvalidCredentialError = (error: unknown): boolean => {
+    const authError = error as { code?: string; message?: string } | undefined
+    return authError?.code === 'auth/invalid-credential'
+      || authError?.code === 'auth/wrong-password'
+      || authError?.code === 'auth/user-not-found'
+      || authError?.message?.toLowerCase().includes('invalid-credential')
+      || false
+  }
+
+  const canBootstrapBaselineAuth = (username: string, password: string): boolean => {
+    const normalizedUsername = username.trim().toLowerCase()
+
+    if (normalizedUsername === 'admin') {
+      return !!DEFAULT_ADMIN_PASSWORD && password === DEFAULT_ADMIN_PASSWORD
+    }
+
+    if (normalizedUsername === DEMO_VIEWER_USERNAME) {
+      return !!DEMO_VIEWER_PASSWORD && password === DEMO_VIEWER_PASSWORD
+    }
+
+    return false
+  }
+
   const refreshManagedUsersState = async () => {
     const latestSnapshot = await loadManagedUsersSnapshot()
     setManagedUsers(latestSnapshot.users)
@@ -552,7 +573,6 @@ function App() {
         localStorage.removeItem('domain-last-statuses')
         appConsole.log('Status hydrated from GitHub Actions monitoring results in Firebase')
         
-        // Password already synced to localStorage by loadPassword()
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -623,14 +643,6 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthUserChanged(async (authUser) => {
       if (!authUser) {
-        const hasLegacySession = localStorage.getItem('app-authenticated') === 'true'
-          && !!localStorage.getItem('app-current-user-id')
-          && !localStorage.getItem('app-current-auth-uid')
-
-        if (hasLegacySession) {
-          return
-        }
-
         setIsAuthenticated(false)
         setCurrentUser(null)
         localStorage.setItem('app-authenticated', 'false')
@@ -831,33 +843,20 @@ function App() {
       console.error('[Auth] Firebase sign-in failed:', authError)
 
       if (isAuthConfigurationError(authError)) {
-        const matchedLegacyUser = users.find(
-          user => user.username.toLowerCase() === normalized && (user.password || '') === password
-        )
-
-        if (!matchedLegacyUser) {
-          toast.error('Username atau password salah')
-          return
-        }
-
-        if (!matchedLegacyUser.isActive) {
-          toast.error('Akun nonaktif. Hubungi admin.')
-          return
-        }
-
-        applyAuthenticatedSession(matchedLegacyUser)
-        toast.warning('Firebase Auth belum aktif. Masuk menggunakan mode legacy sementara.')
+        toast.error('Firebase Authentication belum aktif. Aktifkan provider Email/Password terlebih dahulu.')
         return
       }
 
-      const legacyUser = users.find(user => user.username.toLowerCase() === normalized)
-      const canBootstrapLegacyAuth = legacyUser && !legacyUser.authUid && (legacyUser.password || '') === password
+      const baselineUser = users.find(user => user.username.toLowerCase() === normalized)
+      const canBootstrapAuth = baselineUser
+        && !baselineUser.authUid
+        && canBootstrapBaselineAuth(normalized, password)
 
-      if (canBootstrapLegacyAuth && legacyUser) {
+      if (canBootstrapAuth && baselineUser && isAuthInvalidCredentialError(authError)) {
         try {
-          const bootstrappedAuth = await createAuthUserWithUsername(legacyUser.username, password)
+          const bootstrappedAuth = await createAuthUserWithUsername(baselineUser.username, password)
           const updatedUsers = users.map(user =>
-            user.id === legacyUser.id
+            user.id === baselineUser.id
               ? {
                   ...user,
                   authUid: bootstrappedAuth.uid,
@@ -874,23 +873,23 @@ function App() {
           }
 
           await syncUserAccessProfileToFirestore(bootstrappedAuth.uid, {
-            appUserId: legacyUser.id,
-            username: legacyUser.username,
+            appUserId: baselineUser.id,
+            username: baselineUser.username,
             email: bootstrappedAuth.email,
-            role: legacyUser.role,
-            permissions: legacyUser.permissions,
-            isActive: legacyUser.isActive,
+            role: baselineUser.role,
+            permissions: baselineUser.permissions,
+            isActive: baselineUser.isActive,
           })
 
           await signInWithUsernamePassword(username, password)
           toast.success('Akun user berhasil dimigrasikan ke Firebase Auth. Silakan login ulang sekali lagi jika perlu.')
           return
         } catch (bootstrapError) {
-          console.error('[Auth] Legacy user bootstrap failed:', bootstrapError)
+          console.error('[Auth] Baseline user bootstrap failed:', bootstrapError)
         }
       }
 
-      toast.error('Username atau password salah / akun auth belum aktif')
+      toast.error('Username atau password salah')
       return
     }
 
@@ -1045,21 +1044,18 @@ function App() {
         }
       }
 
-      if (!isAuthConfigurationError(error)) {
-        if (!authUser) {
-          toast.error('Gagal membuat akun auth user')
-          return false
-        }
+      if (isAuthConfigurationError(error)) {
+        toast.error('Firebase Authentication belum aktif. Aktifkan provider Email/Password sebelum membuat user baru.')
+        return false
+      }
+
+      if (!authUser) {
+        toast.error('Gagal membuat akun auth user')
+        return false
       }
 
       if (authUser) {
         toast.info('Akun auth sudah ada. User directory akan dihubungkan ke akun tersebut.')
-      } else if (isAuthConfigurationError(error)) {
-        toast.warning('Firebase Auth belum aktif. User dibuat dengan mode legacy sementara.')
-      }
-
-      if (!authUser && !isAuthConfigurationError(error)) {
-        return false
       }
     }
 
@@ -1069,7 +1065,6 @@ function App() {
       username: payload.username,
       email: authUser?.email,
       authUid: authUser?.uid,
-      password: authUser ? undefined : payload.password,
       role: payload.role,
       permissions: getPermissionsByRole(payload.role),
       isActive: true,
