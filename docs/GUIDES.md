@@ -1,7 +1,7 @@
 # 📖 USER GUIDES - Domain Monitor
 
 **App:** Domain Monitor Dashboard  
-**URL:** https://your-monitoring-dashboard.vercel.app (Live on Vercel)  
+**URL:** https://domain-watchtower.vercel.app (Live on Vercel)  
 **Version:** 3.11.32  
 **Deployment:** Vercel Production (Manual deploy via Vercel CLI)
 
@@ -12,7 +12,7 @@
 ## 🚀 Quick Start
 
 ### First Time Setup:
-1. **Access App** - Buka URL deployment Anda (contoh: https://your-monitoring-dashboard.vercel.app)
+1. **Access App** - Buka URL deployment Anda (contoh: https://domain-watchtower.vercel.app)
 2. **Login** - Masukkan username + password yang diberikan admin
 3. **Setup Notifications (Optional)** - Klik Bell icon → Setup Slack webhook
 4. **Add Domain** - Klik "Tambah Domain", masukkan URL (contoh: `diskominfo.kendalkab.go.id`)

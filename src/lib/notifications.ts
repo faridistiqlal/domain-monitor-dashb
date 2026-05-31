@@ -211,7 +211,7 @@ export class NotificationService {
       elements: [
         {
           type: 'mrkdwn',
-          text: `🕐 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB | <https://kendal-uptime.vercel.app|View Dashboard>`,
+          text: `🕐 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB | <https://domain-watchtower.vercel.app|View Dashboard>`,
         },
       ],
     });

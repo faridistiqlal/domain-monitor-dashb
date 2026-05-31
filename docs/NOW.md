@@ -5,7 +5,7 @@
 
 **Last Updated:** 30 Mei 2026  
 **Current Version:** 3.11.32 (sumber: `src/lib/version.ts`)  
-**Live App:** https://kendal-uptime.vercel.app
+**Live App:** https://domain-watchtower.vercel.app
 
 ---
 

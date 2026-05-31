@@ -8,7 +8,8 @@ const HTTP_TIMEOUT_MS = 12000;
 const MAX_DOMAINS_PER_REQUEST = 12;
 const MANUAL_CHECK_WINDOW_MS = 60_000;
 const MANUAL_CHECK_MAX_REQUESTS = 2;
-const rateLimitStore = globalThis.__domainMonitorManualRateLimitStore || new Map();
+const rateLimitStore =
+  globalThis.__domainMonitorManualRateLimitStore || new Map();
 
 if (!globalThis.__domainMonitorManualRateLimitStore) {
   globalThis.__domainMonitorManualRateLimitStore = rateLimitStore;
@@ -32,10 +33,14 @@ const getClientIdentifier = (request) => {
   }
 
   if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
-    return String(forwardedFor[0] || "").split(",")[0].trim();
+    return String(forwardedFor[0] || "")
+      .split(",")[0]
+      .trim();
   }
 
-  return request.headers["x-real-ip"] || request.socket?.remoteAddress || "unknown";
+  return (
+    request.headers["x-real-ip"] || request.socket?.remoteAddress || "unknown"
+  );
 };
 
 const cleanupRateLimitStore = (now) => {
@@ -70,7 +75,10 @@ const checkRateLimit = (request) => {
     return {
       allowed: false,
       remaining: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil((existingEntry.resetAt - now) / 1000)),
+      retryAfterSeconds: Math.max(
+        1,
+        Math.ceil((existingEntry.resetAt - now) / 1000),
+      ),
     };
   }
 
@@ -79,7 +87,10 @@ const checkRateLimit = (request) => {
   return {
     allowed: true,
     remaining: Math.max(0, MANUAL_CHECK_MAX_REQUESTS - existingEntry.count),
-    retryAfterSeconds: Math.max(1, Math.ceil((existingEntry.resetAt - now) / 1000)),
+    retryAfterSeconds: Math.max(
+      1,
+      Math.ceil((existingEntry.resetAt - now) / 1000),
+    ),
   };
 };
 
