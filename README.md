@@ -1,14 +1,29 @@
-# 📊 Domain Monitor Dashboard - Kabupaten Kendal
+# 📊 Domain Monitor Dashboard
 
-Dashboard monitoring availability subdomain dengan Firebase sync, statistik uptime, notifikasi Slack, dan role-based user management.
+Dashboard monitoring availability domain/subdomain dengan Firebase sync, statistik uptime, notifikasi Slack, dan role-based access.
 
-- Live App: https://kendal-uptime.vercel.app
+- Demo URL: https://your-monitoring-dashboard.vercel.app
 - Current Version: 3.11.32
 - Runtime: React 19 + TypeScript + Vite 7 + Tailwind 4
 
 ---
 
-## 🚀 Quick Start
+## Demo Readonly
+
+Secara default aplikasi membootstrap user demo readonly:
+
+- Username: `demo`
+- Password: `demo12345`
+- Role: `viewer` (hanya lihat data, tidak bisa edit/delete/manage user)
+
+Opsional override via env:
+
+- `VITE_DEMO_VIEWER_USERNAME`
+- `VITE_DEMO_VIEWER_PASSWORD`
+
+---
+
+## Quick Start
 
 ```bash
 npm install
@@ -24,45 +39,107 @@ npm run preview
 
 ---
 
-## ✅ Fitur Utama
+## Fitur Utama
 
 ### Monitoring
 - 3-state status: `online`, `dns-only`, `offline`
-- Batch staggered check (B1-B4) di aplikasi
-- Auto-refresh + manual check
-- Statistik daily/hourly + incident tracking
-- Toggle global **Monitoring Cron** (admin) tersinkron ke Firebase + workflow
-- Export laporan monitoring **PDF per domain** (periode 1/15/30 hari) — dari pin menu, dialog Statistik, atau halaman Analytics
+- Manual bulk check + progress counter
+- Auto-refresh + batch staggered checking
+- Statistik harian/jam + incident tracking
+- Export laporan PDF per domain
 
-### User & Permission (MVP)
+### User & Permission
 - Login username + password
 - Role: `admin`, `viewer`, `add-only`
 - Guard permission pada aksi mutasi (edit/delete/pin/toggle monitoring)
-- Manajemen user untuk admin
+- Admin bisa kelola user dari UI
 
-### Data & Integrasi
-- Firebase Firestore sync untuk domain/group/tag
-- Notification settings sync ke Firebase
-- Slack webhook untuk alert down/recovery/slow
-- Import/export CSV
-
-### UI
-- Responsive desktop/mobile
-- Pin domain untuk prioritas monitoring
-- Group & tag management
+### Integrasi
+- Firebase Firestore sync (domains/groups/tags/stats)
+- GitHub Actions cron monitoring
+- Slack webhook notification (down/recovery/slow)
 
 ---
 
-## 🤖 Monitoring 24/7 (GitHub Actions)
+## Setup Firebase
 
-- Workflow: `.github/workflows/monitor-domains.yml`
-- Schedule: `cron: '0 * * * *'` (setiap 1 jam)
-- Script eksekusi: `node scripts/monitor-cron.js`
-- Estimasi usage: ~1,728 menit/bulan dari kuota 2,000 menit
+1. Buat project Firebase dan aktifkan Firestore.
+2. Salin konfigurasi web app ke [src/lib/firebase.ts](src/lib/firebase.ts).
+3. Deploy rules:
+
+```bash
+npm run firebase:login
+npm run firebase:rules:deploy
+```
+
+4. Pastikan struktur dokumen utama tersedia:
+- `domains/default-user`
+- `groups/default-user`
+- `tags/default-user`
+- `users/default-user`
+
+5. Aktifkan Firebase Authentication (Email/Password) jika ingin mode auth penuh.
 
 ---
 
-## 🧩 Struktur Proyek (Ringkas)
+## Setup GitHub Actions Monitoring
+
+Workflow utama: [.github/workflows/monitor-domains.yml](.github/workflows/monitor-domains.yml)
+
+Schedule default: setiap 1 jam (`cron: '0 * * * *'`).
+
+Set repository secrets berikut:
+
+- `FIREBASE_API_KEY`
+- `FIREBASE_AUTH_DOMAIN`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_STORAGE_BUCKET`
+- `FIREBASE_MESSAGING_SENDER_ID`
+- `FIREBASE_APP_ID`
+- `FIREBASE_MEASUREMENT_ID`
+- `FIREBASE_SERVICE_ACCOUNT` (recommended)
+- `FIREBASE_CRON_EMAIL` dan `FIREBASE_CRON_PASSWORD` (fallback jika tanpa service account)
+- `SLACK_WEBHOOK_URL` (optional)
+
+Set repository variables (optional):
+
+- `MONITORING_ENABLED=true`
+- `MONITORING_PAUSE_UNTIL=`
+- `MONITORING_QUOTA_GRACEFUL_EXIT=true`
+- `STATS_HEARTBEAT_HOURS=12`
+
+---
+
+## Setup Slack Notification
+
+1. Buat Incoming Webhook di Slack.
+2. Simpan URL ke secret `SLACK_WEBHOOK_URL` untuk cron server-side.
+3. Untuk notification dari UI, buka Settings > Notification dan isi webhook.
+4. Aktifkan toggle `Enable Notifications` per domain.
+
+Jenis alert:
+
+- Down
+- Recovery
+- Slow response
+
+---
+
+## Deploy (Vercel)
+
+```bash
+vercel --prod
+```
+
+Endpoint API server-side check:
+
+- `POST /api/check-domains`
+
+Endpoint ini dipakai manual `Check All` agar hasil tidak tergantung jaringan laptop user.
+
+---
+
+## Struktur Proyek
 
 ```text
 src/
@@ -70,47 +147,28 @@ src/
   components/
   hooks/
   lib/
+api/
+  check-domains.js
 docs/
-  NOW.md            # baca ini saja = paham segalanya
-  CHANGELOG.md      # detail histori rilis
-  GUIDES.md         # panduan penggunaan app
-  archive/          # dokumen historis (reference only)
+  NOW.md
+  CHANGELOG.md
+  GUIDES.md
 scripts/
   monitor-cron.js
-  *.mjs (tools query/debug Firebase)
 ```
 
 ---
 
-## 📚 Dokumentasi
+## Dokumentasi
 
-- [docs/NOW.md](docs/NOW.md) — **baca ini saja** (status sistem, versi, roadmap, plan, progress, workflow deploy)
-- [docs/CHANGELOG.md](docs/CHANGELOG.md) — detail histori semua rilis
-- [docs/GUIDES.md](docs/GUIDES.md) — panduan penggunaan aplikasi
-
----
-
-## 🛠️ Commands
-
-```bash
-# app
-npm run dev
-npm run build
-npm run preview
-
-# monitoring script
-npm run monitor
-npm run verify:auth-admin -- --email "admin@kendal.local" --password "***"
-
-# firebase rules
-npm run firebase:login
-npm run firebase:rules:deploy
-```
+- [docs/NOW.md](docs/NOW.md)
+- [docs/CHANGELOG.md](docs/CHANGELOG.md)
+- [docs/GUIDES.md](docs/GUIDES.md)
 
 ---
 
-## 🔐 Security Notes
+## Security Notes
 
-- Rules Firestore ada di `firestore.rules`
-- Policy repo ada di `SECURITY.md`
-- Kredensial workflow disimpan via GitHub Secrets
+- Jangan commit file `.env*`.
+- Simpan credential di GitHub Secrets / Vercel Environment Variables.
+- Cek [SECURITY.md](SECURITY.md) untuk disclosure policy.

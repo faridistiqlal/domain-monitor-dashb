@@ -39,7 +39,7 @@ interface DailyPerformanceRow {
 }
 
 const SLA_TARGET_PERCENT = 99.0
-const REPORT_ORG_NAME = 'Kabupaten Kendal'
+const REPORT_ORG_NAME = 'Dashboard Monitoring'
 const REPORT_CLASSIFICATION = 'Internal Monitoring Report'
 
 const COLORS = {

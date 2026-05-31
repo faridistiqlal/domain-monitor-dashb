@@ -706,9 +706,9 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
                 </div>
 
                 <div className="bg-card border rounded-lg p-3">
-                  <p className="font-semibold text-foreground mb-1">Q: Apakah bisa monitoring domain non-.kendalkab.go.id?</p>
+                  <p className="font-semibold text-foreground mb-1">Q: Apakah bisa monitoring domain apa saja?</p>
                   <p className="text-muted-foreground">
-                    A: Ya, sistem dapat memonitor domain apa saja. Tidak terbatas hanya subdomain kendalkab.go.id.
+                    A: Tergantung konfigurasi validasi domain pada deployment Anda. Secara default, sistem mengikuti aturan domain yang ditetapkan administrator.
                   </p>
                 </div>
 

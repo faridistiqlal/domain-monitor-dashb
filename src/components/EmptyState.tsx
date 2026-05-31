@@ -12,15 +12,15 @@ export function EmptyState() {
       </h3>
       
       <p className="text-muted-foreground max-w-md mb-6">
-        Tambahkan domain .kendalkab.go.id yang ingin Anda pantau untuk mulai memantau status website secara real-time.
+        Tambahkan domain yang diizinkan oleh konfigurasi sistem Anda untuk mulai memantau status website secara real-time.
       </p>
 
       <div className="bg-card border border-border rounded-lg p-4 max-w-md">
         <p className="text-sm text-muted-foreground mb-2">Contoh domain:</p>
         <ul className="space-y-1 text-sm font-mono text-foreground">
-          <li>• sismple.kendalkab.go.id</li>
-          <li>• ppid.kendalkab.go.id</li>
-          <li>• lpse.kendalkab.go.id</li>
+          <li>• monitoring.instansi.go.id</li>
+          <li>• portal.instansi.go.id</li>
+          <li>• layanan.instansi.go.id</li>
         </ul>
       </div>
     </div>

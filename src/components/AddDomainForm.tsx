@@ -35,7 +35,7 @@ export function AddDomainForm({ onAdd }: AddDomainFormProps) {
           <Input
             id="domain-input"
             type="text"
-            placeholder="contoh: sismple.kendalkab.go.id"
+            placeholder="contoh: monitoring.instansi.go.id"
             value={input}
             onChange={(e) => {
               setInput(e.target.value)

@@ -52,7 +52,7 @@ export function TermsOfServiceDialog({ triggerText = 'Syarat & Ketentuan' }: Ter
               <h3 className="font-semibold text-base text-foreground">2. Tujuan Layanan</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Domain Monitor adalah aplikasi monitoring untuk memantau status ketersediaan domain milik 
-                Pemerintah Kabupaten Kendal. Aplikasi ini dirancang untuk penggunaan internal dan tidak 
+                organisasi/instansi Anda. Aplikasi ini dirancang untuk penggunaan internal dan tidak 
                 dimaksudkan untuk tujuan komersial.
               </p>
             </section>
@@ -145,7 +145,7 @@ export function TermsOfServiceDialog({ triggerText = 'Syarat & Ketentuan' }: Ter
               <h3 className="font-semibold text-base text-foreground">10. Hak Kekayaan Intelektual</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Semua hak kekayaan intelektual terkait aplikasi Domain Monitor, termasuk desain, kode, dan 
-                konten, adalah milik Pemerintah Kabupaten Kendal. Penggunaan tanpa izin dilarang.
+                konten, adalah milik organisasi pemilik sistem. Penggunaan tanpa izin dilarang.
               </p>
             </section>
 
@@ -169,7 +169,7 @@ export function TermsOfServiceDialog({ triggerText = 'Syarat & Ketentuan' }: Ter
               <h3 className="font-semibold text-base text-foreground">13. Kontak</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Untuk pertanyaan atau klarifikasi terkait syarat dan ketentuan ini, silakan hubungi 
-                administrator sistem Domain Monitor Kabupaten Kendal.
+                administrator sistem Domain Monitor.
               </p>
             </section>
 

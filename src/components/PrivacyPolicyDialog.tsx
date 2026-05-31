@@ -143,7 +143,7 @@ export function PrivacyPolicyDialog({ triggerText = 'Kebijakan Privasi' }: Priva
               <h3 className="font-semibold text-base text-foreground">10. Kontak</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Jika Anda memiliki pertanyaan tentang kebijakan privasi ini, silakan hubungi administrator 
-                sistem Domain Monitor Kabupaten Kendal.
+                sistem Domain Monitor.
               </p>
             </section>
 

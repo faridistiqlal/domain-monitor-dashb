@@ -109,6 +109,8 @@ function TabSectionFallback({ error, resetErrorBoundary }: FallbackProps) {
 
 function App() {
   const DEFAULT_ADMIN_PASSWORD = (import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || '').trim()
+  const DEMO_VIEWER_USERNAME = (import.meta.env.VITE_DEMO_VIEWER_USERNAME || 'demo').trim().toLowerCase()
+  const DEMO_VIEWER_PASSWORD = (import.meta.env.VITE_DEMO_VIEWER_PASSWORD || 'demo12345').trim()
   const LOGOUT_SYNC_KEY = 'app-logout-sync'
   const AUTH_CHANNEL_NAME = 'domain-monitor-auth'
   const appConsole = {
@@ -162,6 +164,41 @@ function App() {
     updatedAt: Date.now(),
     createdBy: 'system',
   })
+
+  const createDemoViewerUser = (): ManagedUser => ({
+    id: 'demo-viewer',
+    username: DEMO_VIEWER_USERNAME || 'demo',
+    password: DEMO_VIEWER_PASSWORD,
+    role: 'viewer',
+    permissions: getPermissionsByRole('viewer'),
+    isActive: true,
+    revision: 1,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    createdBy: 'system',
+  })
+
+  const ensureBaselineUsers = useCallback((users: ManagedUser[]): ManagedUser[] => {
+    const now = Date.now()
+    const nextUsers = [...users]
+
+    const hasAdmin = nextUsers.some(user => user.username.toLowerCase() === 'admin')
+    if (!hasAdmin) {
+      nextUsers.push(createDefaultAdminUser())
+    }
+
+    const canSeedDemo = !!DEMO_VIEWER_USERNAME && !!DEMO_VIEWER_PASSWORD && DEMO_VIEWER_USERNAME !== 'admin'
+    const hasDemo = nextUsers.some(user => user.username.toLowerCase() === DEMO_VIEWER_USERNAME)
+    if (canSeedDemo && !hasDemo) {
+      nextUsers.push({
+        ...createDemoViewerUser(),
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+
+    return nextUsers
+  }, [DEMO_VIEWER_PASSWORD, DEMO_VIEWER_USERNAME])
 
   // Authentication & Security States
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -408,7 +445,7 @@ function App() {
         if (!isAuthenticated) {
           const cachedUsersRaw = localStorage.getItem('managed-users-cache')
           const cachedUsers = cachedUsersRaw ? (JSON.parse(cachedUsersRaw) as ManagedUser[]) : []
-          const fallbackUsers = cachedUsers.length > 0 ? cachedUsers : [createDefaultAdminUser()]
+          const fallbackUsers = ensureBaselineUsers(cachedUsers)
 
           setManagedUsers(fallbackUsers)
           setManagedUsersRevision(0)
@@ -419,10 +456,8 @@ function App() {
 
         // Load managed users (user directory)
         let managedSnapshot = await loadManagedUsersSnapshot()
-        let loadedManagedUsers = managedSnapshot.users
-        if (!loadedManagedUsers || loadedManagedUsers.length === 0) {
-          const defaultAdmin = createDefaultAdminUser()
-          loadedManagedUsers = [defaultAdmin]
+        let loadedManagedUsers = ensureBaselineUsers(managedSnapshot.users || [])
+        if (loadedManagedUsers.length > managedSnapshot.users.length) {
           const bootstrapResult = await syncManagedUsersWithRevision(loadedManagedUsers, managedSnapshot.revision)
           if (bootstrapResult.ok) {
             managedSnapshot = {
@@ -430,9 +465,12 @@ function App() {
               revision: bootstrapResult.revision,
             }
           }
-          localStorage.setItem('app-current-user-id', defaultAdmin.id)
-          localStorage.setItem('app-current-username', defaultAdmin.username)
-          appConsole.log('[Users] Bootstrap default admin user')
+          const defaultAdmin = loadedManagedUsers.find(user => user.username.toLowerCase() === 'admin')
+          if (defaultAdmin) {
+            localStorage.setItem('app-current-user-id', defaultAdmin.id)
+            localStorage.setItem('app-current-username', defaultAdmin.username)
+          }
+          appConsole.log('[Users] Baseline users bootstrapped (admin/demo)')
         }
 
         setManagedUsers(loadedManagedUsers)
@@ -519,7 +557,7 @@ function App() {
       }
     }
     loadData()
-  }, [isAuthenticated, loadAndSetDomainsFromFirebase])
+  }, [ensureBaselineUsers, isAuthenticated, loadAndSetDomainsFromFirebase])
 
   // Sync to Firebase with debouncing (reduce writes)
   useEffect(() => {
@@ -688,11 +726,9 @@ function App() {
     let users = managedUsers
     if (!users || users.length === 0) {
       const snapshot = await loadManagedUsersSnapshot()
-      users = snapshot.users
+      users = ensureBaselineUsers(snapshot.users)
       setManagedUsersRevision(snapshot.revision)
-      if (!users || users.length === 0) {
-        const defaultAdmin = createDefaultAdminUser()
-        users = [defaultAdmin]
+      if (users.length > snapshot.users.length) {
         const bootstrapSyncResult = await syncManagedUsersWithRevision(users, snapshot.revision)
         if (bootstrapSyncResult.ok) {
           setManagedUsersRevision(bootstrapSyncResult.revision)
@@ -2154,18 +2190,17 @@ function App() {
               {/* Branding */}
               <div className="text-center space-y-3">
                 <div className="flex justify-center">
-                  <img 
-                    src="/logo.webp" 
-                    alt="Logo Kendal"
-                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
-                  />
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-primary/15 border border-primary/20 flex items-center justify-center">
+                    <Monitor size={36} weight="duotone" className="text-primary md:hidden" />
+                    <Monitor size={44} weight="duotone" className="text-primary hidden md:block" />
+                  </div>
                 </div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                     Domain Monitor
                   </h1>
                   <p className="text-sm text-muted-foreground tracking-wide mt-1">
-                    Kabupaten Kendal
+                    Dashboard Monitoring
                   </p>
                 </div>
                 <p className="text-xs md:text-sm text-muted-foreground">
@@ -2227,17 +2262,16 @@ function App() {
               />
               
               <div className="flex items-center gap-2.5">
-                <img 
-                  src="/logo.webp" 
-                  alt="Logo Kendal"
-                  className="w-8 h-8 md:w-10 md:h-10 object-contain"
-                />
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center">
+                  <Monitor size={18} weight="duotone" className="text-primary md:hidden" />
+                  <Monitor size={22} weight="duotone" className="text-primary hidden md:block" />
+                </div>
                 <div>
                   <h1 className="text-lg md:text-2xl font-bold tracking-tight text-foreground">
                     Domain Monitor
                   </h1>
                   <p className="text-[10px] md:text-xs text-muted-foreground tracking-wide">
-                    Kabupaten Kendal
+                    Dashboard Monitoring
                   </p>
                 </div>
               </div>
@@ -3384,10 +3418,10 @@ function App() {
           <div className="container mx-auto px-2 md:px-4 py-2 max-w-5xl">
             <div className="flex items-center justify-center gap-1.5 text-[10px] md:text-xs text-center flex-wrap">
               {/* Mobile compact layout */}
-              <span className="text-muted-foreground md:hidden">© 2026 Kab Kendal</span>
+              <span className="text-muted-foreground md:hidden">© 2026 Dashboard Monitoring</span>
               
               {/* Desktop full text */}
-              <span className="text-muted-foreground hidden md:inline">© 2026 Domain Monitor • Kabupaten Kendal</span>
+              <span className="text-muted-foreground hidden md:inline">© 2026 Domain Monitor • Dashboard Monitoring</span>
               
               <span className="text-muted-foreground">•</span>
               

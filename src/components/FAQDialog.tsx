@@ -23,7 +23,7 @@ interface FAQItem {
 const faqItems: FAQItem[] = [
   {
     question: 'Apa itu Domain Monitor?',
-    answer: 'Domain Monitor adalah dashboard untuk memantau ketersediaan (availability) dan uptime subdomain milik Kabupaten Kendal secara real-time. Sistem ini mengecek apakah domain online, hanya DNS, atau offline.',
+    answer: 'Domain Monitor adalah dashboard untuk memantau ketersediaan (availability) dan uptime domain/subdomain instansi secara real-time. Sistem ini mengecek apakah domain online, hanya DNS, atau offline.',
   },
   {
     question: 'Bagaimana cara kerja monitoring?',
@@ -39,7 +39,7 @@ const faqItems: FAQItem[] = [
   },
   {
     question: 'Bagaimana cara menambah domain baru?',
-    answer: 'Setelah login sebagai Admin atau Add-Only, buka tab Monitoring lalu gunakan form "Tambah Domain" di bagian atas. Masukkan URL domain lengkap (contoh: https://example.kendalkab.go.id).',
+    answer: 'Setelah login sebagai Admin atau Add-Only, buka tab Monitoring lalu gunakan form "Tambah Domain" di bagian atas. Masukkan URL domain lengkap sesuai aturan validasi pada deployment Anda.',
   },
   {
     question: 'Apakah data monitoring tersimpan?',

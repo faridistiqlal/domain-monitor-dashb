@@ -13,7 +13,7 @@ import "./main.css"
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider attribute="class" defaultTheme="dark" storageKey="kendal-theme">
+    <ThemeProvider attribute="class" defaultTheme="dark" storageKey="domain-monitor-theme">
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <App />
         <Toaster position="bottom-right" richColors />
