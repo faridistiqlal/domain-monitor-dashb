@@ -135,6 +135,10 @@ export interface UserAccessProfile {
   updatedAt?: number
 }
 
+export interface UserAccessProfileMatch extends UserAccessProfile {
+  authUid: string
+}
+
 const toPermissionsByRole = (role: ManagedUserRole): UserPermissions => {
   if (role === 'admin') {
     return {
@@ -801,6 +805,55 @@ export const getUserAccessProfileByUid = async (authUid: string): Promise<UserAc
     }
   } catch (error) {
     console.error('Error getting user access profile:', error)
+    return null
+  }
+}
+
+export const findUserAccessProfileByUsername = async (username: string): Promise<UserAccessProfileMatch | null> => {
+  const normalizedUsername = username.trim().toLowerCase()
+  if (!normalizedUsername) {
+    return null
+  }
+
+  try {
+    const usersRef = collection(db, COLLECTIONS.USERS)
+    const snapshot = await getDocs(usersRef)
+    const matchedDoc = snapshot.docs.find(docSnap => {
+      if (docSnap.id === USER_DIRECTORY_DOC_ID) {
+        return false
+      }
+
+      const data = docSnap.data()
+      return typeof data.username === 'string' && data.username.toLowerCase() === normalizedUsername
+    })
+
+    if (!matchedDoc) {
+      return null
+    }
+
+    const data = matchedDoc.data()
+    const role = normalizeRole(data.role)
+    const permissions = (data.permissions && typeof data.permissions === 'object')
+      ? {
+          canView: !!data.permissions.canView,
+          canAddDomain: !!data.permissions.canAddDomain,
+          canEdit: !!data.permissions.canEdit,
+          canManageUsers: !!data.permissions.canManageUsers,
+        }
+      : toPermissionsByRole(role)
+
+    return {
+      authUid: matchedDoc.id,
+      appUserId: typeof data.appUserId === 'string' ? data.appUserId : undefined,
+      username: typeof data.username === 'string' ? data.username : undefined,
+      email: typeof data.email === 'string' ? data.email : null,
+      role,
+      permissions,
+      isActive: data.isActive !== false,
+      updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : undefined,
+    }
+  } catch (error) {
+    console.error('Error finding user access profile by username:', error)
     return null
   }
 }

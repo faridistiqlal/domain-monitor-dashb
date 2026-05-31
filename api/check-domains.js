@@ -6,6 +6,13 @@ export const config = {
 
 const HTTP_TIMEOUT_MS = 12000;
 const MAX_DOMAINS_PER_REQUEST = 12;
+const MANUAL_CHECK_WINDOW_MS = 60_000;
+const MANUAL_CHECK_MAX_REQUESTS = 2;
+const rateLimitStore = globalThis.__domainMonitorManualRateLimitStore || new Map();
+
+if (!globalThis.__domainMonitorManualRateLimitStore) {
+  globalThis.__domainMonitorManualRateLimitStore = rateLimitStore;
+}
 
 const json = (response, statusCode, payload) => {
   response.status(statusCode).json(payload);
@@ -17,6 +24,64 @@ const normalizeDomain = (url) =>
     .replace(/^https?:\/\//i, "")
     .split("/")[0]
     .toLowerCase();
+
+const getClientIdentifier = (request) => {
+  const forwardedFor = request.headers["x-forwarded-for"];
+  if (typeof forwardedFor === "string" && forwardedFor.trim()) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
+    return String(forwardedFor[0] || "").split(",")[0].trim();
+  }
+
+  return request.headers["x-real-ip"] || request.socket?.remoteAddress || "unknown";
+};
+
+const cleanupRateLimitStore = (now) => {
+  for (const [key, entry] of rateLimitStore.entries()) {
+    if (now >= entry.resetAt) {
+      rateLimitStore.delete(key);
+    }
+  }
+};
+
+const checkRateLimit = (request) => {
+  const now = Date.now();
+  cleanupRateLimitStore(now);
+
+  const clientIdentifier = getClientIdentifier(request);
+  const existingEntry = rateLimitStore.get(clientIdentifier);
+
+  if (!existingEntry || now >= existingEntry.resetAt) {
+    const freshEntry = {
+      count: 1,
+      resetAt: now + MANUAL_CHECK_WINDOW_MS,
+    };
+    rateLimitStore.set(clientIdentifier, freshEntry);
+    return {
+      allowed: true,
+      remaining: Math.max(0, MANUAL_CHECK_MAX_REQUESTS - freshEntry.count),
+      retryAfterSeconds: Math.ceil(MANUAL_CHECK_WINDOW_MS / 1000),
+    };
+  }
+
+  if (existingEntry.count >= MANUAL_CHECK_MAX_REQUESTS) {
+    return {
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds: Math.max(1, Math.ceil((existingEntry.resetAt - now) / 1000)),
+    };
+  }
+
+  existingEntry.count += 1;
+  rateLimitStore.set(clientIdentifier, existingEntry);
+  return {
+    allowed: true,
+    remaining: Math.max(0, MANUAL_CHECK_MAX_REQUESTS - existingEntry.count),
+    retryAfterSeconds: Math.max(1, Math.ceil((existingEntry.resetAt - now) / 1000)),
+  };
+};
 
 const isAllowedDomain = (domain) =>
   domain === "kendalkab.go.id" || domain.endsWith(".kendalkab.go.id");
@@ -173,6 +238,19 @@ export default async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
     json(response, 405, { error: "Method not allowed" });
+    return;
+  }
+
+  const rateLimit = checkRateLimit(request);
+  response.setHeader("X-RateLimit-Limit", String(MANUAL_CHECK_MAX_REQUESTS));
+  response.setHeader("X-RateLimit-Remaining", String(rateLimit.remaining));
+  response.setHeader("X-RateLimit-Reset", String(rateLimit.retryAfterSeconds));
+
+  if (!rateLimit.allowed) {
+    response.setHeader("Retry-After", String(rateLimit.retryAfterSeconds));
+    json(response, 429, {
+      error: `Terlalu sering menjalankan manual check. Coba lagi dalam ${rateLimit.retryAfterSeconds} detik.`,
+    });
     return;
   }
 

@@ -56,6 +56,7 @@ import {
   writeAuditLog,
   syncUserAccessProfileToFirestore,
   getUserAccessProfileByUid,
+  findUserAccessProfileByUsername,
   syncUserActiveStateByAppUserId,
   revokeUserAccessProfile
 } from '@/lib/firestore-sync'
@@ -74,6 +75,7 @@ import {
   signOutAuth,
   onAuthUserChanged,
   emailToUsername,
+  usernameToEmail,
   changeCurrentUserPassword,
 } from '@/lib/firebase-auth'
 import { toast } from 'sonner'
@@ -109,8 +111,8 @@ function TabSectionFallback({ error, resetErrorBoundary }: FallbackProps) {
 
 function App() {
   const DEFAULT_ADMIN_PASSWORD = (import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || '').trim()
-  const DEMO_VIEWER_USERNAME = (import.meta.env.VITE_DEMO_VIEWER_USERNAME || 'demo').trim().toLowerCase()
-  const DEMO_VIEWER_PASSWORD = (import.meta.env.VITE_DEMO_VIEWER_PASSWORD || 'demo12345').trim()
+  const DEMO_VIEWER_USERNAME = (import.meta.env.VITE_DEMO_VIEWER_USERNAME || 'demoakun').trim().toLowerCase()
+  const DEMO_VIEWER_PASSWORD = (import.meta.env.VITE_DEMO_VIEWER_PASSWORD || 'demo123456').trim()
   const LOGOUT_SYNC_KEY = 'app-logout-sync'
   const AUTH_CHANNEL_NAME = 'domain-monitor-auth'
   const appConsole = {
@@ -124,6 +126,7 @@ function App() {
   const skipInitialDomainsSync = useRef(true)
   const skipInitialGroupsSync = useRef(true)
   const skipInitialTagsSync = useRef(true)
+  const manualRefreshAbortControllerRef = useRef<AbortController | null>(null)
 
   const getPermissionsByRole = (role: ManagedUserRole): UserPermissions => {
     if (role === 'admin') {
@@ -1011,6 +1014,7 @@ function App() {
     }
 
     let authUser: { uid: string; email: string } | null = null
+    let restoredAccessProfile: { authUid: string; appUserId?: string; email?: string | null } | null = null
     try {
       authUser = await createAuthUserWithUsername(payload.username, payload.password)
     } catch (error) {
@@ -1021,8 +1025,23 @@ function App() {
           authUser = await signInWithUsernamePasswordSecondary(payload.username, payload.password)
         } catch (existingAuthError) {
           console.error('[Auth] Existing auth account cannot be claimed with provided password:', existingAuthError)
-          toast.error('Email auth sudah terpakai. Gunakan username lain atau password yang sesuai akun lama.')
-          return false
+
+          const existingAccessProfile = await findUserAccessProfileByUsername(payload.username)
+          if (existingAccessProfile?.authUid) {
+            restoredAccessProfile = {
+              authUid: existingAccessProfile.authUid,
+              appUserId: existingAccessProfile.appUserId,
+              email: existingAccessProfile.email,
+            }
+            authUser = {
+              uid: existingAccessProfile.authUid,
+              email: existingAccessProfile.email || usernameToEmail(payload.username),
+            }
+            toast.warning('Akun auth lama ditemukan. User directory dipulihkan; password login tetap mengikuti akun Firebase Auth yang lama.')
+          } else {
+            toast.error('Email auth sudah terpakai. Gunakan password akun auth lama atau username lain.')
+            return false
+          }
         }
       }
 
@@ -1046,7 +1065,7 @@ function App() {
 
     const now = Date.now()
     const newUser: ManagedUser = {
-      id: `user-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      id: restoredAccessProfile?.appUserId || `user-${now}-${Math.random().toString(36).slice(2, 8)}`,
       username: payload.username,
       email: authUser?.email,
       authUid: authUser?.uid,
@@ -1104,6 +1123,7 @@ function App() {
         username: newUser.username,
         role: newUser.role,
         isActive: newUser.isActive,
+        restoredAuthAccount: !!restoredAccessProfile,
       },
     }).catch(console.error)
 
@@ -1289,13 +1309,27 @@ function App() {
   const canAddDomain = isAuthenticated && (currentUser?.permissions.canAddDomain ?? false)
   const canEdit = isAuthenticated && (currentUser?.permissions.canEdit ?? false)
   const canManageUsers = isAuthenticated && (currentUser?.permissions.canManageUsers ?? false)
+  const canControlMonitoring = canEdit
+  const canOpenManageTab = canEdit || canAddDomain
   const currentUserRoleLabel = currentUser?.role === 'admin'
     ? 'Admin'
     : currentUser?.role === 'add-only'
       ? 'Add URL Only'
       : 'Readonly'
 
-  async function checkAllDomains(showToast = false, batchCheckOnly = false, isAutoCheck = false) {
+  useEffect(() => {
+    if (activeTab === 'manage' && !canOpenManageTab) {
+      setActiveTab('domains')
+    }
+  }, [activeTab, canOpenManageTab])
+
+  useEffect(() => {
+    return () => {
+      manualRefreshAbortControllerRef.current?.abort()
+    }
+  }, [])
+
+  async function checkAllDomains(showToast = false, batchCheckOnly = false, isAutoCheck = false, abortSignal?: AbortSignal) {
     if (!domains || domains.length === 0) return
 
     const now = new Date()
@@ -1366,7 +1400,7 @@ function App() {
 
       results = isAutoCheck
         ? await checkDomainStatuses(domainsToCheck, undefined, handleProgress)
-        : await checkDomainStatusesFromServer(domainsToCheck, handleProgress)
+        : await checkDomainStatusesFromServer(domainsToCheck, handleProgress, abortSignal)
     } finally {
       setBulkCheckProgress(null)
     }
@@ -1815,6 +1849,15 @@ function App() {
   }
 
   const handleManualRefresh = useCallback(async (enforceCooldown: boolean = true) => {
+    if (!canControlMonitoring) {
+      toast.error('Akun readonly tidak dapat menjalankan manual check')
+      return
+    }
+
+    if (isRefreshing) {
+      return
+    }
+
     if (enforceCooldown && manualRefreshRemainingSeconds > 0) {
       toast.info(`Tunggu ${manualRefreshRemainingSeconds} detik sebelum check manual berikutnya`)
       return
@@ -1825,20 +1868,41 @@ function App() {
     }
 
     setIsRefreshing(true)
+    const abortController = new AbortController()
+    manualRefreshAbortControllerRef.current = abortController
     resetCountdownToNextBatch()
     if (autoRefreshEnabled) {
       setIsPaused(false)
     }
     try {
-      await checkAllDomains(true, false, false) // Manual check: server-side, no Firebase writes
+      await checkAllDomains(true, false, false, abortController.signal) // Manual check: server-side, no Firebase writes
       setLastCheckTime(new Date())
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        toast.info('Manual check dihentikan')
+        return
+      }
+
       const message = error instanceof Error ? error.message : 'Manual check gagal dijalankan dari server'
       toast.error(message)
     } finally {
+      if (manualRefreshAbortControllerRef.current === abortController) {
+        manualRefreshAbortControllerRef.current = null
+      }
       setIsRefreshing(false)
     }
-  }, [autoRefreshEnabled, checkAllDomains, manualRefreshRemainingSeconds, startManualRefreshCooldown])
+  }, [autoRefreshEnabled, canControlMonitoring, checkAllDomains, isRefreshing, manualRefreshRemainingSeconds, resetCountdownToNextBatch, startManualRefreshCooldown])
+
+  const handleStopManualRefresh = useCallback(() => {
+    if (!isRefreshing) {
+      return
+    }
+
+    manualRefreshAbortControllerRef.current?.abort()
+    manualRefreshAbortControllerRef.current = null
+    setBulkCheckProgress(null)
+    setIsRefreshing(false)
+  }, [isRefreshing])
 
   useTabAutoChecks({
     activeTab,
@@ -1847,6 +1911,7 @@ function App() {
     hasChecked,
     isRefreshing,
     domains,
+    allowInitialManualCheck: canControlMonitoring,
     onManualRefresh: handleManualRefresh,
   })
 
@@ -1864,6 +1929,11 @@ function App() {
   }, [resetCountdownToNextBatch])
 
   const handleToggleAutoRefresh = useCallback(() => {
+    if (!canControlMonitoring) {
+      toast.error('Akun readonly tidak dapat mengubah mode monitoring')
+      return
+    }
+
     setAutoRefreshEnabled(prev => {
       const newState = !prev
       if (newState) {
@@ -1879,7 +1949,7 @@ function App() {
       }
       return newState
     })
-  }, [checkAllDomains, hasChecked, resetCountdownToNextBatch])
+  }, [canControlMonitoring, checkAllDomains, hasChecked, resetCountdownToNextBatch])
 
   const handleImportDomains = (importedDomains: Domain[], groupId?: string) => {
     if (!canEdit) {
@@ -2251,6 +2321,7 @@ function App() {
                 onLogout={handleLogout}
                 isAutoRefresh={autoRefreshEnabled}
                 onToggleAutoRefresh={handleToggleAutoRefresh}
+                canControlMonitoring={canControlMonitoring}
                 canManageUsers={canManageUsers}
                 managedUsers={managedUsers}
                 currentUserId={currentUser?.id}
@@ -2335,69 +2406,99 @@ function App() {
 
                 <div className="h-6 w-px bg-border" />
 
-                <Button
-                  variant={autoRefreshEnabled ? "default" : "outline"}
-                  size="sm"
-                  onClick={handleToggleAutoRefresh}
-                  className="h-8 text-xs"
-                  title={autoRefreshEnabled ? "Switch ke Mode Manual" : "Switch ke Mode Auto-refresh"}
-                >
-                  {autoRefreshEnabled ? "Auto" : "Manual"}
-                </Button>
+                {canControlMonitoring && (
+                  <>
+                    <Button
+                      variant={autoRefreshEnabled ? "default" : "outline"}
+                      size="sm"
+                      onClick={handleToggleAutoRefresh}
+                      className="h-8 text-xs"
+                      title={autoRefreshEnabled ? "Switch ke Mode Manual" : "Switch ke Mode Auto-refresh"}
+                    >
+                      {autoRefreshEnabled ? "Auto" : "Manual"}
+                    </Button>
 
-                {autoRefreshEnabled && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleTogglePause}
-                    className="h-8"
-                    title={isPaused ? "Resume Auto-refresh" : "Pause Auto-refresh"}
-                  >
-                    {isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}
-                  </Button>
+                    {autoRefreshEnabled && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleTogglePause}
+                        className="h-8"
+                        title={isPaused ? "Resume Auto-refresh" : "Pause Auto-refresh"}
+                      >
+                        {isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleManualRefresh(true)}
+                      disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
+                      className="h-8"
+                      title={manualRefreshRemainingSeconds > 0 ? `Tunggu ${manualRefreshRemainingSeconds} detik` : 'Check Sekarang'}
+                      aria-label={manualRefreshRemainingSeconds > 0 ? `Manual check cooldown ${manualRefreshRemainingSeconds} detik` : 'Check domain sekarang'}
+                    >
+                      <ArrowClockwise 
+                        size={14} 
+                        className={isRefreshing ? 'animate-spin' : ''} 
+                      />
+                      {isRefreshing && (
+                        <span className="text-xs ml-1.5">
+                          {bulkCheckProgress ? `${bulkCheckProgress.completed}/${bulkCheckProgress.total}` : 'Checking...'}
+                        </span>
+                      )}
+                      {!isRefreshing && manualRefreshRemainingSeconds > 0 && (
+                        <span className="text-xs ml-1.5">{manualRefreshRemainingSeconds}s</span>
+                      )}
+                    </Button>
+
+                    {isRefreshing && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleStopManualRefresh}
+                        className="h-8"
+                        title="Hentikan manual check"
+                      >
+                        <X size={14} />
+                        <span className="ml-1.5">Stop</span>
+                      </Button>
+                    )}
+                  </>
                 )}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleManualRefresh(true)}
-                  disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
-                  className="h-8"
-                  title={manualRefreshRemainingSeconds > 0 ? `Tunggu ${manualRefreshRemainingSeconds} detik` : 'Check Sekarang'}
-                  aria-label={manualRefreshRemainingSeconds > 0 ? `Manual check cooldown ${manualRefreshRemainingSeconds} detik` : 'Check domain sekarang'}
-                >
-                  <ArrowClockwise 
-                    size={14} 
-                    className={isRefreshing ? 'animate-spin' : ''} 
-                  />
-                  {isRefreshing && (
-                    <span className="text-xs ml-1.5">
-                      {bulkCheckProgress ? `${bulkCheckProgress.completed}/${bulkCheckProgress.total}` : 'Checking...'}
-                    </span>
-                  )}
-                  {!isRefreshing && manualRefreshRemainingSeconds > 0 && (
-                    <span className="text-xs ml-1.5">{manualRefreshRemainingSeconds}s</span>
-                  )}
-                </Button>
               </div>
               
               {/* Mobile Quick Action - Only Check button visible */}
-              <div className="flex md:hidden items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleManualRefresh(true)}
-                  disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
-                  className="h-10 w-10 p-0"
-                  title={manualRefreshRemainingSeconds > 0 ? `Tunggu ${manualRefreshRemainingSeconds} detik` : 'Check Sekarang'}
-                  aria-label={manualRefreshRemainingSeconds > 0 ? `Manual check cooldown ${manualRefreshRemainingSeconds} detik` : 'Check domain sekarang'}
-                >
-                  <ArrowClockwise 
-                    size={18} 
-                    className={isRefreshing ? 'animate-spin' : ''} 
-                  />
-                </Button>
-              </div>
+              {canControlMonitoring && (
+                <div className="flex md:hidden items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleManualRefresh(true)}
+                    disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
+                    className="h-10 w-10 p-0"
+                    title={manualRefreshRemainingSeconds > 0 ? `Tunggu ${manualRefreshRemainingSeconds} detik` : 'Check Sekarang'}
+                    aria-label={manualRefreshRemainingSeconds > 0 ? `Manual check cooldown ${manualRefreshRemainingSeconds} detik` : 'Check domain sekarang'}
+                  >
+                    <ArrowClockwise 
+                      size={18} 
+                      className={isRefreshing ? 'animate-spin' : ''} 
+                    />
+                  </Button>
+                  {isRefreshing && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleStopManualRefresh}
+                      className="h-10 px-3"
+                      title="Hentikan manual check"
+                    >
+                      <X size={16} />
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </header>
 
@@ -2408,11 +2509,11 @@ function App() {
             setSelectedGroupId(null)
           }
           // Auto-check domains when opening monitoring tab for the first time
-          if (val === 'domains' && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
+          if (canControlMonitoring && val === 'domains' && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
             handleManualRefresh(false)
           }
         }} className="flex-1 flex flex-col overflow-hidden bg-card">
-          <TabsList className="grid w-full max-w-3xl grid-cols-6 mb-8 md:mb-6 gap-1 md:gap-0 h-10 p-1 mt-2">
+          <TabsList className={`grid w-full max-w-3xl ${canOpenManageTab ? 'grid-cols-6' : 'grid-cols-5'} mb-8 md:mb-6 gap-1 md:gap-0 h-10 p-1 mt-2`}>
             <TabsTrigger value="pinned" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab Pin domain">
               <MapPin size={18} weight="fill" className="md:size-4" />
               <span className="hidden md:inline">Pin</span>
@@ -2433,10 +2534,12 @@ function App() {
               <Tag size={18} className="md:size-4" />
               <span className="hidden md:inline">Tag</span>
             </TabsTrigger>
-            <TabsTrigger value="manage" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab kelola data">
-              <Toolbox size={18} className="md:size-4" />
-              <span className="hidden md:inline">Kelola</span>
-            </TabsTrigger>
+            {canOpenManageTab && (
+              <TabsTrigger value="manage" className="gap-0 md:gap-1.5 text-[11px] md:text-sm h-9 px-1 md:px-3" aria-label="Tab kelola data">
+                <Toolbox size={18} className="md:size-4" />
+                <span className="hidden md:inline">Kelola</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="domains" className="space-y-4 flex-1 flex flex-col overflow-hidden">
@@ -2737,7 +2840,7 @@ function App() {
 
             {!domains || domains.length === 0 ? (
               <EmptyState />
-            ) : !hasChecked && !autoRefreshEnabled ? (
+            ) : !hasChecked && !autoRefreshEnabled && canControlMonitoring ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center space-y-6 max-w-md mx-auto">
                   <div className="w-24 h-24 rounded-2xl bg-primary/20 mx-auto flex items-center justify-center">
@@ -2768,6 +2871,17 @@ function App() {
                           ? `Tunggu ${manualRefreshRemainingSeconds}s`
                           : `Check All Domains (${totalCount})`}
                     </Button>
+                    {isRefreshing && (
+                      <Button
+                        onClick={handleStopManualRefresh}
+                        variant="destructive"
+                        size="lg"
+                        className="mt-2"
+                      >
+                        <X size={18} className="mr-2" />
+                        Stop Manual Check
+                      </Button>
+                    )}
                     {isRefreshing && bulkCheckProgress && (
                       <div className="space-y-2" aria-live="polite">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">

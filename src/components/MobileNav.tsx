@@ -26,6 +26,7 @@ interface MobileNavProps {
   onLogout: () => void
   isAutoRefresh: boolean
   onToggleAutoRefresh: () => void
+  canControlMonitoring: boolean
   canManageUsers: boolean
   managedUsers: ManagedUser[]
   currentUserId?: string
@@ -48,6 +49,7 @@ export function MobileNav({
   onLogout,
   isAutoRefresh,
   onToggleAutoRefresh,
+  canControlMonitoring,
   canManageUsers,
   managedUsers,
   currentUserId,
@@ -119,19 +121,23 @@ export function MobileNav({
         
         <div className="mt-8 space-y-6">
           {/* Auto-refresh Toggle */}
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-foreground">Monitoring Mode</p>
-            <Button
-              onClick={onToggleAutoRefresh}
-              variant={isAutoRefresh ? 'default' : 'outline'}
-              className="w-full justify-start h-12 text-base"
-              size="lg"
-            >
-              {isAutoRefresh ? 'Auto-refresh ON' : 'Manual Mode'}
-            </Button>
-          </div>
-          
-          <Separator className="my-4" />
+          {canControlMonitoring && (
+            <>
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-foreground">Monitoring Mode</p>
+                <Button
+                  onClick={onToggleAutoRefresh}
+                  variant={isAutoRefresh ? 'default' : 'outline'}
+                  className="w-full justify-start h-12 text-base"
+                  size="lg"
+                >
+                  {isAutoRefresh ? 'Auto-refresh ON' : 'Manual Mode'}
+                </Button>
+              </div>
+
+              <Separator className="my-4" />
+            </>
+          )}
           
           {/* Import/Export */}
           <div className="space-y-3">

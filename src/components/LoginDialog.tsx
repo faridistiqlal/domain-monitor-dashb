@@ -3,11 +3,36 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Lock, Eye, EyeSlash } from '@phosphor-icons/react'
+import { Lock, Eye, EyeSlash, ArrowClockwise } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface LoginFormProps {
   onLogin: (username: string, password: string) => Promise<void> | void
+}
+
+type CaptchaChallenge = {
+  prompt: string
+  answer: number
+}
+
+const generateCaptchaChallenge = (): CaptchaChallenge => {
+  const left = Math.floor(Math.random() * 9) + 1
+  const right = Math.floor(Math.random() * 9) + 1
+  const useAddition = Math.random() > 0.5
+
+  if (useAddition) {
+    return {
+      prompt: `${left} + ${right}`,
+      answer: left + right,
+    }
+  }
+
+  const max = Math.max(left, right)
+  const min = Math.min(left, right)
+  return {
+    prompt: `${max} - ${min}`,
+    answer: max - min,
+  }
 }
 
 export function LoginForm({ onLogin }: LoginFormProps) {
@@ -15,6 +40,13 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge>(() => generateCaptchaChallenge())
+  const [captchaInput, setCaptchaInput] = useState('')
+
+  const resetCaptcha = () => {
+    setCaptchaChallenge(generateCaptchaChallenge())
+    setCaptchaInput('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,6 +61,18 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       return
     }
 
+    const parsedCaptchaAnswer = Number.parseInt(captchaInput.trim(), 10)
+    if (Number.isNaN(parsedCaptchaAnswer)) {
+      toast.error('Captcha wajib diisi dengan angka')
+      return
+    }
+
+    if (parsedCaptchaAnswer !== captchaChallenge.answer) {
+      toast.error('Captcha tidak sesuai, silakan coba lagi')
+      resetCaptcha()
+      return
+    }
+
     setIsLoading(true)
     
     try {
@@ -37,6 +81,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       // error handled by parent
     } finally {
       setPassword('')
+      resetCaptcha()
       setIsLoading(false)
     }
   }
@@ -79,6 +124,36 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 <Eye className="h-4 w-4" />
               )}
             </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="login-captcha">Captcha Keamanan</Label>
+          <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm text-foreground">
+                Berapa hasil <strong>{captchaChallenge.prompt}</strong>?
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2"
+                onClick={resetCaptcha}
+                aria-label="Refresh captcha"
+              >
+                <ArrowClockwise className="h-4 w-4" />
+              </Button>
+            </div>
+            <Input
+              id="login-captcha"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={captchaInput}
+              onChange={(e) => setCaptchaInput(e.target.value.replace(/[^0-9-]/g, ''))}
+              placeholder="Masukkan jawaban captcha"
+            />
           </div>
         </div>
 

@@ -269,6 +269,7 @@ export async function checkDomainStatuses<T extends { id: string; url: string }>
 export async function checkDomainStatusesFromServer<T extends { id: string; url: string }>(
   domains: T[],
   onProgress?: (progress: DomainCheckProgress<T>) => void,
+  signal?: AbortSignal,
 ): Promise<DomainStatus[]> {
   const results: DomainStatus[] = []
   let completed = 0
@@ -281,6 +282,7 @@ export async function checkDomainStatusesFromServer<T extends { id: string; url:
       const response = await fetch('/api/check-domains', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal,
         body: JSON.stringify({
           domains: batch.map(domain => ({ id: domain.id, url: domain.url })),
         }),

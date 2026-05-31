@@ -1,10 +1,43 @@
-# 📊 Domain Monitor Dashboard
+# Domain Monitor Dashboard
 
 Dashboard monitoring availability domain/subdomain dengan Firebase sync, statistik uptime, notifikasi Slack, dan role-based access.
 
-- Demo URL: https://your-monitoring-dashboard.vercel.app
+| Link | Value |
+| --- | --- |
+| Demo URL | https://your-monitoring-dashboard.vercel.app |
+| Current Version | 3.11.32 |
+| Runtime | React 19 + TypeScript + Vite 7 + Tailwind 4 |
+
 - Current Version: 3.11.32
-- Runtime: React 19 + TypeScript + Vite 7 + Tailwind 4
+
+## Preview
+
+<table>
+  <tr>
+    <td><img src="./public/images/project-monitoring/pin-dashboard.webp" alt="Pin dashboard view" width="100%" /></td>
+    <td><img src="./public/images/project-monitoring/monitoring-list.webp" alt="Monitoring list view" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Pin dashboard</sub></td>
+    <td align="center"><sub>Monitoring list</sub></td>
+  </tr>
+  <tr>
+    <td><img src="./public/images/project-monitoring/statistics-overview.webp" alt="Statistics overview" width="100%" /></td>
+    <td><img src="./public/images/project-monitoring/statistics-detail.webp" alt="Statistics detail" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Statistics overview</sub></td>
+    <td align="center"><sub>Statistics detail</sub></td>
+  </tr>
+  <tr>
+    <td><img src="./public/images/project-monitoring/uptime-chart.webp" alt="Uptime chart" width="100%" /></td>
+    <td><img src="./public/images/project-monitoring/url-management.webp" alt="URL management" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Uptime chart</sub></td>
+    <td align="center"><sub>URL management</sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -12,8 +45,8 @@ Dashboard monitoring availability domain/subdomain dengan Firebase sync, statist
 
 Secara default aplikasi membootstrap user demo readonly:
 
-- Username: `demo`
-- Password: `demo12345`
+- Username: `demoakun`
+- Password: `demo123456`
 - Role: `viewer` (hanya lihat data, tidak bisa edit/delete/manage user)
 
 Opsional override via env:
@@ -36,6 +69,14 @@ Build production:
 npm run build
 npm run preview
 ```
+
+## Highlights
+
+- Pin dashboard untuk domain favorit.
+- Monitoring list dengan status realtime.
+- Statistik uptime (overview dan detail).
+- Uptime chart harian/jam.
+- URL management untuk tambah/edit/hapus domain.
 
 ---
 
@@ -136,6 +177,7 @@ Endpoint API server-side check:
 - `POST /api/check-domains`
 
 Endpoint ini dipakai manual `Check All` agar hasil tidak tergantung jaringan laptop user.
+Endpoint ini juga dibatasi di server menjadi maksimal 2 request per 60 detik per client, sehingga user tidak bisa spam manual check terus-menerus.
 
 ---
 

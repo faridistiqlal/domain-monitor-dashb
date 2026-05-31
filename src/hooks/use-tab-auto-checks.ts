@@ -8,6 +8,7 @@ interface UseTabAutoChecksParams {
   hasChecked: boolean
   isRefreshing: boolean
   domains: Domain[]
+  allowInitialManualCheck: boolean
   onManualRefresh: (enforceCooldown?: boolean) => void
 }
 
@@ -18,12 +19,13 @@ export function useTabAutoChecks({
   hasChecked,
   isRefreshing,
   domains,
+  allowInitialManualCheck,
   onManualRefresh,
 }: UseTabAutoChecksParams) {
   useEffect(() => {
-    if (activeTab === 'domains' && !isLoadingData && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
+    if (allowInitialManualCheck && activeTab === 'domains' && !isLoadingData && !autoRefreshEnabled && !hasChecked && !isRefreshing && domains.length > 0) {
       globalThis.console.log('[Monitoring Tab] Auto-checking all domains on initial load...')
       onManualRefresh(false)
     }
-  }, [activeTab, isLoadingData, autoRefreshEnabled, hasChecked, isRefreshing, domains.length])
+  }, [activeTab, allowInitialManualCheck, isLoadingData, autoRefreshEnabled, hasChecked, isRefreshing, domains.length, onManualRefresh])
 }
