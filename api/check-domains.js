@@ -106,6 +106,8 @@ const isSslError = (message) => {
     normalized.includes("self_signed") ||
     normalized.includes("self signed") ||
     normalized.includes("unable_to_verify") ||
+    normalized.includes("unable to verify") ||
+    normalized.includes("leaf_signature") ||
     normalized.includes("handshake")
   );
 };
@@ -174,6 +176,38 @@ const attemptHttp = async (domain, protocol) => {
   };
 };
 
+// Fallback untuk domain dengan incomplete cert chain (misal: UNABLE_TO_VERIFY_LEAF_SIGNATURE).
+// Menggunakan https.request langsung dengan rejectUnauthorized:false karena
+// native fetch() tidak mendukung opsi agent untuk bypass SSL verification.
+const attemptHttpsNoVerify = (domain) =>
+  new Promise((resolve) => {
+    const startedAt = Date.now();
+    import("node:https").then(({ request }) => {
+      const timer = setTimeout(
+        () => resolve({ accessible: false, error: "Timeout" }),
+        HTTP_TIMEOUT_MS,
+      );
+      const req = request(
+        { hostname: domain, path: "/", method: "HEAD", rejectUnauthorized: false },
+        (res) => {
+          clearTimeout(timer);
+          resolve({
+            accessible: true,
+            responseTime: Date.now() - startedAt,
+            statusCode: res.statusCode,
+          });
+        },
+      );
+      req.on("error", () => {
+        clearTimeout(timer);
+        resolve({ accessible: false });
+      });
+      req.end();
+    });
+  });
+
+const attemptHttpWithAgent = attemptHttp; // alias kept for internal checkDomain use
+
 const checkDomain = async ({ id, url }) => {
   const domain = normalizeDomain(url);
 
@@ -223,6 +257,26 @@ const checkDomain = async ({ id, url }) => {
   const error =
     httpsResult.error || httpResult.error || "Server tidak dapat diakses";
   const rawError = httpsResult.rawError || httpResult.rawError || error;
+
+  // Fallback: jika SSL gagal karena incomplete cert chain (bukan self-signed),
+  // server mungkin tetap aktif — coba tanpa verifikasi cert untuk konfirmasi.
+  if (dnsResolvable && isSslError(rawError)) {
+    const fallbackResult = await attemptHttpsNoVerify(domain);
+    if (fallbackResult.accessible) {
+      return {
+        id,
+        status: "online",
+        responseTime: fallbackResult.responseTime,
+        lastChecked: Date.now(),
+        ipAddress,
+        httpAccessible: true,
+        dnsResolvable,
+        protocol: "https",
+        sslWarning: true,
+      };
+    }
+  }
+
   const status = dnsResolvable && isSslError(rawError) ? "dns-only" : "offline";
 
   return {

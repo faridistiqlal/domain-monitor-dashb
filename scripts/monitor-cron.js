@@ -284,20 +284,33 @@ async function initializeFirestoreConnection() {
  * Accepts any HTTP response (including 4xx/5xx) as "server alive".
  * Falls back from HEAD → GET if server rejects HEAD.
  */
-async function attemptHTTP(baseUrl, protocol, timeoutMs) {
+async function attemptHTTP(baseUrl, protocol, timeoutMs, rejectUnauthorized = true) {
   const url = `${protocol}://${baseUrl}`;
   const startTime = Date.now();
+
+  // For HTTPS with disabled cert verification (fallback for incomplete cert chains)
+  let httpsAgent = null;
+  if (protocol === "https" && !rejectUnauthorized) {
+    const { Agent } = await import("https");
+    httpsAgent = new Agent({ rejectUnauthorized: false });
+  }
 
   for (const method of ["HEAD", "GET"]) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      const response = await fetch(url, {
+      const fetchOptions = {
         method,
         signal: controller.signal,
         redirect: "follow",
-      });
+      };
+      if (httpsAgent) {
+        // node-fetch v3 supports agent option
+        fetchOptions.agent = httpsAgent;
+      }
+
+      const response = await fetch(url, fetchOptions);
       clearTimeout(timeoutId);
 
       // Any HTTP response means server is alive (even 403/503)
@@ -399,8 +412,6 @@ async function checkDomain(domain) {
 
   // ── Classify after retries exhausted ────────────────────────────────────
   if (dnsResolved) {
-    // dns-only ONLY when the error is specifically SSL/TLS/cert related.
-    // Any other failure (server down, connection refused, timeout, etc.) = offline.
     const errMsg = (lastResult?.error || "").toLowerCase();
     const isSslError =
       errMsg.includes("cert") ||
@@ -409,9 +420,25 @@ async function checkDomain(domain) {
       errMsg.includes("self_signed") ||
       errMsg.includes("self signed") ||
       errMsg.includes("unable_to_verify") ||
+      errMsg.includes("unable to verify") ||
+      errMsg.includes("leaf_signature") ||
       errMsg.includes("handshake");
 
     if (isSslError) {
+      // Fallback: server mungkin tetap aktif meski cert chain incomplete.
+      // Coba tanpa verifikasi cert untuk konfirmasi server hidup.
+      const fallback = await attemptHTTP(url, "https", HTTP_TIMEOUT, false);
+      if (fallback.reachable) {
+        return {
+          status: "online",
+          ipAddress,
+          responseTime: fallback.responseTime,
+          protocol: "https",
+          error: null,
+          sslWarning: true,
+        };
+      }
+
       return {
         status: "dns-only",
         ipAddress,
