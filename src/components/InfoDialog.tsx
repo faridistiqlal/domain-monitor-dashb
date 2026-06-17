@@ -121,7 +121,7 @@ export function InfoDialog({ triggerText = 'Bantuan', asLink = false }: InfoDial
                 </div>
                 <div className="flex gap-2">
                   <span className="font-semibold text-accent">•</span>
-                  <p><span className="font-semibold text-foreground">Status Pinned:</span> Tab Pin memakai hasil monitoring GitHub Actions dari Firebase. Klik "Muat Status Cron" untuk memuat hasil server terbaru.</p>
+                  <p><span className="font-semibold text-foreground">Status Pinned:</span> Tab Pin memakai hasil cron terakhir dari Firestore. Klik "Muat Status Cron" untuk memuat ulang data database dengan cooldown 60 detik.</p>
                 </div>
               </div>
             </AccordionContent>

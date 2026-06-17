@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 3.11.33 - Fix Pinned Status Firestore Only
+
+**Tanggal Rilis:** 17 Juni 2026
+
+### 🔧 Fix: Tab Pinned Mengikuti Source of Truth Firestore
+
+- Tombol manual `Check Pinned Sekarang` dihapus dari tab Pinned agar tidak menampilkan status sementara yang berbeda dari data database.
+- Tombol `Muat Status Cron` kini membaca langsung dari Firestore melalui `getDomainsFromFirestore()`, tanpa fallback cache/localStorage.
+- Ditambahkan cooldown 60 detik untuk refresh status cron di tab Pinned agar read Firestore tidak dipicu berulang.
+- Saat Firestore terkena `resource-exhausted`, UI menampilkan pesan quota limit yang jelas dan meminta user menunggu reset quota.
+
 ## Version 3.11.32 - Fix Monitoring False Offline Browser Check
 
 **Tanggal Rilis:** 30 Mei 2026

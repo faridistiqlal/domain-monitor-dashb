@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 30 Mei 2026  
-**Current Version:** 3.11.32 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 17 Juni 2026  
+**Current Version:** 3.11.33 (sumber: `src/lib/version.ts`)  
 **Live App:** https://domain-watchtower.vercel.app
 
 ---
@@ -167,6 +167,12 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.33 (17 Juni 2026) — **Fix: Pinned Status Firestore Only**
+
+- Tab Pinned kini hanya memuat status dari Firestore/hasil cron melalui tombol `Muat Status Cron`.
+- Tombol manual `Check Pinned Sekarang` dihapus dari tab Pinned agar tidak menampilkan hasil sementara yang bukan source of truth database.
+- Refresh status cron memakai cooldown 60 detik dan menampilkan pesan jelas saat Firestore terkena `resource-exhausted`.
 
 ### v3.11.32 (30 Mei 2026) — **Fix: Monitoring False Offline Browser Check**
 
@@ -542,6 +548,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 
 | ID    | Item                                                                        | Versi   |
 | ----- | --------------------------------------------------------------------------- | ------- |
+| D-031 | Tab Pinned hanya memuat status cron dari Firestore + cooldown refresh       | 3.11.33 |
 | D-030 | Fix monitoring false offline: concurrency limit + HEAD→GET fallback         | 3.11.32 |
 | D-029 | Fix grup domain hilang setelah refresh + icon link mobile                   | 3.11.31 |
 | D-028 | Fix cron dns-only logic + Slack Block Kit upgrade                           | 3.11.30 |

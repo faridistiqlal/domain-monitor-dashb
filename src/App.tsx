@@ -44,6 +44,7 @@ import { NotificationDetails } from '@/lib/notifications'
 import { checkDomainStatus, checkDomainStatuses, checkDomainStatusesFromServer } from '@/lib/monitoring'
 import { 
   loadDomains, 
+  getDomainsFromFirestore,
   loadGroups, 
   loadTags,
   loadMonitoringControl,
@@ -242,6 +243,7 @@ function App() {
   const [managePinFilter, setManagePinFilter] = useState<string>('all')
   const [editingTag, setEditingTag] = useState<DomainTag | null>(null)
   const [monitoringEnabled, setMonitoringEnabled] = useState(true)
+  const [isLoadingPinnedCronStatus, setIsLoadingPinnedCronStatus] = useState(false)
 
   const {
     firebaseOps,
@@ -264,6 +266,10 @@ function App() {
   const {
     manualRefreshRemainingSeconds,
     startManualRefreshCooldown,
+  } = useManualRefreshCooldown()
+  const {
+    manualRefreshRemainingSeconds: pinnedCronRefreshRemainingSeconds,
+    startManualRefreshCooldown: startPinnedCronRefreshCooldown,
   } = useManualRefreshCooldown()
 
   const {
@@ -1896,72 +1902,70 @@ function App() {
     }
   }, [autoRefreshEnabled, canControlMonitoring, checkAllDomains, isRefreshing, manualRefreshRemainingSeconds, resetCountdownToNextBatch, startManualRefreshCooldown])
 
-  const handleRefreshPinnedStatuses = useCallback(async () => {
+  const handleLoadPinnedCronStatuses = useCallback(async () => {
     const pinnedDomains = domains.filter(d => d.pinned)
     if (pinnedDomains.length === 0) {
       toast.info('Belum ada domain pinned')
       return
     }
 
-    if (!canControlMonitoring) {
-      toast.error('Akun readonly tidak dapat menjalankan manual check')
+    if (isLoadingPinnedCronStatus) {
       return
     }
 
-    if (isRefreshing) {
+    if (pinnedCronRefreshRemainingSeconds > 0) {
+      toast.info(`Tunggu ${pinnedCronRefreshRemainingSeconds} detik sebelum memuat status cron lagi`)
       return
     }
 
-    if (manualRefreshRemainingSeconds > 0) {
-      toast.info(`Tunggu ${manualRefreshRemainingSeconds} detik sebelum check manual berikutnya`)
-      return
-    }
-
-    startManualRefreshCooldown(30_000)
-    setIsRefreshing(true)
-
-    const abortController = new AbortController()
-    manualRefreshAbortControllerRef.current = abortController
+    startPinnedCronRefreshCooldown(60_000)
+    setIsLoadingPinnedCronStatus(true)
 
     try {
-      toast.info(`Memeriksa ${pinnedDomains.length} domain pinned...`)
+      toast.info('Memuat status terbaru dari Firestore...')
+      const loadedDomains = await getDomainsFromFirestore()
+      trackFirebaseRead(1)
 
-      const results = await checkDomainStatusesFromServer(
-        pinnedDomains,
-        ({ result }) => {
-          setStatuses(prev => ({ ...prev, [result.id]: result }))
-        },
-        abortController.signal,
+      const normalizedDomains = normalizeDomainsForMonitoring(loadedDomains)
+      const persistedStatuses = getPersistedStatusesFromDomains(normalizedDomains)
+
+      setDomains(normalizedDomains)
+      setStatuses(persistedStatuses)
+      setPreviousStatuses(
+        Object.entries(persistedStatuses).reduce<Record<string, 'online' | 'offline' | 'dns-only'>>(
+          (acc, [id, status]) => {
+            if (status.status !== 'checking') {
+              acc[id] = status.status
+            }
+            return acc
+          },
+          {},
+        )
       )
 
-      const mergedStatuses: Record<string, DomainStatus> = {}
-      results.forEach(result => {
-        mergedStatuses[result.id] = result
-      })
-      setStatuses(prev => ({ ...prev, ...mergedStatuses }))
-      setHasChecked(true)
-      setLastCheckTime(new Date())
-
-      const online = results.filter(r => r.status === 'online').length
-      const offline = results.filter(r => r.status === 'offline').length
-      const dnsOnly = results.filter(r => r.status === 'dns-only').length
-
-      toast.success(`Pinned selesai: Online ${online}, DNS Only ${dnsOnly}, Offline ${offline}`)
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        toast.info('Check pinned dihentikan')
+      const refreshedPinnedCount = normalizedDomains.filter(domain => domain.pinned && domain.status).length
+      toast.success(`Status Firestore dimuat: ${refreshedPinnedCount}/${pinnedDomains.length} pinned domain punya hasil cron`)
+    } catch (error: unknown) {
+      const code = (error as { code?: string } | undefined)?.code
+      if (code === 'resource-exhausted') {
+        toast.error('Firestore quota sedang limit. Tunggu reset quota sebelum memuat status cron lagi.')
         return
       }
 
-      const message = error instanceof Error ? error.message : 'Gagal memeriksa domain pinned'
+      const message = error instanceof Error ? error.message : 'Gagal memuat status cron dari Firestore'
       toast.error(message)
     } finally {
-      if (manualRefreshAbortControllerRef.current === abortController) {
-        manualRefreshAbortControllerRef.current = null
-      }
-      setIsRefreshing(false)
+      setIsLoadingPinnedCronStatus(false)
     }
-  }, [canControlMonitoring, domains, isRefreshing, manualRefreshRemainingSeconds, startManualRefreshCooldown])
+  }, [
+    domains,
+    getPersistedStatusesFromDomains,
+    isLoadingPinnedCronStatus,
+    normalizeDomainsForMonitoring,
+    pinnedCronRefreshRemainingSeconds,
+    startPinnedCronRefreshCooldown,
+    trackFirebaseRead,
+  ])
 
   const handleStopManualRefresh = useCallback(() => {
     if (!isRefreshing) {
@@ -3303,28 +3307,18 @@ function App() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleRefreshPinnedStatuses}
-                    disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
+                    onClick={handleLoadPinnedCronStatuses}
+                    disabled={isLoadingPinnedCronStatus || pinnedCronRefreshRemainingSeconds > 0}
                     className="h-8"
+                    title={pinnedCronRefreshRemainingSeconds > 0 ? `Tunggu ${pinnedCronRefreshRemainingSeconds} detik` : 'Muat status cron dari Firestore'}
+                    aria-label={pinnedCronRefreshRemainingSeconds > 0 ? `Refresh status cron cooldown ${pinnedCronRefreshRemainingSeconds} detik` : 'Muat status cron dari Firestore'}
                   >
                     <ArrowClockwise size={14} />
-                    Check Pinned Sekarang
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      const pinnedDomains = domains.filter(d => d.pinned)
-                      if (pinnedDomains.length === 0) return
-
-                      toast.info('Memuat status terbaru dari GitHub Actions...')
-                      const refreshedDomains = await loadAndSetDomainsFromFirebase()
-                      const refreshedPinnedCount = refreshedDomains.filter(d => d.pinned && d.status).length
-                      toast.success(`Status cron dimuat: ${refreshedPinnedCount}/${pinnedDomains.length} pinned domain punya hasil server`)
-                    }}
-                    className="h-8"
-                  >
-                    Muat Status Cron
+                    {isLoadingPinnedCronStatus
+                      ? 'Memuat...'
+                      : pinnedCronRefreshRemainingSeconds > 0
+                        ? `Tunggu ${pinnedCronRefreshRemainingSeconds}s`
+                        : 'Muat Status Cron'}
                   </Button>
                 </div>
               )}
