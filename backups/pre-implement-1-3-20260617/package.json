@@ -1,14 +1,12 @@
 {
-    "name": "domain-monitor-dashboard",
+    "name": "spark-template",
     "private": true,
-    "version": "3.11.32",
+    "version": "3.11.33",
     "type": "module",
     "scripts": {
         "dev": "vite",
         "kill": "fuser -k 5000/tcp",
         "build": "./node_modules/.bin/tsc -b --noCheck && ./node_modules/.bin/vite build",
-        "typecheck": "./node_modules/.bin/tsc -b --noEmit",
-        "test": "node --test tests/*.test.mjs",
         "lint": "eslint .",
         "optimize": "vite optimize",
         "preview": "vite preview",

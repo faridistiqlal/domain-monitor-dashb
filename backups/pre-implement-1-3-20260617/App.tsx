@@ -345,17 +345,9 @@ function App() {
       const persistedStatuses = getPersistedStatusesFromDomains(normalizedDomains)
       setDomains(normalizedDomains)
       setStatuses(persistedStatuses)
-      setPreviousStatuses(
-        Object.entries(persistedStatuses).reduce<Record<string, 'online' | 'offline' | 'dns-only'>>(
-          (acc, [id, status]) => {
-            if (status.status !== 'checking') {
-              acc[id] = status.status
-            }
-            return acc
-          },
-          {},
-        )
-      )
+      setPreviousStatuses(Object.fromEntries(
+        Object.entries(persistedStatuses).map(([id, status]) => [id, status.status])
+      ))
 
       appConsole.log('[Domains] ✅ Loaded', normalizedDomains.length, 'domains from Firebase')
       const pinnedCount = normalizedDomains.filter(d => d.pinned).length

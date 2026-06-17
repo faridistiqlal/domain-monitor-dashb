@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { useState } from 'react'
 import { Globe, DotsThree, Trash, Clock, DownloadSimple, FilePdf } from '@phosphor-icons/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -57,7 +57,7 @@ const ResponseSparkline = ({ values }: { values: number[] }) => {
   )
 }
 
-export function PinnedDomainCard({ domain, status, insight, onUnpin }: PinnedDomainCardProps): ReactElement {
+export function PinnedDomainCard({ domain, status, insight, onUnpin }: PinnedDomainCardProps): JSX.Element {
   const [showStats, setShowStats] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [exportingPeriod, setExportingPeriod] = useState<ReportPeriodDays | null>(null)
