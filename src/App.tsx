@@ -1888,6 +1888,73 @@ function App() {
     }
   }, [autoRefreshEnabled, canControlMonitoring, checkAllDomains, isRefreshing, manualRefreshRemainingSeconds, resetCountdownToNextBatch, startManualRefreshCooldown])
 
+  const handleRefreshPinnedStatuses = useCallback(async () => {
+    const pinnedDomains = domains.filter(d => d.pinned)
+    if (pinnedDomains.length === 0) {
+      toast.info('Belum ada domain pinned')
+      return
+    }
+
+    if (!canControlMonitoring) {
+      toast.error('Akun readonly tidak dapat menjalankan manual check')
+      return
+    }
+
+    if (isRefreshing) {
+      return
+    }
+
+    if (manualRefreshRemainingSeconds > 0) {
+      toast.info(`Tunggu ${manualRefreshRemainingSeconds} detik sebelum check manual berikutnya`)
+      return
+    }
+
+    startManualRefreshCooldown(30_000)
+    setIsRefreshing(true)
+
+    const abortController = new AbortController()
+    manualRefreshAbortControllerRef.current = abortController
+
+    try {
+      toast.info(`Memeriksa ${pinnedDomains.length} domain pinned...`)
+
+      const results = await checkDomainStatusesFromServer(
+        pinnedDomains,
+        ({ result }) => {
+          setStatuses(prev => ({ ...prev, [result.id]: result }))
+        },
+        abortController.signal,
+      )
+
+      const mergedStatuses: Record<string, DomainStatus> = {}
+      results.forEach(result => {
+        mergedStatuses[result.id] = result
+      })
+      setStatuses(prev => ({ ...prev, ...mergedStatuses }))
+      setHasChecked(true)
+      setLastCheckTime(new Date())
+
+      const online = results.filter(r => r.status === 'online').length
+      const offline = results.filter(r => r.status === 'offline').length
+      const dnsOnly = results.filter(r => r.status === 'dns-only').length
+
+      toast.success(`Pinned selesai: Online ${online}, DNS Only ${dnsOnly}, Offline ${offline}`)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        toast.info('Check pinned dihentikan')
+        return
+      }
+
+      const message = error instanceof Error ? error.message : 'Gagal memeriksa domain pinned'
+      toast.error(message)
+    } finally {
+      if (manualRefreshAbortControllerRef.current === abortController) {
+        manualRefreshAbortControllerRef.current = null
+      }
+      setIsRefreshing(false)
+    }
+  }, [canControlMonitoring, domains, isRefreshing, manualRefreshRemainingSeconds, startManualRefreshCooldown])
+
   const handleStopManualRefresh = useCallback(() => {
     if (!isRefreshing) {
       return
@@ -3224,23 +3291,34 @@ function App() {
                 </p>
               </div>
               {domains.filter(d => d.pinned).length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    const pinnedDomains = domains.filter(d => d.pinned)
-                    if (pinnedDomains.length === 0) return
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefreshPinnedStatuses}
+                    disabled={isRefreshing || manualRefreshRemainingSeconds > 0}
+                    className="h-8"
+                  >
+                    <ArrowClockwise size={14} />
+                    Check Pinned Sekarang
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      const pinnedDomains = domains.filter(d => d.pinned)
+                      if (pinnedDomains.length === 0) return
 
-                    toast.info('Memuat status terbaru dari GitHub Actions...')
-                    const refreshedDomains = await loadAndSetDomainsFromFirebase()
-                    const refreshedPinnedCount = refreshedDomains.filter(d => d.pinned && d.status).length
-                    toast.success(`Status cron dimuat: ${refreshedPinnedCount}/${pinnedDomains.length} pinned domain punya hasil server`)
-                  }}
-                  className="h-8"
-                >
-                  <ArrowClockwise size={14} />
-                  Muat Status Cron
-                </Button>
+                      toast.info('Memuat status terbaru dari GitHub Actions...')
+                      const refreshedDomains = await loadAndSetDomainsFromFirebase()
+                      const refreshedPinnedCount = refreshedDomains.filter(d => d.pinned && d.status).length
+                      toast.success(`Status cron dimuat: ${refreshedPinnedCount}/${pinnedDomains.length} pinned domain punya hasil server`)
+                    }}
+                    className="h-8"
+                  >
+                    Muat Status Cron
+                  </Button>
+                </div>
               )}
             </div>
             

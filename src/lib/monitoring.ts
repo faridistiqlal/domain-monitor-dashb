@@ -1,4 +1,5 @@
 import { DomainStatus } from './types'
+import { getCurrentIdToken } from './firebase-auth'
 
 const DNS_LOOKUP_TIMEOUT_MS = 5000
 const HTTP_HEAD_TIMEOUT_MS = 4000
@@ -277,11 +278,19 @@ export async function checkDomainStatusesFromServer<T extends { id: string; url:
     && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
 
   try {
+    const idToken = await getCurrentIdToken()
+    if (!idToken) {
+      throw new Error('Sesi login tidak aktif. Silakan login ulang untuk manual check.')
+    }
+
     for (let startIndex = 0; startIndex < domains.length; startIndex += SERVER_CHECK_BATCH_SIZE) {
       const batch = domains.slice(startIndex, startIndex + SERVER_CHECK_BATCH_SIZE)
       const response = await fetch('/api/check-domains', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
         signal,
         body: JSON.stringify({
           domains: batch.map(domain => ({ id: domain.id, url: domain.url })),

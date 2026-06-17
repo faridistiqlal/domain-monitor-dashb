@@ -8,6 +8,9 @@ const HTTP_TIMEOUT_MS = 12000;
 const MAX_DOMAINS_PER_REQUEST = 12;
 const MANUAL_CHECK_WINDOW_MS = 60_000;
 const MANUAL_CHECK_MAX_REQUESTS = 2;
+const AUTH_VERIFY_TIMEOUT_MS = 8000;
+const FIREBASE_WEB_API_KEY =
+  process.env.FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY || "";
 const rateLimitStore =
   globalThis.__domainMonitorManualRateLimitStore || new Map();
 
@@ -25,6 +28,60 @@ const normalizeDomain = (url) =>
     .replace(/^https?:\/\//i, "")
     .split("/")[0]
     .toLowerCase();
+
+const getBearerToken = (request) => {
+  const authorization = request.headers.authorization;
+  if (!authorization || typeof authorization !== "string") return null;
+
+  const [scheme, token] = authorization.trim().split(/\s+/);
+  if (!scheme || scheme.toLowerCase() !== "bearer" || !token) return null;
+
+  return token;
+};
+
+const verifyFirebaseIdToken = async (idToken) => {
+  if (!FIREBASE_WEB_API_KEY) {
+    throw new Error("Manual check auth is not configured");
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    AUTH_VERIFY_TIMEOUT_MS,
+  );
+
+  try {
+    const verifyResponse = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(FIREBASE_WEB_API_KEY)}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ idToken }),
+        signal: controller.signal,
+      },
+    );
+
+    if (!verifyResponse.ok) {
+      return null;
+    }
+
+    const payload = await verifyResponse.json();
+    const user = Array.isArray(payload?.users) ? payload.users[0] : null;
+    const uid = user?.localId;
+
+    if (!uid || typeof uid !== "string") {
+      return null;
+    }
+
+    return { uid };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
 
 const getClientIdentifier = (request) => {
   const forwardedFor = request.headers["x-forwarded-for"];
@@ -188,7 +245,12 @@ const attemptHttpsNoVerify = (domain) =>
         HTTP_TIMEOUT_MS,
       );
       const req = request(
-        { hostname: domain, path: "/", method: "HEAD", rejectUnauthorized: false },
+        {
+          hostname: domain,
+          path: "/",
+          method: "HEAD",
+          rejectUnauthorized: false,
+        },
         (res) => {
           clearTimeout(timer);
           resolve({
@@ -303,6 +365,22 @@ export default async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
     json(response, 405, { error: "Method not allowed" });
+    return;
+  }
+
+  const idToken = getBearerToken(request);
+  if (!idToken) {
+    json(response, 401, {
+      error: "Unauthorized: login diperlukan untuk manual check",
+    });
+    return;
+  }
+
+  const authUser = await verifyFirebaseIdToken(idToken);
+  if (!authUser) {
+    json(response, 401, {
+      error: "Unauthorized: token tidak valid atau sudah expired",
+    });
     return;
   }
 

@@ -79,6 +79,17 @@ export const onAuthUserChanged = (callback: (user: User | null) => void): Unsubs
   return onAuthStateChanged(auth, callback)
 }
 
+export const getCurrentIdToken = async (): Promise<string | null> => {
+  const auth = getPrimaryAuth()
+  const currentUser = auth.currentUser
+
+  if (!currentUser) {
+    return null
+  }
+
+  return currentUser.getIdToken()
+}
+
 export const changeCurrentUserPassword = async (oldPassword: string, newPassword: string): Promise<void> => {
   const auth = getPrimaryAuth()
   const currentUser = auth.currentUser

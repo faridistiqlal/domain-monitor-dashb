@@ -284,7 +284,12 @@ async function initializeFirestoreConnection() {
  * Accepts any HTTP response (including 4xx/5xx) as "server alive".
  * Falls back from HEAD → GET if server rejects HEAD.
  */
-async function attemptHTTP(baseUrl, protocol, timeoutMs, rejectUnauthorized = true) {
+async function attemptHTTP(
+  baseUrl,
+  protocol,
+  timeoutMs,
+  rejectUnauthorized = true,
+) {
   const url = `${protocol}://${baseUrl}`;
   const startTime = Date.now();
 
