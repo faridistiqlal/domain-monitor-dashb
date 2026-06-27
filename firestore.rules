@@ -213,7 +213,7 @@ service cloud.firestore {
     }
 
     match /users/user-directory {
-      allow read: if canReadApp();
+      allow read: if isAdmin();
       allow write: if isAdmin() && validManagedUsersDoc();
     }
 

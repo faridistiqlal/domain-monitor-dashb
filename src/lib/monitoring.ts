@@ -3,9 +3,11 @@ import { getCurrentIdToken } from './firebase-auth'
 
 const DNS_LOOKUP_TIMEOUT_MS = 5000
 const HTTP_HEAD_TIMEOUT_MS = 4000
-const HTTP_GET_TIMEOUT_MS = 10000
+const HTTP_GET_TIMEOUT_MS = 5000
 const BULK_CHECK_CONCURRENCY = 8
 const SERVER_CHECK_BATCH_SIZE = 8
+
+const ALLOWED_BASE_DOMAIN = (import.meta.env.VITE_ALLOWED_BASE_DOMAIN || 'kendalkab.go.id').trim().toLowerCase()
 
 export interface DomainCheckProgress<T extends { id: string; url: string }> {
   completed: number
@@ -334,9 +336,9 @@ export function validateDomain(url: string): { valid: boolean; error?: string } 
 
   const cleanUrl = trimmedUrl.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase()
   
-  // Accept kendalkab.go.id or any subdomain (*.kendalkab.go.id)
-  if (!cleanUrl.endsWith('kendalkab.go.id') && cleanUrl !== 'kendalkab.go.id') {
-    return { valid: false, error: 'Hanya domain kendalkab.go.id atau subdomain-nya yang diperbolehkan' }
+  // Accept ALLOWED_BASE_DOMAIN or any subdomain (*.ALLOWED_BASE_DOMAIN)
+  if (!cleanUrl.endsWith(ALLOWED_BASE_DOMAIN) && cleanUrl !== ALLOWED_BASE_DOMAIN) {
+    return { valid: false, error: `Hanya domain ${ALLOWED_BASE_DOMAIN} atau subdomain-nya yang diperbolehkan` }
   }
 
   return { valid: true }

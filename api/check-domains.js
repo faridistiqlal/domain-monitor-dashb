@@ -4,11 +4,15 @@ export const config = {
   maxDuration: 60,
 };
 
-const HTTP_TIMEOUT_MS = 12000;
+const HTTP_TIMEOUT_MS = 5000;
 const MAX_DOMAINS_PER_REQUEST = 12;
 const MANUAL_CHECK_WINDOW_MS = 60_000;
 const MANUAL_CHECK_MAX_REQUESTS = 2;
 const AUTH_VERIFY_TIMEOUT_MS = 8000;
+const ALLOWED_BASE_DOMAIN =
+  process.env.ALLOWED_BASE_DOMAIN ||
+  process.env.VITE_ALLOWED_BASE_DOMAIN ||
+  "kendalkab.go.id";
 const FIREBASE_WEB_API_KEY =
   process.env.FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY || "";
 const rateLimitStore =
@@ -152,7 +156,7 @@ const checkRateLimit = (request) => {
 };
 
 const isAllowedDomain = (domain) =>
-  domain === "kendalkab.go.id" || domain.endsWith(".kendalkab.go.id");
+  domain === ALLOWED_BASE_DOMAIN || domain.endsWith("." + ALLOWED_BASE_DOMAIN);
 
 const isSslError = (message) => {
   const normalized = String(message || "").toLowerCase();
