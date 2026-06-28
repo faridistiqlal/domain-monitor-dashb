@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 3.11.34 - Fix Daily Stats Gap di Uptime Bar
+
+**Tanggal Rilis:** 28 Juni 2026
+
+### 🐛 Fix: Gap Abu-Abu Periodik di Uptime Bar Pinned
+
+- Cron monitoring kini menulis minimal satu dokumen `domain-stats-daily` per domain per hari Jakarta, walaupun status domain stabil dan heartbeat 12 jam belum lewat.
+- Sebelumnya, domain yang stabil `online` bisa melewatkan tanggal tertentu karena `lastStatsWrite` belum melewati heartbeat saat pergantian hari. Akibatnya Uptime Bar menampilkan bar abu-abu/gap untuk tanggal tanpa dokumen stats.
+- Log stats cron diperjelas dengan `dailyStatsDue`, tanggal stats terakhir, tanggal hari ini, dan alasan write/skip agar diagnosis gap berikutnya lebih mudah.
+
 ## Version 3.11.33 - Fix Pinned Status Firestore Only
 
 **Tanggal Rilis:** 17 Juni 2026

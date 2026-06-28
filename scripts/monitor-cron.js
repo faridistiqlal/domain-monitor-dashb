@@ -501,6 +501,18 @@ function getTodayString() {
   return jakartaTime.toISOString().split("T")[0];
 }
 
+function getJakartaDateString(timestamp) {
+  if (!timestamp) return null;
+
+  const date = new Date(Number(timestamp));
+  if (Number.isNaN(date.getTime())) return null;
+
+  const jakartaTime = new Date(
+    date.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
+  );
+  return jakartaTime.toISOString().split("T")[0];
+}
+
 /**
  * Get current hour in Asia/Jakarta timezone (0-23)
  */
@@ -656,11 +668,17 @@ function shouldWriteDomainStats(domain, checkResult) {
   const lastStatsWrite = Number(domain?.lastStatsWrite || 0);
   const elapsedMs = Date.now() - lastStatsWrite;
   const heartbeatDue = !lastStatsWrite || elapsedMs >= STATS_HEARTBEAT_MS;
+  const lastStatsDate = getJakartaDateString(lastStatsWrite);
+  const today = getTodayString();
+  const dailyStatsDue = lastStatsDate !== today;
 
   return {
-    shouldWrite: statusChanged || heartbeatDue,
+    shouldWrite: statusChanged || heartbeatDue || dailyStatsDue,
     statusChanged,
     heartbeatDue,
+    dailyStatsDue,
+    lastStatsDate,
+    today,
     elapsedMs,
   };
 }
@@ -995,13 +1013,15 @@ async function runMonitoring() {
             console.log(
               `[Stats] Write scheduled for ${domain.url} ` +
                 `(statusChanged=${statsDecision.statusChanged}, heartbeatDue=${statsDecision.heartbeatDue}, ` +
+                `dailyStatsDue=${statsDecision.dailyStatsDue}, statsDate=${statsDecision.lastStatsDate || "none"}→${statsDecision.today}, ` +
                 `elapsedMin=${Math.round(statsDecision.elapsedMs / 60000)})`,
             );
             await updateDailyStats(domain.id, result);
           } else {
             console.log(
               `[Stats] Skip write for ${domain.url} ` +
-                `(status stable & heartbeat not due, elapsedMin=${Math.round(statsDecision.elapsedMs / 60000)})`,
+                `(status stable, heartbeat not due, daily stats already written, ` +
+                `statsDate=${statsDecision.lastStatsDate || "none"}, elapsedMin=${Math.round(statsDecision.elapsedMs / 60000)})`,
             );
           }
 

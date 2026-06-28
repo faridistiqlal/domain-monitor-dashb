@@ -3,8 +3,8 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 17 Juni 2026  
-**Current Version:** 3.11.33 (sumber: `src/lib/version.ts`)  
+**Last Updated:** 28 Juni 2026  
+**Current Version:** 3.11.34 (sumber: `src/lib/version.ts`)  
 **Live App:** https://domain-watchtower.vercel.app
 
 ---
@@ -167,6 +167,12 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### v3.11.34 (28 Juni 2026) — **Fix: Daily Stats Gap di Uptime Bar**
+
+- Cron monitoring kini wajib menulis minimal satu `domain-stats-daily` per domain per hari Jakarta, walaupun status stabil dan heartbeat 12 jam belum lewat.
+- Ini mencegah gap abu-abu periodik pada Uptime Bar Pinned akibat tanggal tertentu tidak punya dokumen statistik.
+- Log cron stats kini menampilkan alasan write/skip termasuk `dailyStatsDue` dan tanggal stats terakhir.
 
 ### v3.11.33 (17 Juni 2026) — **Fix: Pinned Status Firestore Only**
 
@@ -548,6 +554,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 
 | ID    | Item                                                                        | Versi   |
 | ----- | --------------------------------------------------------------------------- | ------- |
+| D-032 | Fix gap uptime bar: cron tulis minimal satu daily stats per hari Jakarta    | 3.11.34 |
 | D-031 | Tab Pinned hanya memuat status cron dari Firestore + cooldown refresh       | 3.11.33 |
 | D-030 | Fix monitoring false offline: concurrency limit + HEAD→GET fallback         | 3.11.32 |
 | D-029 | Fix grup domain hilang setelah refresh + icon link mobile                   | 3.11.31 |
