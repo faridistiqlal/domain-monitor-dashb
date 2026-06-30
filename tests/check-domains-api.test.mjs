@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 
 const originalFetch = globalThis.fetch
 const originalFirebaseApiKey = process.env.FIREBASE_API_KEY
@@ -17,6 +18,22 @@ const loadHandler = async () => {
   resetRateLimitStore()
   const moduleUrl = `../api/check-domains.js?test=${Date.now()}-${Math.random()}`
   const imported = await import(moduleUrl)
+  return imported.default
+}
+
+const loadHandlerWithMockDns = async (lookup = async () => ({ address: '103.162.68.183' })) => {
+  process.env.FIREBASE_API_KEY = 'test-api-key'
+  process.env.ALLOWED_BASE_DOMAIN = 'kendalkab.go.id'
+  resetRateLimitStore()
+  globalThis.__checkDomainsTestDns = { lookup }
+
+  const source = await readFile(new URL('../api/check-domains.js', import.meta.url), 'utf8')
+  const testableSource = source.replace(
+    'import dns from "node:dns/promises";',
+    'const dns = globalThis.__checkDomainsTestDns;',
+  )
+  const encoded = Buffer.from(testableSource, 'utf8').toString('base64')
+  const imported = await import(`data:text/javascript;base64,${encoded}#${Date.now()}-${Math.random()}`)
   return imported.default
 }
 
@@ -56,8 +73,27 @@ const mockValidFirebaseLookup = () => {
   })
 }
 
+const createFetchMock = (handlers) => {
+  const calls = []
+
+  const fetchMock = async (url, options = {}) => {
+    calls.push({ url: String(url), options })
+    const handler = handlers.shift()
+
+    if (!handler) {
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    return handler(url, options)
+  }
+
+  fetchMock.calls = calls
+  return fetchMock
+}
+
 test.afterEach(() => {
   globalThis.fetch = originalFetch
+  delete globalThis.__checkDomainsTestDns
   process.env.FIREBASE_API_KEY = originalFirebaseApiKey
   process.env.VITE_FIREBASE_API_KEY = originalViteFirebaseApiKey
   process.env.ALLOWED_BASE_DOMAIN = originalAllowedBaseDomain
@@ -134,6 +170,102 @@ test('returns validation result for domains outside allowed base domain', async 
       error: 'Domain tidak valid atau tidak diizinkan',
     },
   )
+})
+
+test('returns online result when an allowed domain is reachable over HTTPS', async () => {
+  globalThis.fetch = createFetchMock([
+    async () => ({
+      ok: true,
+      json: async () => ({ users: [{ localId: 'test-uid' }] }),
+    }),
+    async () => ({ status: 200 }),
+  ])
+  const handler = await loadHandlerWithMockDns()
+  const response = createResponse()
+
+  await handler(
+    createRequest({
+      headers: { authorization: 'Bearer valid-token' },
+      body: { domains: [{ id: 'kendal-new', url: 'https://new.kendalkab.go.id/path' }] },
+    }),
+    response,
+  )
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(response.body.results.length, 1)
+  assert.deepEqual(
+    {
+      id: response.body.results[0].id,
+      status: response.body.results[0].status,
+      ipAddress: response.body.results[0].ipAddress,
+      httpAccessible: response.body.results[0].httpAccessible,
+      dnsResolvable: response.body.results[0].dnsResolvable,
+      protocol: response.body.results[0].protocol,
+    },
+    {
+      id: 'kendal-new',
+      status: 'online',
+      ipAddress: '103.162.68.183',
+      httpAccessible: true,
+      dnsResolvable: true,
+      protocol: 'https',
+    },
+  )
+  assert.equal(globalThis.fetch.calls[1].url, 'https://new.kendalkab.go.id')
+  assert.equal(globalThis.fetch.calls[1].options.method, 'HEAD')
+})
+
+test('returns online result when HTTPS fails but HTTP fallback is reachable', async () => {
+  globalThis.fetch = createFetchMock([
+    async () => ({
+      ok: true,
+      json: async () => ({ users: [{ localId: 'test-uid' }] }),
+    }),
+    async () => {
+      const error = new Error('connect ECONNREFUSED')
+      error.code = 'ECONNREFUSED'
+      throw error
+    },
+    async () => {
+      const error = new Error('connect ECONNREFUSED')
+      error.code = 'ECONNREFUSED'
+      throw error
+    },
+    async () => ({ status: 200 }),
+  ])
+  const handler = await loadHandlerWithMockDns()
+  const response = createResponse()
+
+  await handler(
+    createRequest({
+      headers: { authorization: 'Bearer valid-token' },
+      body: { domains: [{ id: 'kendal-http', url: 'http-only.kendalkab.go.id' }] },
+    }),
+    response,
+  )
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(response.body.results.length, 1)
+  assert.deepEqual(
+    {
+      id: response.body.results[0].id,
+      status: response.body.results[0].status,
+      ipAddress: response.body.results[0].ipAddress,
+      httpAccessible: response.body.results[0].httpAccessible,
+      dnsResolvable: response.body.results[0].dnsResolvable,
+      protocol: response.body.results[0].protocol,
+    },
+    {
+      id: 'kendal-http',
+      status: 'online',
+      ipAddress: '103.162.68.183',
+      httpAccessible: true,
+      dnsResolvable: true,
+      protocol: 'http',
+    },
+  )
+  assert.equal(globalThis.fetch.calls[3].url, 'http://http-only.kendalkab.go.id')
+  assert.equal(globalThis.fetch.calls[3].options.method, 'HEAD')
 })
 
 test('rate limits repeated manual check requests by client', async () => {
