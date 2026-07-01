@@ -70,6 +70,12 @@ import {
 } from '@/lib/check-history'
 import { loadLastKnownStatuses } from '@/lib/status-loader'
 import {
+  getPermissionsByRole,
+  isAuthConfigurationError,
+  isAuthEmailAlreadyInUseError,
+  isAuthInvalidCredentialError,
+} from '@/lib/auth-helpers'
+import {
   signInWithUsernamePassword,
   createAuthUserWithUsername,
   signInWithUsernamePasswordSecondary,
@@ -128,33 +134,6 @@ function App() {
   const skipInitialGroupsSync = useRef(true)
   const skipInitialTagsSync = useRef(true)
   const manualRefreshAbortControllerRef = useRef<AbortController | null>(null)
-
-  const getPermissionsByRole = (role: ManagedUserRole): UserPermissions => {
-    if (role === 'admin') {
-      return {
-        canView: true,
-        canAddDomain: true,
-        canEdit: true,
-        canManageUsers: true,
-      }
-    }
-
-    if (role === 'add-only') {
-      return {
-        canView: true,
-        canAddDomain: true,
-        canEdit: false,
-        canManageUsers: false,
-      }
-    }
-
-    return {
-      canView: true,
-      canAddDomain: false,
-      canEdit: false,
-      canManageUsers: false,
-    }
-  }
 
   const createDefaultAdminUser = (): ManagedUser => ({
     id: 'default-user',
@@ -398,29 +377,6 @@ function App() {
     localStorage.setItem('app-last-activity', Date.now().toString())
     setLastActivityTime(Date.now())
     setShowLoginDialog(false)
-  }
-
-  const isAuthConfigurationError = (error: unknown): boolean => {
-    const authError = error as { code?: string; message?: string } | undefined
-    return authError?.code === 'auth/configuration-not-found'
-      || authError?.message?.toLowerCase().includes('configuration-not-found')
-      || false
-  }
-
-  const isAuthEmailAlreadyInUseError = (error: unknown): boolean => {
-    const authError = error as { code?: string; message?: string } | undefined
-    return authError?.code === 'auth/email-already-in-use'
-      || authError?.message?.toLowerCase().includes('email-already-in-use')
-      || false
-  }
-
-  const isAuthInvalidCredentialError = (error: unknown): boolean => {
-    const authError = error as { code?: string; message?: string } | undefined
-    return authError?.code === 'auth/invalid-credential'
-      || authError?.code === 'auth/wrong-password'
-      || authError?.code === 'auth/user-not-found'
-      || authError?.message?.toLowerCase().includes('invalid-credential')
-      || false
   }
 
   const canBootstrapBaselineAuth = (username: string, password: string): boolean => {
