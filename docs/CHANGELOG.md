@@ -1,5 +1,30 @@
 # Changelog
 
+## Maintenance - 1 Juli 2026 - Quality Gate, Test Coverage, Cleanup, Refactor Aman
+
+### ✅ Quality Gate & Build Safety
+
+- Menambahkan workflow GitHub Actions quality gate untuk menjalankan `check:docs-version`, `npm test`, `npm run typecheck`, dan `npm run build`.
+- Script build tidak lagi memakai TypeScript `--noCheck`; build sekarang menjalankan typecheck penuh sebelum Vite build.
+
+### ✅ Test Coverage
+
+- Menambahkan test untuk `api/check-domains.js`: auth, request validation, domain limit, rate-limit, allowed-domain validation, HTTPS success, HTTP fallback success, dan `dns-only`.
+- Menambahkan test untuk `src/lib/monitoring.ts`: validasi/normalisasi domain serta status `online`, `dns-only`, dan `offline`.
+- Menambahkan test untuk `src/lib/check-history.ts`: assignment batch dan jadwal check.
+- Menambahkan test untuk `src/lib/auth-helpers.ts`: permission role dan mapping error Firebase Auth.
+
+### ✅ Repo Cleanup
+
+- Menghapus folder `backups/` dari version control dan menambahkan `backups/` ke `.gitignore`.
+- Menghapus dependency unused yang jelas tidak dipakai: `d3`, `marked`, `uuid`, `zod`.
+
+### ✅ R-006 Refactor Aman
+
+- Mengekstrak helper auth pure dari `App.tsx` ke `src/lib/auth-helpers.ts`.
+- Tidak ada perubahan flow UI, Firestore, auth runtime, atau monitoring.
+- Validasi terakhir: `npm test` 25 pass, `npm run typecheck` pass, `npm run check:docs-version` pass, `npm run build` pass.
+
 ## Version 3.11.34 - Fix Daily Stats Gap di Uptime Bar
 
 **Tanggal Rilis:** 28 Juni 2026

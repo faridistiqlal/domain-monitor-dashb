@@ -3,7 +3,7 @@
 > **Baca file ini saja = langsung paham keseluruhan sistem.**
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
-**Last Updated:** 28 Juni 2026  
+**Last Updated:** 1 Juli 2026  
 **Current Version:** 3.11.34 (sumber: `src/lib/version.ts`)  
 **Live App:** https://domain-watchtower.vercel.app
 
@@ -167,6 +167,21 @@ firestore.rules               # Security rules Firestore
 ---
 
 ## 4. Release Terbaru
+
+### Maintenance Progress (1 Juli 2026) — **Quality Gate, Test Coverage, Cleanup, R-006 Phase 11**
+
+- Menambahkan GitHub Actions quality gate untuk `check:docs-version`, `npm test`, `typecheck`, dan `build`.
+- Build lokal sekarang menjalankan TypeScript check penuh sebelum Vite build; bypass `--noCheck` sudah dihapus.
+- Test coverage bertambah untuk:
+  - `api/check-domains.js`: auth, validation, rate-limit, HTTPS online, HTTP fallback, dan `dns-only`.
+  - `src/lib/monitoring.ts`: validasi domain, `online`, `dns-only`, dan `offline`.
+  - `src/lib/check-history.ts`: scheduler batch monitoring.
+  - `src/lib/auth-helpers.ts`: role permissions dan Firebase auth error mapping.
+- Cleanup repo:
+  - folder `backups/` dihapus dari version control dan ditambahkan ke `.gitignore`.
+  - dependency unused yang jelas tidak dipakai dihapus: `d3`, `marked`, `uuid`, `zod`.
+- R-006 Phase 11 selesai secara kecil dan aman: helper auth pure diekstrak dari `App.tsx` ke `src/lib/auth-helpers.ts`, disertai unit test.
+- Validasi terakhir: `npm test` 25 pass, `npm run typecheck` pass, `npm run check:docs-version` pass, `npm run build` pass.
 
 ### v3.11.34 (28 Juni 2026) — **Fix: Daily Stats Gap di Uptime Bar**
 
@@ -518,7 +533,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 
 | ID    | Item                                                                  | Kategori     | Effort | Status                            | Target |
 | ----- | --------------------------------------------------------------------- | ------------ | ------ | --------------------------------- | ------ |
-| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix          | large  | In Progress (Phase 10 done)       | 3.12.x |
+| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix          | large  | In Progress (Phase 11 done)       | 3.12.x |
 | R-007 | Hapus console.log berlebihan (~126 statements di App.tsx)             | fix          | small  | Done                              | 3.11.x |
 | R-008 | Tambah `useCallback` pada handler functions (cegah re-render)         | fix          | medium | Done                              | 3.12.x |
 | R-004 | Firestore rules: auth guard pada domains/groups/tags collections      | fix/security | small  | Done                              | 3.11.x |
@@ -547,13 +562,17 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | R-020 | SSL certificate expiry monitoring & warning (30/14/7 hari)     | feature     | large  | Planned | 3.14.x  |
 | R-021 | Rate limiting pada manual refresh (cooldown 30s)               | improvement | small  | Done    | 3.11.x  |
 | R-022 | Session management: sync logout antar tab (BroadcastChannel)   | improvement | medium | Done    | 3.11.x  |
-| R-023 | Cleanup unused dependencies (three, embla, vaul, heroicons)    | fix         | small  | Done    | 3.11.x  |
+| R-023 | Cleanup unused dependencies                                    | fix         | small  | Done    | 3.11.x  |
 | R-005 | Governance update docs per release                             | improvement | small  | Planned | ongoing |
 
 ### Done Recently
 
 | ID    | Item                                                                        | Versi   |
 | ----- | --------------------------------------------------------------------------- | ------- |
+| D-036 | Quality gate + test coverage API/monitoring/check-history/auth helpers      | maint   |
+| D-035 | R-006 phase 11: ekstraksi helper auth pure dari `App.tsx`                   | maint   |
+| D-034 | Cleanup repo: hapus tracked `backups/` + ignore `backups/`                  | maint   |
+| D-033 | Cleanup dependency unused: `d3`, `marked`, `uuid`, `zod`                    | maint   |
 | D-032 | Fix gap uptime bar: cron tulis minimal satu daily stats per hari Jakarta    | 3.11.34 |
 | D-031 | Tab Pinned hanya memuat status cron dari Firestore + cooldown refresh       | 3.11.33 |
 | D-030 | Fix monitoring false offline: concurrency limit + HEAD→GET fallback         | 3.11.32 |
@@ -608,7 +627,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | D-002 | Read-only/add-only action lock                                              | 3.10.1  |
 | D-003 | Firebase rules deploy & E2E                                                 | 3.10.2  |
 
-### R-006 Master Checklist (s/d Phase 10)
+### R-006 Master Checklist (s/d Phase 11)
 
 #### Status per Phase
 
@@ -620,8 +639,9 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 - [x] Phase 8 — ekstraksi notification settings ke `use-notification-settings` (rilis `3.11.10`)
 - [x] Phase 9 — ekstraksi tab auto-check logic ke `use-tab-auto-checks` (rilis `3.11.11`)
 - [x] Phase 10 — ekstraksi CSV export handlers ke `use-domain-export` (rilis `3.11.12`)
+- [x] Phase 11 — ekstraksi helper auth pure ke `src/lib/auth-helpers.ts` + unit test (maintenance 1 Juli 2026)
 
-#### Analisis Kandidat Refactor Berikutnya (Phase 11+)
+#### Analisis Kandidat Refactor Berikutnya (Phase 12+)
 
 1. **Dialog/UI state orchestration hook**
 
