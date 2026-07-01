@@ -70,6 +70,7 @@ import {
 } from '@/lib/check-history'
 import { loadLastKnownStatuses } from '@/lib/status-loader'
 import {
+  canBootstrapBaselineAuth,
   getPermissionsByRole,
   isAuthConfigurationError,
   isAuthEmailAlreadyInUseError,
@@ -377,20 +378,6 @@ function App() {
     localStorage.setItem('app-last-activity', Date.now().toString())
     setLastActivityTime(Date.now())
     setShowLoginDialog(false)
-  }
-
-  const canBootstrapBaselineAuth = (username: string, password: string): boolean => {
-    const normalizedUsername = username.trim().toLowerCase()
-
-    if (normalizedUsername === 'admin') {
-      return !!DEFAULT_ADMIN_PASSWORD && password === DEFAULT_ADMIN_PASSWORD
-    }
-
-    if (normalizedUsername === DEMO_VIEWER_USERNAME) {
-      return !!DEMO_VIEWER_PASSWORD && password === DEMO_VIEWER_PASSWORD
-    }
-
-    return false
   }
 
   const refreshManagedUsersState = async () => {
@@ -820,7 +807,11 @@ function App() {
       const baselineUser = users.find(user => user.username.toLowerCase() === normalized)
       const canBootstrapAuth = baselineUser
         && !baselineUser.authUid
-        && canBootstrapBaselineAuth(normalized, password)
+        && canBootstrapBaselineAuth(normalized, password, {
+          defaultAdminPassword: DEFAULT_ADMIN_PASSWORD,
+          demoViewerUsername: DEMO_VIEWER_USERNAME,
+          demoViewerPassword: DEMO_VIEWER_PASSWORD,
+        })
 
       if (canBootstrapAuth && baselineUser && isAuthInvalidCredentialError(authError)) {
         try {

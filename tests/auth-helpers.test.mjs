@@ -39,6 +39,33 @@ test('maps managed user roles to permissions', async () => {
   })
 })
 
+test('allows baseline auth bootstrap for configured admin and demo users only', async () => {
+  const { canBootstrapBaselineAuth } = await loadAuthHelpersModule()
+  const config = {
+    defaultAdminPassword: 'admin-secret',
+    demoViewerUsername: 'demoakun',
+    demoViewerPassword: 'demo-secret',
+  }
+
+  assert.equal(canBootstrapBaselineAuth(' admin ', 'admin-secret', config), true)
+  assert.equal(canBootstrapBaselineAuth('DEMOAKUN', 'demo-secret', config), true)
+  assert.equal(canBootstrapBaselineAuth('admin', 'wrong-password', config), false)
+  assert.equal(canBootstrapBaselineAuth('demoakun', 'wrong-password', config), false)
+  assert.equal(canBootstrapBaselineAuth('viewer', 'demo-secret', config), false)
+})
+
+test('blocks baseline auth bootstrap when configured passwords are empty', async () => {
+  const { canBootstrapBaselineAuth } = await loadAuthHelpersModule()
+  const config = {
+    defaultAdminPassword: '',
+    demoViewerUsername: 'demoakun',
+    demoViewerPassword: '',
+  }
+
+  assert.equal(canBootstrapBaselineAuth('admin', '', config), false)
+  assert.equal(canBootstrapBaselineAuth('demoakun', '', config), false)
+})
+
 test('detects Firebase auth configuration errors by code or message', async () => {
   const { isAuthConfigurationError } = await loadAuthHelpersModule()
 

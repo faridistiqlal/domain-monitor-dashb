@@ -1,5 +1,11 @@
 import type { ManagedUserRole, UserPermissions } from './types'
 
+interface BootstrapAuthConfig {
+  defaultAdminPassword: string
+  demoViewerUsername: string
+  demoViewerPassword: string
+}
+
 export const getPermissionsByRole = (role: ManagedUserRole): UserPermissions => {
   if (role === 'admin') {
     return {
@@ -25,6 +31,28 @@ export const getPermissionsByRole = (role: ManagedUserRole): UserPermissions => 
     canEdit: false,
     canManageUsers: false,
   }
+}
+
+export const canBootstrapBaselineAuth = (
+  username: string,
+  password: string,
+  {
+    defaultAdminPassword,
+    demoViewerUsername,
+    demoViewerPassword,
+  }: BootstrapAuthConfig,
+): boolean => {
+  const normalizedUsername = username.trim().toLowerCase()
+
+  if (normalizedUsername === 'admin') {
+    return !!defaultAdminPassword && password === defaultAdminPassword
+  }
+
+  if (normalizedUsername === demoViewerUsername) {
+    return !!demoViewerPassword && password === demoViewerPassword
+  }
+
+  return false
 }
 
 export const isAuthConfigurationError = (error: unknown): boolean => {
