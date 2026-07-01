@@ -139,6 +139,45 @@ test('rejects invalid Firebase tokens', async () => {
   assert.match(response.body.error, /token tidak valid/)
 })
 
+test('rejects authenticated requests without domains', async () => {
+  mockValidFirebaseLookup()
+  const handler = await loadHandler()
+  const response = createResponse()
+
+  await handler(
+    createRequest({
+      headers: { authorization: 'Bearer valid-token' },
+      body: { domains: [] },
+    }),
+    response,
+  )
+
+  assert.equal(response.statusCode, 400)
+  assert.equal(response.body.error, 'domains wajib diisi')
+})
+
+test('rejects authenticated requests above the per-request domain limit', async () => {
+  mockValidFirebaseLookup()
+  const handler = await loadHandler()
+  const response = createResponse()
+
+  await handler(
+    createRequest({
+      headers: { authorization: 'Bearer valid-token' },
+      body: {
+        domains: Array.from({ length: 13 }, (_, index) => ({
+          id: `domain-${index}`,
+          url: `sub-${index}.kendalkab.go.id`,
+        })),
+      },
+    }),
+    response,
+  )
+
+  assert.equal(response.statusCode, 413)
+  assert.equal(response.body.error, 'Maksimal 12 domain per request')
+})
+
 test('returns validation result for domains outside allowed base domain', async () => {
   mockValidFirebaseLookup()
   const handler = await loadHandler()
