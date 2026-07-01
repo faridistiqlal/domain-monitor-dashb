@@ -26,12 +26,33 @@ const loadHandlerWithMockDns = async (lookup = async () => ({ address: '103.162.
   process.env.ALLOWED_BASE_DOMAIN = 'kendalkab.go.id'
   resetRateLimitStore()
   globalThis.__checkDomainsTestDns = { lookup }
+  globalThis.__checkDomainsTestHttps = {
+    request: () => {
+      let errorHandler = () => {}
+
+      return {
+        on(eventName, handler) {
+          if (eventName === 'error') {
+            errorHandler = handler
+          }
+        },
+        end() {
+          errorHandler(new Error('mock no-verify HTTPS unavailable'))
+        },
+      }
+    },
+  }
 
   const source = await readFile(new URL('../api/check-domains.js', import.meta.url), 'utf8')
-  const testableSource = source.replace(
-    'import dns from "node:dns/promises";',
-    'const dns = globalThis.__checkDomainsTestDns;',
-  )
+  const testableSource = source
+    .replace(
+      'import dns from "node:dns/promises";',
+      'const dns = globalThis.__checkDomainsTestDns;',
+    )
+    .replace(
+      'import("node:https").then(({ request }) => {',
+      'Promise.resolve(globalThis.__checkDomainsTestHttps).then(({ request }) => {',
+    )
   const encoded = Buffer.from(testableSource, 'utf8').toString('base64')
   const imported = await import(`data:text/javascript;base64,${encoded}#${Date.now()}-${Math.random()}`)
   return imported.default
@@ -94,6 +115,7 @@ const createFetchMock = (handlers) => {
 test.afterEach(() => {
   globalThis.fetch = originalFetch
   delete globalThis.__checkDomainsTestDns
+  delete globalThis.__checkDomainsTestHttps
   process.env.FIREBASE_API_KEY = originalFirebaseApiKey
   process.env.VITE_FIREBASE_API_KEY = originalViteFirebaseApiKey
   process.env.ALLOWED_BASE_DOMAIN = originalAllowedBaseDomain
@@ -305,6 +327,62 @@ test('returns online result when HTTPS fails but HTTP fallback is reachable', as
   )
   assert.equal(globalThis.fetch.calls[3].url, 'http://http-only.kendalkab.go.id')
   assert.equal(globalThis.fetch.calls[3].options.method, 'HEAD')
+})
+
+test('returns dns-only result when DNS resolves but SSL and HTTP checks fail', async () => {
+  globalThis.fetch = createFetchMock([
+    async () => ({
+      ok: true,
+      json: async () => ({ users: [{ localId: 'test-uid' }] }),
+    }),
+    async () => {
+      throw new Error('certificate has expired')
+    },
+    async () => {
+      throw new Error('certificate has expired')
+    },
+    async () => {
+      const error = new Error('connect ECONNREFUSED')
+      error.code = 'ECONNREFUSED'
+      throw error
+    },
+    async () => {
+      const error = new Error('connect ECONNREFUSED')
+      error.code = 'ECONNREFUSED'
+      throw error
+    },
+  ])
+  const handler = await loadHandlerWithMockDns()
+  const response = createResponse()
+
+  await handler(
+    createRequest({
+      headers: { authorization: 'Bearer valid-token' },
+      body: { domains: [{ id: 'kendal-ssl', url: 'ssl-broken.kendalkab.go.id' }] },
+    }),
+    response,
+  )
+
+  assert.equal(response.statusCode, 200)
+  assert.equal(response.body.results.length, 1)
+  assert.deepEqual(
+    {
+      id: response.body.results[0].id,
+      status: response.body.results[0].status,
+      ipAddress: response.body.results[0].ipAddress,
+      httpAccessible: response.body.results[0].httpAccessible,
+      dnsResolvable: response.body.results[0].dnsResolvable,
+      error: response.body.results[0].error,
+    },
+    {
+      id: 'kendal-ssl',
+      status: 'dns-only',
+      ipAddress: '103.162.68.183',
+      httpAccessible: false,
+      dnsResolvable: true,
+      error: 'certificate has expired',
+    },
+  )
 })
 
 test('rate limits repeated manual check requests by client', async () => {
