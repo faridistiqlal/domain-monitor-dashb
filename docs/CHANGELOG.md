@@ -22,8 +22,10 @@
 ### ✅ R-006 Refactor Aman
 
 - Mengekstrak helper auth pure dari `App.tsx` ke `src/lib/auth-helpers.ts`.
+- Mengekstrak bootstrap auth helper (`canBootstrapBaselineAuth`) dari `App.tsx` ke `src/lib/auth-helpers.ts`.
+- Menambahkan unit test untuk bootstrap admin/demo, termasuk guard password kosong dan username case-insensitive.
 - Tidak ada perubahan flow UI, Firestore, auth runtime, atau monitoring.
-- Validasi terakhir: `npm test` 25 pass, `npm run typecheck` pass, `npm run check:docs-version` pass, `npm run build` pass.
+- Validasi terakhir: `npm test` 27 pass, `npm run typecheck` pass, `npm run check:docs-version` pass, `npm run build` pass.
 
 ## Version 3.11.34 - Fix Daily Stats Gap di Uptime Bar
 

@@ -168,7 +168,7 @@ firestore.rules               # Security rules Firestore
 
 ## 4. Release Terbaru
 
-### Maintenance Progress (1 Juli 2026) — **Quality Gate, Test Coverage, Cleanup, R-006 Phase 11**
+### Maintenance Progress (1 Juli 2026) — **Quality Gate, Test Coverage, Cleanup, R-006 Phase 12**
 
 - Menambahkan GitHub Actions quality gate untuk `check:docs-version`, `npm test`, `typecheck`, dan `build`.
 - Build lokal sekarang menjalankan TypeScript check penuh sebelum Vite build; bypass `--noCheck` sudah dihapus.
@@ -181,7 +181,8 @@ firestore.rules               # Security rules Firestore
   - folder `backups/` dihapus dari version control dan ditambahkan ke `.gitignore`.
   - dependency unused yang jelas tidak dipakai dihapus: `d3`, `marked`, `uuid`, `zod`.
 - R-006 Phase 11 selesai secara kecil dan aman: helper auth pure diekstrak dari `App.tsx` ke `src/lib/auth-helpers.ts`, disertai unit test.
-- Validasi terakhir: `npm test` 25 pass, `npm run typecheck` pass, `npm run check:docs-version` pass, `npm run build` pass.
+- R-006 Phase 12 selesai secara kecil dan aman: bootstrap auth helper (`canBootstrapBaselineAuth`) diekstrak ke `src/lib/auth-helpers.ts`, disertai unit test admin/demo.
+- Validasi terakhir: `npm test` 27 pass, `npm run typecheck` pass, `npm run check:docs-version` pass, `npm run build` pass.
 
 ### v3.11.34 (28 Juni 2026) — **Fix: Daily Stats Gap di Uptime Bar**
 
@@ -533,7 +534,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 
 | ID    | Item                                                                  | Kategori     | Effort | Status                            | Target |
 | ----- | --------------------------------------------------------------------- | ------------ | ------ | --------------------------------- | ------ |
-| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix          | large  | In Progress (Phase 11 done)       | 3.12.x |
+| R-006 | Refactor App.tsx god component (~3600 baris → hooks + sub-components) | fix          | large  | In Progress (Phase 12 done)       | 3.12.x |
 | R-007 | Hapus console.log berlebihan (~126 statements di App.tsx)             | fix          | small  | Done                              | 3.11.x |
 | R-008 | Tambah `useCallback` pada handler functions (cegah re-render)         | fix          | medium | Done                              | 3.12.x |
 | R-004 | Firestore rules: auth guard pada domains/groups/tags collections      | fix/security | small  | Done                              | 3.11.x |
@@ -569,6 +570,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 
 | ID    | Item                                                                        | Versi   |
 | ----- | --------------------------------------------------------------------------- | ------- |
+| D-037 | R-006 phase 12: ekstraksi bootstrap auth helper + unit test admin/demo      | maint   |
 | D-036 | Quality gate + test coverage API/monitoring/check-history/auth helpers      | maint   |
 | D-035 | R-006 phase 11: ekstraksi helper auth pure dari `App.tsx`                   | maint   |
 | D-034 | Cleanup repo: hapus tracked `backups/` + ignore `backups/`                  | maint   |
@@ -627,7 +629,7 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 | D-002 | Read-only/add-only action lock                                              | 3.10.1  |
 | D-003 | Firebase rules deploy & E2E                                                 | 3.10.2  |
 
-### R-006 Master Checklist (s/d Phase 11)
+### R-006 Master Checklist (s/d Phase 12)
 
 #### Status per Phase
 
@@ -640,8 +642,9 @@ Detail lengkap setiap versi: [CHANGELOG.md](./CHANGELOG.md)
 - [x] Phase 9 — ekstraksi tab auto-check logic ke `use-tab-auto-checks` (rilis `3.11.11`)
 - [x] Phase 10 — ekstraksi CSV export handlers ke `use-domain-export` (rilis `3.11.12`)
 - [x] Phase 11 — ekstraksi helper auth pure ke `src/lib/auth-helpers.ts` + unit test (maintenance 1 Juli 2026)
+- [x] Phase 12 — ekstraksi bootstrap auth helper ke `src/lib/auth-helpers.ts` + unit test admin/demo (deployed 1 Juli 2026)
 
-#### Analisis Kandidat Refactor Berikutnya (Phase 12+)
+#### Analisis Kandidat Refactor Berikutnya (Phase 13+)
 
 1. **Dialog/UI state orchestration hook**
 
