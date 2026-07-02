@@ -66,6 +66,48 @@ test('blocks baseline auth bootstrap when configured passwords are empty', async
   assert.equal(canBootstrapBaselineAuth('demoakun', '', config), false)
 })
 
+test('creates default admin and demo viewer baseline users', async () => {
+  const {
+    createDefaultAdminUser,
+    createDemoViewerUser,
+  } = await loadAuthHelpersModule()
+  const timestamp = 1783000000000
+
+  assert.deepEqual(createDefaultAdminUser(timestamp), {
+    id: 'default-user',
+    username: 'admin',
+    role: 'admin',
+    permissions: {
+      canView: true,
+      canAddDomain: true,
+      canEdit: true,
+      canManageUsers: true,
+    },
+    isActive: true,
+    revision: 1,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    createdBy: 'system',
+  })
+
+  assert.deepEqual(createDemoViewerUser('demoakun', timestamp), {
+    id: 'demo-viewer',
+    username: 'demoakun',
+    role: 'viewer',
+    permissions: {
+      canView: true,
+      canAddDomain: false,
+      canEdit: false,
+      canManageUsers: false,
+    },
+    isActive: true,
+    revision: 1,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    createdBy: 'system',
+  })
+})
+
 test('detects Firebase auth configuration errors by code or message', async () => {
   const { isAuthConfigurationError } = await loadAuthHelpersModule()
 

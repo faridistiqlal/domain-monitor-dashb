@@ -71,6 +71,8 @@ import {
 import { loadLastKnownStatuses } from '@/lib/status-loader'
 import {
   canBootstrapBaselineAuth,
+  createDefaultAdminUser,
+  createDemoViewerUser,
   getPermissionsByRole,
   isAuthConfigurationError,
   isAuthEmailAlreadyInUseError,
@@ -136,47 +138,19 @@ function App() {
   const skipInitialTagsSync = useRef(true)
   const manualRefreshAbortControllerRef = useRef<AbortController | null>(null)
 
-  const createDefaultAdminUser = (): ManagedUser => ({
-    id: 'default-user',
-    username: 'admin',
-    role: 'admin',
-    permissions: getPermissionsByRole('admin'),
-    isActive: true,
-    revision: 1,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    createdBy: 'system',
-  })
-
-  const createDemoViewerUser = (): ManagedUser => ({
-    id: 'demo-viewer',
-    username: DEMO_VIEWER_USERNAME || 'demo',
-    role: 'viewer',
-    permissions: getPermissionsByRole('viewer'),
-    isActive: true,
-    revision: 1,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    createdBy: 'system',
-  })
-
   const ensureBaselineUsers = useCallback((users: ManagedUser[]): ManagedUser[] => {
     const now = Date.now()
     const nextUsers = [...users]
 
     const hasAdmin = nextUsers.some(user => user.username.toLowerCase() === 'admin')
     if (!hasAdmin) {
-      nextUsers.push(createDefaultAdminUser())
+      nextUsers.push(createDefaultAdminUser(now))
     }
 
     const canSeedDemo = !!DEMO_VIEWER_USERNAME && !!DEMO_VIEWER_PASSWORD && DEMO_VIEWER_USERNAME !== 'admin'
     const hasDemo = nextUsers.some(user => user.username.toLowerCase() === DEMO_VIEWER_USERNAME)
     if (canSeedDemo && !hasDemo) {
-      nextUsers.push({
-        ...createDemoViewerUser(),
-        createdAt: now,
-        updatedAt: now,
-      })
+      nextUsers.push(createDemoViewerUser(DEMO_VIEWER_USERNAME || 'demo', now))
     }
 
     return nextUsers

@@ -1,4 +1,4 @@
-import type { ManagedUserRole, UserPermissions } from './types'
+import type { ManagedUser, ManagedUserRole, UserPermissions } from './types'
 
 interface BootstrapAuthConfig {
   defaultAdminPassword: string
@@ -54,6 +54,33 @@ export const canBootstrapBaselineAuth = (
 
   return false
 }
+
+export const createDefaultAdminUser = (timestamp: number = Date.now()): ManagedUser => ({
+  id: 'default-user',
+  username: 'admin',
+  role: 'admin',
+  permissions: getPermissionsByRole('admin'),
+  isActive: true,
+  revision: 1,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+  createdBy: 'system',
+})
+
+export const createDemoViewerUser = (
+  username: string,
+  timestamp: number = Date.now(),
+): ManagedUser => ({
+  id: 'demo-viewer',
+  username: username || 'demo',
+  role: 'viewer',
+  permissions: getPermissionsByRole('viewer'),
+  isActive: true,
+  revision: 1,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+  createdBy: 'system',
+})
 
 export const isAuthConfigurationError = (error: unknown): boolean => {
   const authError = error as { code?: string; message?: string } | undefined
