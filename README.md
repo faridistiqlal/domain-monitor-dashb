@@ -5,10 +5,10 @@ Dashboard monitoring availability domain/subdomain dengan Firebase sync, statist
 | Link            | Value                                       |
 | --------------- | ------------------------------------------- |
 | Demo URL        | https://domain-watchtower.vercel.app        |
-| Current Version | 3.11.34                                     |
+| Current Version | 3.11.35                                     |
 | Runtime         | React 19 + TypeScript + Vite 7 + Tailwind 4 |
 
-- Current Version: 3.11.34
+- Current Version: 3.11.35
 
 ## Preview
 

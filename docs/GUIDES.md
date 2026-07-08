@@ -2,7 +2,7 @@
 
 **App:** Domain Monitor Dashboard  
 **URL:** https://domain-watchtower.vercel.app (Live on Vercel)  
-**Version:** 3.11.34  
+**Version:** 3.11.35  
 **Deployment:** Vercel Production (Manual deploy via Vercel CLI)
 
 > **Status:** Source of Truth (operasional)
@@ -541,5 +541,5 @@ sudo systemctl reload nginx
 ---
 
 **Last Updated:** 28 Juni 2026  
-**App Version:** 3.11.34  
+**App Version:** 3.11.35  
 **Guide Status:** ✅ Complete & Up-to-date

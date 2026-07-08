@@ -14,8 +14,8 @@ jobs:
   monitor:
     runs-on: ubuntu-latest
     
-    # Timeout after 5 minutes to prevent hanging
-    timeout-minutes: 5
+    # Timeout after 10 minutes to prevent hanging while allowing slow batches to finish
+    timeout-minutes: 10
     
     steps:
       - name: Evaluate monitoring toggle
@@ -57,7 +57,7 @@ jobs:
       
       - name: Run domain monitoring
         if: steps.monitor_toggle.outputs.should_run == 'true'
-        timeout-minutes: 4
+        timeout-minutes: 8
         env:
           MONITORING_ENABLED: ${{ vars.MONITORING_ENABLED }}
           MONITORING_PAUSE_UNTIL: ${{ vars.MONITORING_PAUSE_UNTIL }}
