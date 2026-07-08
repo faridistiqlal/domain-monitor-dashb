@@ -4,7 +4,7 @@
 > Tidak perlu baca file lain kecuali butuh detail spesifik.
 
 **Last Updated:** 1 Juli 2026  
-**Current Version:** 3.11.34 (sumber: `src/lib/version.ts`)  
+**Current Version:** 3.11.35 (sumber: `src/lib/version.ts`)  
 **Live App:** https://domain-watchtower.vercel.app
 
 ---

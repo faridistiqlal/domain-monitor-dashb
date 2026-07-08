@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 3.11.35 - Fix Monitoring Cron Timeout
+
+**Tanggal Rilis:** 8 Juli 2026
+
+### 🐛 Fix: GitHub Actions Cron Timeout Sporadis
+
+- Timeout job monitoring dinaikkan dari 5 menit menjadi 10 menit.
+- Timeout step `Run domain monitoring` dinaikkan dari 4 menit menjadi 8 menit.
+- Perubahan ini mencegah batch monitoring yang sudah selesai secara logis ditandai gagal oleh GitHub Actions karena mepet batas timeout.
+
 ## Maintenance - 1 Juli 2026 - Quality Gate, Test Coverage, Cleanup, Refactor Aman
 
 ### ✅ Quality Gate & Build Safety
